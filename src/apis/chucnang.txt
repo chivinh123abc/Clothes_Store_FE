@@ -1,0 +1,41 @@
+Cac ham goi API
++ axiosClient.ts
++ userApi.ts, productApi.ts,...
+
+------------------------------------------------------------------
+
+ex:
+// src/api/axiosClient.ts
+import axios from 'axios'
+
+const axiosClient = axios.create({
+  baseURL: import.meta.env.VITE_API_URL,
+  headers: { 'Content-Type': 'application/json' },
+  withCredentials: true,
+})
+
+axiosClient.interceptors.request.use(config => {
+  const token = localStorage.getItem('access_token')
+  if (token && config.headers) config.headers.Authorization = `Bearer ${token}`
+  return config
+})
+
+axiosClient.interceptors.response.use(
+  res => res,
+  err => {
+    // global error handling (401 refresh token, toast, ...)
+    return Promise.reject(err)
+  }
+)
+
+export default axiosClient
+
+// src/api/userApi.ts
+import axiosClient from './axiosClient'
+import { LoginRequestDto, AuthResponseDto } from '../types/user'
+
+export const userApi = {
+  login: (data: LoginRequestDto) => axiosClient.post<AuthResponseDto>('/users/login', data),
+  register: (data: any) => axiosClient.post('/users/register', data),
+  getProfile: () => axiosClient.get('/users/info'),
+}

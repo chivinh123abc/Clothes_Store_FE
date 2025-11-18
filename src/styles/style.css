@@ -1,0 +1,23 @@
+@import url('https://fonts.googleapis.com/css2?family=Macondo&family=Momo+Signature&family=Roboto:ital,wght@0,100..900;1,100..900&family=Rubik+Bubbles&family=VT323&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-poppins: "Poppins", sans-serif;
+  --font-roboto: "Roboto", sans-serif;
+  --font-vt323: "VT323", monospace;
+  --font-macondo: "Macondo", cursive;
+  --font-rubik-bubbles: "Rubik Bubbles", cursive;
+  --font-momo-signature: "Momo Signature", cursive;
+}
+
+@layer base{
+  button{
+    @apply cursor-pointer;
+  }
+}
+
+@layer utilities {
+  .bg-img-white {
+    filter: invert(1) brightness(200%);
+  }
+}

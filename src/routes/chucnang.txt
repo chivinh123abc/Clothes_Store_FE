@@ -1,0 +1,25 @@
+Dinh nghia route 
++ React router dom
+
+=====================================================================
+
+// src/routes/AppRoutes.tsx
+import { Routes, Route, Navigate } from 'react-router-dom'
+import Home from '../pages/Home'
+import Login from '../pages/Login'
+import { useAuth } from '../hooks/useAuth'
+
+const Private = ({children}:{children:JSX.Element}) => {
+  const { user } = useAuth()
+  return user ? children : <Navigate to="/login" />
+}
+
+export default function AppRoutes(){
+  return (
+    <Routes>
+      <Route path="/" element={<Home/>}/>
+      <Route path="/login" element={<Login/>}/>
+      <Route path="/checkout" element={<Private><div>Checkout</div></Private>} />
+    </Routes>
+  )
+}

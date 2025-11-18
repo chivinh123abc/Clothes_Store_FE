@@ -1,0 +1,32 @@
+Context trong React dùng để chia sẻ dữ liệu chung cho nhiều component mà không phải truyền props qua nhiều cấp.
+
+Khi nào cần Context?
++ Auth (lưu user, token)
++ Cart (giỏ hàng)
++ Theme (dark/light)
++ Global settings
+Thay vì truyền props qua 10 component, bạn chỉ cần đặt data trong Context và component nào cũng lấy được.
+
+=======================================================================
+Bao gom: 
++ AuthContext
++ CartContext,...
+=> Share state toan app 
+
+=======================================================================
+
+// src/contexts/AuthContext.tsx
+import React, {createContext, useState, useEffect} from 'react'
+import { AuthResponseDto } from '../types/user'
+
+type AuthCtx = { user: AuthResponseDto | null, setUser: (u: AuthResponseDto|null)=>void, logout: ()=>void }
+export const AuthContext = createContext<AuthCtx | null>(null)
+
+export const AuthProvider: React.FC = ({children}) => {
+  const [user, setUser] = useState<AuthResponseDto | null>(() => {
+    const raw = localStorage.getItem('auth_user'); return raw ? JSON.parse(raw) : null
+  })
+  useEffect(()=>{ if(user) localStorage.setItem('auth_user', JSON.stringify(user)) }, [user])
+  const logout = ()=>{ setUser(null); localStorage.removeItem('access_token'); localStorage.removeItem('auth_user') }
+  return <AuthContext.Provider value={{user, setUser, logout}}>{children}</AuthContext.Provider>
+}
