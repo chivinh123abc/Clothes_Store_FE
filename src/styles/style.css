@@ -7,7 +7,34 @@
   --font-vt323: "VT323", monospace;
   --font-macondo: "Macondo", cursive;
   --font-rubik-bubbles: "Rubik Bubbles", cursive;
-  --font-momo-signature: "Momo Signature", cursive;
+  --font-momo-signature: "Momo Signature", cursive;  
+  /* https://flatuicolors.com/palette/cn */
+  --color-golden-sand: #eccc68;
+  --color-blood-red: #e2012d;
+  --color-coral: #ff7f50;
+  --color-wild-watermelon: #ff6b81;
+  --color-light-orange: #ffa502;
+  --color-bruschetta-tomato: #ff6348;
+  --color-watermelon: #ff4757;
+  --color-lime-soap: #7bed9f;
+  --color-french-sky-blue: #70a1ff;
+  --color-ufo-green: #2ed573;
+  --color-clear-chill: #1e90ff;
+  --color-saturated-sky: #5352ed;
+  --color-bright-greek: #3742fa;
+  --color-peace: #a4b0be;
+  --color-bay-wharf: #747d8c;
+  --color-grisaille: #57606f;
+  --color-prestige-blue: #2f3542;
+  --color-city-light: #dfe4ea;
+  --color-anti-flash-white: #f1f2f6;
+  --color-twinkle-blue: #ced6e0;
+  /* Sunset shades */
+  --color-sunset-1: #f7b267;
+  --color-sunset-2: #f79d65;
+  --color-sunset-3: #f4845f;
+  --color-sunset-4: #f27059;
+  --color-sunset-5: #f25c54;
 }
 
 @layer base{

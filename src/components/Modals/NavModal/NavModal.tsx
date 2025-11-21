@@ -10,12 +10,28 @@ interface NavModalProps {
 export default function NavModal({ open, onClose, children }: NavModalProps) {
   return (
     <div onClick={onClose} className={`fixed inset-0 flex justify-start items-center transition-colors ${open ? "visible bg-black/20" : "invisible"}`}>
-      <div onClick={(e) => e.stopPropagation()} className='inset w-[30vw] h-screen bg-white text-black text-xs font-bold border-b border-black'>
+      <div onClick={(e) => e.stopPropagation()} className='inset w-50 h-screen bg-white text-black text-xs font-bold border-b border-black'>
         {children}
+        <NavMenuLogin />
         <NavMenuListModal />
       </div>
 
     </div>
   );
+}
+
+const NavMenuLogin = () => {
+  return (
+    <div className='p-3 border-b-6 border-gray-100'>
+      <p className='pb-2 font-thin'>GLOBAL / USD</p>
+      <div className='flex gap-1 items-center'>
+        <button className='-translate-y-0.5'>Login</button>
+        <div className='flex justify-center items-center w-5 h-5 bg-black rounded-full'>
+          <input type="image" src='src/assets/FAIcon/angle-down-solid-full.svg' className='w-5 h-5 p-1 filter bg-img-white -rotate-90 ' />
+        </div>
+      </div>
+    </div>
+
+  )
 }
 
