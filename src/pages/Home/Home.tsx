@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import Banner from '~/components/Banner/Banner'
+import { CollectionSlider } from '~/components/Card/CollectionSlider'
 import NavModal from '~/components/Modals/NavModal/NavModal'
 import Navbar from '~/components/Navbar/Navbar'
-
 
 function Home() {
   const [openNav, setOpenNav] = useState(false)
@@ -14,14 +14,21 @@ function Home() {
       <Navbar setOpenNav={setOpenNav} />
       <NavModal open={openNav} onClose={() => setOpenNav(false)}>  </NavModal>
 
-
+      {/* NavbarModal */}
       <div className=''>
         <img className='w-screen' src="src/assets/Background/first_bg_img.jpg" alt="" />
       </div>
-      {/* NavbarModal */}
+
+      {/* Collection Recomendation */}
+      <div className=''>
+        {/* CollectinTitle */}
+        <div className='font-bold text-2xl mt-20 mb-10 text-center'>COLLECTION</div>
+        {/* Collection Item */}
+        <CollectionSlider />
+      </div>
+
     </div>
   )
 }
-
 
 export default Home

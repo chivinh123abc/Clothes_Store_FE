@@ -1,56 +1,55 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from 'react'
 
 const data = [
-  { num: "1", text: "Quan GENG" },
-  { num: "2", text: "Ao T1" },
-  { num: "3", text: "Giay HLE" },
-  { num: "4", text: "Tat KT" },
-];
+  { num: '1', text: 'Quan GENG' },
+  { num: '2', text: 'Ao T1' },
+  { num: '3', text: 'Giay HLE' },
+  { num: '4', text: 'Tat KT' }
+]
 
 export default function SearchBar() {
-  const [isFocused, setIsFocused] = useState(false);
-  const [value, setValue] = useState("");
-  const [index, setIndex] = useState(0);
+  const [isFocused, setIsFocused] = useState(false)
+  const [value, setValue] = useState('')
+  const [index, setIndex] = useState(0)
 
   const extend = [...data, data[0]]
 
-  const listRef = useRef<HTMLDivElement | null>(null);
-
+  const listRef = useRef<HTMLDivElement | null>(null)
 
   const blurSearchBar = () => {
-    setIsFocused(false);
-    setIndex(0);
+    setIsFocused(false)
+    setIndex(0)
   }
 
   // Auto slide index
   useEffect(() => {
     const timer = setInterval(() => {
       setIndex((prev) => {
-        return prev + 1;
-      });
-    }, 2000);
+        return prev + 1
+      })
+    }, 2000)
 
-    return () => clearInterval(timer);
-  }, []);
+    return () => clearInterval(timer)
+  }, [])
 
   // Apply sliding effect using transform
   useEffect(() => {
-    if (!listRef.current) return;
+    if (!listRef.current) return
     // console.log('index: ', index)
     if (index === data.length + 1) {
-      listRef.current.style.transition = "transform 0s";
-      listRef.current.style.transform = "translateY(0px)";
+      listRef.current.style.transition = 'transform 0s'
+      listRef.current.style.transform = 'translateY(0px)'
       requestAnimationFrame(() => {
-        setIndex(1); // hoặc 0 nếu bạn duplicate item đầu ở cuối
+        setIndex(1) // hoặc 0 nếu bạn duplicate item đầu ở cuối
         // Sau khi setIndex, useEffect lần sau sẽ chạy với transition bình thường
-      });
+      })
     } else {
-      listRef.current.style.transition = "transform 0.5s ease-in-out";
-      listRef.current.style.transform = `translateY(-${index * 24}px)`;
+      listRef.current.style.transition = 'transform 0.5s ease-in-out'
+      listRef.current.style.transform = `translateY(-${index * 24}px)`
     }
-  }, [index]);
+  }, [index])
 
-  const hidePlaceholder = isFocused || value !== "";
+  const hidePlaceholder = isFocused || value !== ''
 
   return (
     <form
@@ -83,5 +82,5 @@ export default function SearchBar() {
         </div>
       )}
     </form>
-  );
+  )
 }

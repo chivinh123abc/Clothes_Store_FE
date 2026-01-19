@@ -23,8 +23,8 @@ function Navbar({ setOpenNav }: NavbarProps) {
   // const [openNav, setOpenNav] = useState(false)
   // bg-white/30 backdrop-blur-md
   return (
-    <nav className={`text-white text-xs fixed top-8 w-screen`}>
-      <div className={`flex justify-between items-center h-18 px-12 font-semibold ${isTop ? "bg-black/20" : "bg-black/30 backdrop-blur-2xl"}`}>
+    <nav className={'text-white text-xs fixed top-8 w-screen z-100'}>
+      <div className={`flex justify-between items-center h-18 px-12 font-semibold ${isTop ? 'bg-black/20' : 'bg-black/30 backdrop-blur-2xl'}`}>
 
         <div className='lg:hidden'>
           <input onClick={() => setOpenNav(true)} type="image" src='src/assets/Navbar/menu.png' className='w-4 h-4 filter bg-img-white' />
@@ -53,8 +53,5 @@ function Navbar({ setOpenNav }: NavbarProps) {
     </nav>
   )
 }
-
-
-
 
 export default Navbar

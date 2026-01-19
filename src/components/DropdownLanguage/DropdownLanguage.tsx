@@ -1,5 +1,5 @@
-import type React from 'react';
-import { useState } from 'react';
+import type React from 'react'
+import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 
 function DropdownLanguage() {
@@ -36,7 +36,7 @@ export const FlyoutLink = ({ children, href, FlyoutContent }: { children: React.
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 15 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
             className='absolute top-6 -left-2 bg-white text-black'
           >
             <div className='absolute -top-6 left-0 right-0 h-6 bg-transparent' />
