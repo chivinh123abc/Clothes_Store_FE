@@ -47,4 +47,11 @@
   .bg-img-white {
     filter: invert(1) brightness(200%);
   }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }
