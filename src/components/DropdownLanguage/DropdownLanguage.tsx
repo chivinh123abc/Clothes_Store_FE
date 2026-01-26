@@ -1,6 +1,7 @@
 import type React from 'react'
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
+import FAIcon from '~/assets/FAIcon/angle-down-solid-full.svg'
 
 function DropdownLanguage() {
   return (
@@ -8,7 +9,7 @@ function DropdownLanguage() {
       <FlyoutLink href='#' FlyoutContent={LanguageContent}>
         <div className='flex justify-center items-center'>
           <span>GL</span>
-          <img src="src/assets/FAIcon/angle-down-solid-full.svg" alt="angleDown" className='w-3 h-3 bg-img-white' />
+          <img src={FAIcon} alt="angleDown" className='w-3 h-3 bg-img-white' />
         </div>
       </FlyoutLink>
     </div>
