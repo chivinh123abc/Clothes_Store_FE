@@ -10,24 +10,23 @@
 
 import { useState } from 'react'
 import { FlyoutLink } from '../DropdownLanguage/DropdownLanguage'
+import angleDownIcon from '~/assets/FAIcon/angle-down-solid-full.svg'
 
 // 1. For Medal
 export const NavMenuListModal = () => {
-  const [activeMenu, setActiveMenu] = useState<"shop" | "legacy" | "community" | null>(null);
-
+  const [activeMenu, setActiveMenu] = useState<'shop' | 'legacy' | 'community' | null>(null)
 
   const onFocusShop = () => {
-    setActiveMenu(activeMenu === "shop" ? null : "shop");
-  };
+    setActiveMenu(activeMenu === 'shop' ? null : 'shop')
+  }
 
   const onFocusLegacy = () => {
-    setActiveMenu(activeMenu === "legacy" ? null : "legacy");
-  };
+    setActiveMenu(activeMenu === 'legacy' ? null : 'legacy')
+  }
 
   const onFocusCommunity = () => {
-    setActiveMenu(activeMenu === "community" ? null : "community");
-  };
-
+    setActiveMenu(activeMenu === 'community' ? null : 'community')
+  }
 
   return (
     <ul className="flex flex-col gap-0">
@@ -45,7 +44,7 @@ export const NavMenuListModal = () => {
         <a href='' className=''>SHOP</a>
         <input
           onClick={onFocusShop}
-          type="image" src='src/assets/FAIcon/angle-down-solid-full.svg' className={`w-5 h-5 absolute inset-0 translate-y-1/3 translate-x-40 z-20 transition-transform duration-0 ease-linear ${(activeMenu === 'shop') ? 'rotate-180' : 'rotate-0'}`}
+          type="image" src={angleDownIcon} className={`w-5 h-5 absolute inset-0 translate-y-1/3 translate-x-40 z-20 transition-transform duration-300 ease-linear ${(activeMenu === 'shop') ? 'rotate-180' : 'rotate-0'}`}
         />
         <ShopExpand active={activeMenu === 'shop'} />
       </li>
@@ -53,7 +52,7 @@ export const NavMenuListModal = () => {
         <a href='' className=''>LEGACY</a>
         <input
           onClick={onFocusLegacy}
-          type="image" src='src/assets/FAIcon/angle-down-solid-full.svg' className={`w-5 h-5 absolute inset-0 translate-y-1/3 translate-x-40 z-20 transition-transform duration-0 ${(activeMenu === 'legacy') ? 'rotate-180' : 'rotate-0'}`}
+          type="image" src={angleDownIcon} className={`w-5 h-5 absolute inset-0 translate-y-1/3 translate-x-40 z-20 transition-transform duration-300 ${(activeMenu === 'legacy') ? 'rotate-180' : 'rotate-0'}`}
         />
         <LegacyExpand active={activeMenu === 'legacy'} />
       </li>
@@ -61,7 +60,7 @@ export const NavMenuListModal = () => {
         <a href='' className=''>COMMUNITY</a>
         <input
           onClick={onFocusCommunity}
-          type="image" src='src/assets/FAIcon/angle-down-solid-full.svg' className={`w-5 h-5 absolute inset-0 translate-y-1/3 translate-x-40 z-20 transition-transform duration-0 ${(activeMenu === 'community') ? 'rotate-180' : 'rotate-0'}`}
+          type="image" src={angleDownIcon} className={`w-5 h-5 absolute inset-0 translate-y-1/3 translate-x-40 z-20 transition-transform duration-300 ${(activeMenu === 'community') ? 'rotate-180' : 'rotate-0'}`}
         />
         <CommunityExpand active={activeMenu === 'community'} />
       </li>
@@ -71,8 +70,8 @@ export const NavMenuListModal = () => {
         </a>
       </li>
     </ul>
-  );
-};
+  )
+}
 
 const ShopExpand = ({ active }: { active: boolean }) => {
   return (
@@ -160,8 +159,8 @@ export const NavMenuListMedium = () => {
         <a href="" className="hover:underline hover:underline-offset-2 hover:decoration-blood-red">Q&A</a>
       </li>
     </ul>
-  );
-};
+  )
+}
 
 const DropdownItem = ({ title, content }: { title: string, content: React.ComponentType }) => {
   return (
