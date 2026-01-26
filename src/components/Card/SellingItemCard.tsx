@@ -1,8 +1,8 @@
-function CollectionCard() {
+function SellingItemCard() {
   return (
     <a className='group bg-blue-100 overflow-hidden' href=''>
       {/* IMAGE */}
-      <div className='overflow-hidden w-90 h-120'>
+      <div className='overflow-hidden w-60 h-90'>
         <img className='transition-transform duration-500 ease-out group-hover:scale-125' src="https://i.pinimg.com/1200x/8a/6d/a4/8a6da44fd555cdef4768b409557d5022.jpg" alt="" />
       </div>
 
@@ -16,4 +16,4 @@ function CollectionCard() {
   )
 }
 
-export default CollectionCard
+export default SellingItemCard

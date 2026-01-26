@@ -3,6 +3,8 @@ import CartIcon from '../Cart/CartIcon'
 import DropdownLanguage from '../DropdownLanguage/DropdownLanguage'
 import { useEffect, useState, type Dispatch, type SetStateAction } from 'react'
 import { NavMenuListMedium } from '../MenuList/NavMenuList'
+import heartIcon from '~/assets/SearchBar/heart.png'
+import menuIcon from '~/assets/Navbar/menu.png'
 
 interface NavbarProps {
   setOpenNav: Dispatch<SetStateAction<boolean>>;
@@ -27,7 +29,7 @@ function Navbar({ setOpenNav }: NavbarProps) {
       <div className={`flex justify-between items-center h-18 px-12 font-semibold ${isTop ? 'bg-black/20' : 'bg-black/30 backdrop-blur-2xl'}`}>
 
         <div className='lg:hidden'>
-          <input onClick={() => setOpenNav(true)} type="image" src='src/assets/Navbar/menu.png' className='w-4 h-4 filter bg-img-white' />
+          <input onClick={() => setOpenNav(true)} type="image" src={menuIcon} className='w-4 h-4 filter bg-img-white' />
         </div>
 
         {/* Hidden UL in mobile */}
@@ -44,7 +46,7 @@ function Navbar({ setOpenNav }: NavbarProps) {
         <div className='flex gap-2'>
           <SearchBar />
           <div className='flex gap-1 px-1'>
-            <input type="image" src='src/assets/SearchBar/heart.png' className='w-4 h-4 filter bg-img-white' />
+            <input type="image" src={heartIcon} className='w-4 h-4 filter bg-img-white' />
             <CartIcon />
           </div>
           <DropdownLanguage />
