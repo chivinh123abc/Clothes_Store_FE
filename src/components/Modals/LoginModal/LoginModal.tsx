@@ -1,21 +1,49 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import axios from 'axios'
+import { userApi } from '../../../apis/userApi'
+import { useAuth } from '../../../hooks/useAuth'
 
 interface LoginModalProps {
-  open: boolean;
-  onClose: () => void;
+  open: boolean
+  onClose: () => void
 }
 
 export default function LoginModal({ open, onClose }: LoginModalProps) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
+  const { setUser } = useAuth()
+  const navigate = useNavigate()
 
-  if (!open) return null;
+  useEffect(() => {
+    if (!open) {
+      setError('')
+      setIsLoading(false)
+    }
+  }, [open])
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Logic gọi API login sẽ được thêm sau
-    console.log('Login submitted:', { email, password });
-  };
+  if (!open) return null
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+    setError('')
+    try {
+      const res = await userApi.login({ email, password })
+      setUser(res)
+      onClose()
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.message || 'Email hoặc mật khẩu không đúng')
+      } else {
+        setError('Email hoặc mật khẩu không đúng')
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   return (
     // Overlay nền mờ
@@ -63,21 +91,31 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
             />
           </div>
           
+          {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+          
           <button 
             type="submit" 
-            className="w-full bg-black text-white py-3 rounded-md font-bold uppercase tracking-wider hover:bg-gray-800 transition-colors"
+            disabled={isLoading}
+            className={`w-full bg-black text-white py-3 rounded-md font-bold uppercase tracking-wider transition-colors ${isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-800'}`}
           >
-            Đăng nhập
+            {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
           </button>
         </form>
         
         <div className="mt-5 text-center text-sm text-gray-500">
           Chưa có tài khoản?{' '}
-          <button type="button" className="text-black font-semibold underline hover:text-gray-700 transition">
+          <button 
+            type="button" 
+            onClick={() => {
+              onClose()
+              navigate('/register')
+            }}
+            className="text-black font-semibold underline hover:text-gray-700 transition"
+          >
             Đăng ký ngay
           </button>
         </div>
       </div>
     </div>
-  );
+  )
 }
