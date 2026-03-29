@@ -11,6 +11,7 @@
 import { useState } from 'react'
 import { FlyoutLink } from '../DropdownLanguage/DropdownLanguage'
 import angleDownIcon from '~/assets/FAIcon/angle-down-solid-full.svg'
+import { Link } from 'react-router-dom';
 
 // 1. For Medal
 export const NavMenuListModal = () => {
@@ -201,10 +202,10 @@ const LegacyContent = () => {
 const CommunityContent = () => {
   return (
     <div className='w-auto bg-white shadow-xl'>
-      <a href="" className='block text-xs py-1 px-3'>NOTICE</a>
-      <a href="" className='block text-xs py-1 px-3'>REVIEW</a>
-      <a href="" className='block text-xs py-1 px-3'>EVENT</a>
-      <a href="" className='block text-xs py-1 px-3'>FAQ</a>
+      <Link to="/community/notice" className='block text-xs py-1 px-3 hover:bg-gray-100'>NOTICE</Link>
+      <Link to="/community/review" className='block text-xs py-1 px-3 hover:bg-gray-100'>REVIEW</Link>
+      <Link to="/community/event" className='block text-xs py-1 px-3 hover:bg-gray-100'>EVENT</Link>
+      <Link to="/community/faq" className='block text-xs py-1 px-3 hover:bg-gray-100'>FAQ</Link>
     </div>
   )
 }

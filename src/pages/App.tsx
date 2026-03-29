@@ -1,12 +1,17 @@
-import Home from './Home/Home'
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import Home from './Home/Home';
+import Community from './Community/Community';
 
 function App() {
   return (
-    // <body className='font-poppins bg-gradient-to-t from-[#fbc2eb] to-[#a6c1ee] h-screen'>
-    <header>
-      <Home />
-    </header>
-  )
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/community" element={<Community />} />
+        <Route path="/community/:tabName" element={<Community />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;
