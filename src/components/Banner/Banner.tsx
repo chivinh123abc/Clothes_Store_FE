@@ -1,8 +1,12 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import LoginModal from '~/components/Modals/LoginModal';
+import { useAuth } from '~/hooks/useAuth';
 
 function Banner() {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   return (
     <>
@@ -14,14 +18,24 @@ function Banner() {
           <a href="">TALK LESS DO MORE</a>
         </div>
         <div className='space-x-1 hidden sm:block'>
-          <button onClick={() => setIsLoginOpen(true)}>LOGIN</button>
-          <span>/</span>
-          <a href="">JOIN</a>
-          <span>/</span>
-          <a href="">ORDER</a>
+          {user ? (
+            <>
+              <button onClick={() => navigate('/my-page')}>MY PAGE</button>
+              <span>/</span>
+              <button onClick={() => { logout(); navigate('/'); }}>LOGOUT</button>
+            </>
+          ) : (
+            <>
+              <button onClick={() => setIsLoginOpen(true)}>LOGIN</button>
+              <span>/</span>
+              <button onClick={() => navigate('/register')}>JOIN</button>
+              <span>/</span>
+              <a href="">ORDER</a>
+            </>
+          )}
         </div>
       </div>
-      
+
       <LoginModal open={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
     </>
   )

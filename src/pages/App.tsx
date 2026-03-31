@@ -1,12 +1,7 @@
-import Home from './Home/Home'
+import AppRoutes from '../routes/AppRoutes'
 
 function App() {
-  return (
-    // <body className='font-poppins bg-gradient-to-t from-[#fbc2eb] to-[#a6c1ee] h-screen'>
-    <header>
-      <Home />
-    </header>
-  )
+  return <AppRoutes />
 }
 
 export default App
