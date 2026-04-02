@@ -1,11 +1,9 @@
-// Import Swiper React components
 import { Swiper, SwiperSlide } from 'swiper/react'
-import { FreeMode, Pagination } from 'swiper/modules'
+import { FreeMode } from 'swiper/modules'
 import CollectionCard from './CollectionCard'
 
 // Import Swiper styles
 import 'swiper/css'
-import 'swiper/css/pagination'
 import 'swiper/css/navigation'
 import 'swiper/css/scrollbar'
 import 'swiper/css/free-mode'
@@ -31,9 +29,7 @@ export const CollectionSlider = () => {
       } freeMode={{
         enabled: true,
         sticky: true
-      }} pagination={{
-        clickable: true
-      }} modules={[FreeMode, Pagination]} className='max-w-[95%]'
+      }} modules={[FreeMode]} className='max-w-[95%]'
       >
         {Array.from({ length: 9 }).map((_, index) => (
           <SwiperSlide key={index} className=''>
