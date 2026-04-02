@@ -10,27 +10,27 @@ function Banner() {
 
   return (
     <>
-      <div className={'z-100 hd-banner fixed inset-0 font-macondo font-bold bg-black w-full text-blood-red h-8 px-3 flex justify-center sm:justify-between items-center'}>
-        <div className='hidden sm:block'>
+      <div className={'z-[100] fixed top-0 w-full bg-t1-dark text-t1-text h-8 px-5 flex justify-center sm:justify-between items-center font-inter text-xs tracking-widest'}>
+        <div className='hidden sm:block opacity-80 hover:opacity-100 transition-opacity'>
           <p>GLOBAL / USD</p>
         </div>
-        <div className='slogan '>
+        <div className='font-oswald tracking-[0.2em] text-[#e2012d] font-bold'>
           <a href="">TALK LESS DO MORE</a>
         </div>
-        <div className='space-x-1 hidden sm:block'>
+        <div className='space-x-3 hidden sm:flex items-center opacity-80'>
           {user ? (
             <>
-              <button onClick={() => navigate('/my-page')}>MY PAGE</button>
+              <button className="hover:text-white transition-colors" onClick={() => navigate('/my-page')}>MY PAGE</button>
               <span>/</span>
-              <button onClick={() => { logout(); navigate('/'); }}>LOGOUT</button>
+              <button className="hover:text-[#e2012d] transition-colors" onClick={() => { logout(); navigate('/'); }}>LOGOUT</button>
             </>
           ) : (
             <>
-              <button onClick={() => setIsLoginOpen(true)}>LOGIN</button>
+              <button className="hover:text-white transition-colors" onClick={() => setIsLoginOpen(true)}>LOGIN</button>
               <span>/</span>
-              <button onClick={() => navigate('/register')}>JOIN</button>
+              <button className="hover:text-white transition-colors" onClick={() => navigate('/register')}>JOIN</button>
               <span>/</span>
-              <a href="">ORDER</a>
+              <a className="hover:text-white transition-colors cursor-pointer">ORDER</a>
             </>
           )}
         </div>

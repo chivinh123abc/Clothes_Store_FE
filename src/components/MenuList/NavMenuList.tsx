@@ -46,24 +46,36 @@ export const NavMenuListModal = () => {
           onClick={onFocusShop}
           type="image" src={angleDownIcon} className={`w-5 h-5 absolute inset-0 translate-y-1/3 translate-x-40 z-20 transition-transform duration-300 ease-linear ${(activeMenu === 'shop') ? 'rotate-180' : 'rotate-0'}`}
         />
-        <ShopExpand active={activeMenu === 'shop'} />
       </li>
+      {activeMenu === 'shop' || true ? (
+        <li className="w-full">
+          <ShopExpand active={activeMenu === 'shop'} />
+        </li>
+      ) : null}
       <li className="relative border border-gray-100 px-2 py-2">
         <a href='' className=''>LEGACY</a>
         <input
           onClick={onFocusLegacy}
           type="image" src={angleDownIcon} className={`w-5 h-5 absolute inset-0 translate-y-1/3 translate-x-40 z-20 transition-transform duration-300 ${(activeMenu === 'legacy') ? 'rotate-180' : 'rotate-0'}`}
         />
-        <LegacyExpand active={activeMenu === 'legacy'} />
       </li>
+      {activeMenu === 'legacy' || true ? (
+        <li className="w-full">
+          <LegacyExpand active={activeMenu === 'legacy'} />
+        </li>
+      ) : null}
       <li className="relative border border-gray-100 px-2 py-2">
         <a href='' className=''>COMMUNITY</a>
         <input
           onClick={onFocusCommunity}
           type="image" src={angleDownIcon} className={`w-5 h-5 absolute inset-0 translate-y-1/3 translate-x-40 z-20 transition-transform duration-300 ${(activeMenu === 'community') ? 'rotate-180' : 'rotate-0'}`}
         />
-        <CommunityExpand active={activeMenu === 'community'} />
       </li>
+      {activeMenu === 'community' || true ? (
+        <li className="w-full">
+          <CommunityExpand active={activeMenu === 'community'} />
+        </li>
+      ) : null}
       <li className="border border-gray-100 px-2 py-2">
         <a href="">
           Q&A
@@ -75,64 +87,48 @@ export const NavMenuListModal = () => {
 
 const ShopExpand = ({ active }: { active: boolean }) => {
   return (
-    <ul className={`font-light bg-gray-50 transition-all duration-600 overflow-hidden pl-4 ${active ? 'max-h-96 opacity-100 py-2 ease-in' : 'max-h-0 opacity-0 ease-out'}`} >
-      <li className='pb-2'>
-        <a href="" className="hover:underline hover:underline-offset-2 hover:decoration-blood-red">ALL</a>
-      </li>
-      <li className='pb-2'>
-        <a href="" className="hover:underline hover:underline-offset-2 hover:decoration-blood-red">TEAM KIT</a>
-      </li>
-      <li className='pb-2'>
-        <a href="" className="hover:underline hover:underline-offset-2 hover:decoration-blood-red">COLLECTION</a>
-      </li>
-      <li className='pb-2'>
-        <a href="" className="hover:underline hover:underline-offset-2 hover:decoration-blood-red">COLLABORATION</a>
-      </li>
-      <li className='pb-2'>
-        <a href="" className="hover:underline hover:underline-offset-2 hover:decoration-blood-red">SALE</a>
-      </li>
-    </ul>
+    <div className={`grid transition-all duration-300 ease-in-out ${active ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+      <div className="overflow-hidden">
+        <ul className="font-light bg-gray-50 pl-4 py-2 flex flex-col gap-2">
+          <li><a href="" className="hover:text-t1-red transition-colors">ALL</a></li>
+          <li><a href="" className="hover:text-t1-red transition-colors">TEAM KIT</a></li>
+          <li><a href="" className="hover:text-t1-red transition-colors">COLLECTION</a></li>
+          <li><a href="" className="hover:text-t1-red transition-colors">COLLABORATION</a></li>
+          <li><a href="" className="hover:text-t1-red transition-colors">SALE</a></li>
+        </ul>
+      </div>
+    </div>
   )
 }
 
 const LegacyExpand = ({ active }: { active: boolean }) => {
   return (
-    <ul className={`font-light bg-gray-50 transition-all duration-600 overflow-hidden pl-4 ${active ? 'max-h-96 opacity-100 py-2 ease-in' : 'max-h-0 opacity-0 ease-out'}`} >
-      <li className='pb-2'>
-        <a href="" className="hover:underline hover:underline-offset-2 hover:decoration-blood-red">2025 WORLD COLLECTION</a>
-      </li>
-      <li className='pb-2'>
-        <a href="" className="hover:underline hover:underline-offset-2 hover:decoration-blood-red">2024 WORLD COLLECTION</a>
-      </li>
-      <li className='pb-2'>
-        <a href="" className="hover:underline hover:underline-offset-2 hover:decoration-blood-red">2023 WORLD COLLECTION</a>
-      </li>
-      <li className='pb-2'>
-        <a href="" className="hover:underline hover:underline-offset-2 hover:decoration-blood-red">APPAREL</a>
-      </li>
-      <li className='pb-2'>
-        <a href="" className="hover:underline hover:underline-offset-2 hover:decoration-blood-red">GIFT & ACCESSORIES</a>
-      </li>
-    </ul>
+    <div className={`grid transition-all duration-300 ease-in-out ${active ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+      <div className="overflow-hidden">
+        <ul className="font-light bg-gray-50 pl-4 py-2 flex flex-col gap-2">
+          <li><a href="" className="hover:text-t1-red transition-colors">2025 WORLD COLLECTION</a></li>
+          <li><a href="" className="hover:text-t1-red transition-colors">2024 WORLD COLLECTION</a></li>
+          <li><a href="" className="hover:text-t1-red transition-colors">2023 WORLD COLLECTION</a></li>
+          <li><a href="" className="hover:text-t1-red transition-colors">APPAREL</a></li>
+          <li><a href="" className="hover:text-t1-red transition-colors">GIFT & ACCESSORIES</a></li>
+        </ul>
+      </div>
+    </div>
   )
 }
 
 const CommunityExpand = ({ active }: { active: boolean }) => {
   return (
-    <ul className={`font-light bg-gray-50 transition-all duration-600 overflow-hidden pl-4 ${active ? 'max-h-96 opacity-100 py-2 ease-in' : 'max-h-0 opacity-0 ease-out'}`} >
-      <li className='pb-2'>
-        <a href="" className="hover:underline hover:underline-offset-2 hover:decoration-blood-red">NOTICE</a>
-      </li>
-      <li className='pb-2'>
-        <a href="" className="hover:underline hover:underline-offset-2 hover:decoration-blood-red">REVIEW</a>
-      </li>
-      <li className='pb-2'>
-        <a href="" className="hover:underline hover:underline-offset-2 hover:decoration-blood-red">EVENT</a>
-      </li>
-      <li className='pb-2'>
-        <a href="" className="hover:underline hover:underline-offset-2 hover:decoration-blood-red">FAQ</a>
-      </li>
-    </ul>
+    <div className={`grid transition-all duration-300 ease-in-out ${active ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+      <div className="overflow-hidden">
+        <ul className="font-light bg-gray-50 pl-4 py-2 flex flex-col gap-2">
+          <li><a href="" className="hover:text-t1-red transition-colors">NOTICE</a></li>
+          <li><a href="" className="hover:text-t1-red transition-colors">REVIEW</a></li>
+          <li><a href="" className="hover:text-t1-red transition-colors">EVENT</a></li>
+          <li><a href="" className="hover:text-t1-red transition-colors">FAQ</a></li>
+        </ul>
+      </div>
+    </div>
   )
 }
 
@@ -141,10 +137,10 @@ export const NavMenuListMedium = () => {
   return (
     <ul className="flex flex-row gap-[3vw]">
       <li>
-        <a href="" className="hover:underline hover:underline-offset-2 hover:decoration-blood-red">NEW</a>
+        <a href="" className="hover:text-t1-red transition-colors cursor-pointer">NEW</a>
       </li>
       <li>
-        <a href="" className="hover:underline hover:underline-offset-2 hover:decoration-blood-red">BEST</a>
+        <a href="" className="hover:text-t1-red transition-colors cursor-pointer">BEST</a>
       </li>
       <li>
         <DropdownItem title='SHOP' content={ShopContent} />
@@ -156,7 +152,7 @@ export const NavMenuListMedium = () => {
         <DropdownItem title='COMMUNITY' content={CommunityContent} />
       </li>
       <li>
-        <a href="" className="hover:underline hover:underline-offset-2 hover:decoration-blood-red">Q&A</a>
+        <a href="" className="hover:text-t1-red transition-colors cursor-pointer">Q&A</a>
       </li>
     </ul>
   )
@@ -164,7 +160,7 @@ export const NavMenuListMedium = () => {
 
 const DropdownItem = ({ title, content }: { title: string, content: React.ComponentType }) => {
   return (
-    <div className='flex justify-center hover:underline hover:underline-offset-2 hover:decoration-blood-red'>
+    <div className='flex justify-center hover:text-t1-red transition-colors cursor-pointer'>
       <FlyoutLink href='#' FlyoutContent={content}>
         <div className='flex justify-center items-center'>
           <span className=''>{title}</span>
@@ -176,35 +172,35 @@ const DropdownItem = ({ title, content }: { title: string, content: React.Compon
 
 const ShopContent = () => {
   return (
-    <div className='w-auto bg-white shadow-xl'>
-      <a href="" className='block text-xs py-1 px-3'>ALL</a>
-      <a href="" className='block text-xs py-1 px-3'>TEAM KIT</a>
-      <a href="" className='block text-xs py-1 px-3'>COLLECTION</a>
-      <a href="" className='block text-xs py-1 px-3'>COLABORATION</a>
-      <a href="" className='block text-xs py-1 px-3'>SALE</a>
+    <div className='w-48 bg-[#111111]/95 backdrop-blur-md shadow-2xl border-t-[3px] border-t-t1-red p-5 flex flex-col gap-3'>
+      <a href="" className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white hover:translate-x-1 transition-all'>ALL</a>
+      <a href="" className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white hover:translate-x-1 transition-all'>TEAM KIT</a>
+      <a href="" className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white hover:translate-x-1 transition-all'>COLLECTION</a>
+      <a href="" className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white hover:translate-x-1 transition-all'>COLLABORATION</a>
+      <a href="" className='block text-xs font-inter tracking-widest text-t1-red hover:text-red-500 hover:translate-x-1 transition-all'>SALE</a>
     </div>
   )
 }
 
 const LegacyContent = () => {
   return (
-    <div className='w-auto whitespace-nowrap bg-white shadow-xl'>
-      <a href="" className='block text-xs py-1 px-3'>2025 WORLD COLLECTION</a>
-      <a href="" className='block text-xs py-1 px-3'>2024 WORLD COLLECTION</a>
-      <a href="" className='block text-xs py-1 px-3'>2023 WORLD COLLECTION</a>
-      <a href="" className='block text-xs py-1 px-3'>APPAREL</a>
-      <a href="" className='block text-xs py-1 px-3'>GIFT & ACCESSORIES</a>
+    <div className='w-56 bg-[#111111]/95 backdrop-blur-md shadow-2xl border-t-[3px] border-t-t1-red p-5 flex flex-col gap-3'>
+      <a href="" className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white hover:translate-x-1 transition-all'>2025 WORLD COLLECTION</a>
+      <a href="" className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white hover:translate-x-1 transition-all'>2024 WORLD COLLECTION</a>
+      <a href="" className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white hover:translate-x-1 transition-all'>2023 WORLD COLLECTION</a>
+      <a href="" className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white hover:translate-x-1 transition-all'>APPAREL</a>
+      <a href="" className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white hover:translate-x-1 transition-all'>GIFT & ACCESSORIES</a>
     </div>
   )
 }
 
 const CommunityContent = () => {
   return (
-    <div className='w-auto bg-white shadow-xl'>
-      <a href="" className='block text-xs py-1 px-3'>NOTICE</a>
-      <a href="" className='block text-xs py-1 px-3'>REVIEW</a>
-      <a href="" className='block text-xs py-1 px-3'>EVENT</a>
-      <a href="" className='block text-xs py-1 px-3'>FAQ</a>
+    <div className='w-40 bg-[#111111]/95 backdrop-blur-md shadow-2xl border-t-[3px] border-t-t1-red p-5 flex flex-col gap-3'>
+      <a href="" className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white hover:translate-x-1 transition-all'>NOTICE</a>
+      <a href="" className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white hover:translate-x-1 transition-all'>REVIEW</a>
+      <a href="" className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white hover:translate-x-1 transition-all'>EVENT</a>
+      <a href="" className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white hover:translate-x-1 transition-all'>FAQ</a>
     </div>
   )
 }
