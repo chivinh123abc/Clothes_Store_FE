@@ -2,6 +2,7 @@ import { useState } from 'react'
 import Banner from '~/components/Banner/Banner'
 import { CollectionSlider } from '~/components/Card/CollectionSlider'
 import { UniformSlider } from '~/components/Card/UniformSlider'
+import { ProductTabContainer } from '~/components/Card/ProductTabContainer'
 import NavModal from '~/components/Modals/NavModal/NavModal'
 import Navbar from '~/components/Navbar/Navbar'
 import BGImage from '~/assets/Background/first_bg_img.jpg'
@@ -40,16 +41,16 @@ function Home() {
       </div>
 
       {/* Recommended (Using Official Uniform Layout) */}
-      <div className='pb-16 px-4 md:px-0'>
+      <div className='pb-16 px-4 md:px-10 lg:px-16'>
         <div className='font-oswald font-bold text-2xl md:text-3xl mb-8 text-center tracking-wider text-t1-text uppercase'>
           2026 OFFICIAL UNIFORM
         </div>
 
         {/* Split Layout Container */}
-        <div className='flex flex-col lg:flex-row w-full border-t border-t1-gray border-b-4 border-b-t1-red min-h-[440px] shadow-2xl'>
+        <div className='flex flex-col lg:flex-row w-full border-t border-t1-gray shadow-2xl'>
 
           {/* Left Banner */}
-          <div className='lg:w-1/3 xl:w-[35%] bg-gradient-to-tr from-black via-[#7a0016] to-[#e2012d] relative p-8 flex flex-col justify-end min-h-[300px] overflow-hidden'>
+          <div className='lg:w-1/3 xl:w-[35%] bg-gradient-to-tr from-black via-[#7a0016] to-[#e2012d] relative p-8 flex flex-col justify-end overflow-hidden'>
             <div className='absolute inset-0 flex items-center justify-center opacity-90'>
               {/* Mascot placeholder icon */}
               <div className='w-56 h-56 lg:w-72 lg:h-72 flex items-center justify-center drop-shadow-2xl overflow-hidden'>
@@ -67,10 +68,15 @@ function Home() {
           </div>
 
           {/* Right Product Carousel */}
-          <div className='lg:w-2/3 xl:w-[65%] bg-[#1b1b1b] min-h-[440px]'>
+          <div className='lg:w-2/3 xl:w-[65%] bg-[#1b1b1b]'>
             <UniformSlider />
           </div>
         </div>
+      </div>
+
+      {/* Product Tab Section */}
+      <div className='py-12 px-4 md:px-10 lg:px-16'>
+        <ProductTabContainer />
       </div>
 
     </div>

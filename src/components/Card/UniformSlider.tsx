@@ -1,11 +1,12 @@
 // Import Swiper React components
 import { Swiper, SwiperSlide } from 'swiper/react'
-import { FreeMode, Navigation } from 'swiper/modules'
+import { FreeMode, Navigation, Scrollbar } from 'swiper/modules'
 
 // Import Swiper styles
 import 'swiper/css'
 import 'swiper/css/navigation'
 import 'swiper/css/free-mode'
+import 'swiper/css/scrollbar'
 import UniformProductCard from './UniformProductCard'
 
 const DUMMY_PRODUCTS = [
@@ -27,8 +28,16 @@ export const UniformSlider = () => {
         }}
         freeMode={true}
         navigation={true}
-        modules={[FreeMode, Navigation]}
-        className='h-full w-full'
+        scrollbar={{ draggable: true, hide: false }}
+        modules={[FreeMode, Navigation, Scrollbar]}
+        className='h-full w-full pb-8 px-2'
+        style={{
+          '--swiper-scrollbar-bg-color': '#333',
+          '--swiper-scrollbar-drag-bg-color': '#e2012d',
+          '--swiper-scrollbar-bottom': '0px',
+          '--swiper-scrollbar-size': '0.5px',
+          '--swiper-scrollbar-sides-offset': '0px'
+        } as React.CSSProperties}
       >
         {DUMMY_PRODUCTS.map((prod, index) => (
           <SwiperSlide key={index} className='h-full'>
