@@ -59,28 +59,30 @@ export default function SearchBar() {
     >
       <p className="hidden md:block">SEARCH&nbsp;&nbsp;</p>
 
-      <input
-        type="text"
-        className="w-30 hidden md:block focus:outline-none relative z-10 bg-transparent"
-        value={value}
-        onFocus={() => setIsFocused(true)}
-        onBlur={blurSearchBar}
-        onChange={(e) => setValue(e.target.value)}
-      />
+      <div className="relative flex items-center h-6 hidden md:flex">
+        <input
+          type="text"
+          className="w-32 h-full focus:outline-none relative z-10 bg-transparent font-inter text-base tracking-normal"
+          value={value}
+          onFocus={() => setIsFocused(true)}
+          onBlur={blurSearchBar}
+          onChange={(e) => setValue(e.target.value)}
+        />
 
-      {/* SLIDE PLACEHOLDER */}
-      {!hidePlaceholder && (
-        <div className="absolute left-13 top-0 overflow-hidden h-6 pointer-events-none hidden md:block">
-          <div ref={listRef}>
-            {extend.map((item, idx) => (
-              <div key={idx} className="flex gap-1 h-6 items-center">
-                <span className="text-blood-red font-bold">{item.num}</span>
-                <span className="text-white">{item.text}</span>
-              </div>
-            ))}
+        {/* SLIDE PLACEHOLDER */}
+        {!hidePlaceholder && (
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 overflow-hidden h-6 pointer-events-none w-full">
+            <div ref={listRef}>
+              {extend.map((item, idx) => (
+                <div key={idx} className="flex gap-2 h-6 items-center font-inter text-sm tracking-normal">
+                  <span className="text-t1-red font-bold translate-y-[1px]">{item.num}</span>
+                  <span className="text-white whitespace-nowrap translate-y-[1px]">{item.text}</span>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </form>
   )
 }

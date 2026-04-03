@@ -25,30 +25,29 @@ function Navbar({ setOpenNav }: NavbarProps) {
   // const [openNav, setOpenNav] = useState(false)
   // bg-white/30 backdrop-blur-md
   return (
-    <nav className={'text-white text-xs fixed top-8 w-screen z-100'}>
-      <div className={`flex justify-between items-center h-18 px-12 font-semibold ${isTop ? 'bg-black/20' : 'bg-black/30 backdrop-blur-2xl'}`}>
+    <nav className={'text-t1-text fixed top-8 w-screen z-50 transition-all duration-300 font-oswald text-lg tracking-wider'}>
+      <div className={`flex justify-between items-center h-[70px] px-8 transition-all duration-500 ease-in-out border-b ${!isTop ? 'bg-[#111111]/80 backdrop-blur-xl border-[#333]' : 'bg-black/10 backdrop-blur-sm border-transparent'}`}>
 
         <div className='lg:hidden'>
-          <input onClick={() => setOpenNav(true)} type="image" src={menuIcon} className='w-4 h-4 filter bg-img-white' />
+          <input onClick={() => setOpenNav(true)} type="image" src={menuIcon} className='w-5 h-5 filter invert' />
         </div>
 
-        {/* Hidden UL in mobile */}
-        <div className='hidden lg:block'>
-          <NavMenuListMedium />
-        </div>
-
-        {/* absolute left-1/2 -translate-x-4/5 */}
-        <div className='absolute left-1/2 -translate-x-16'>
-
-          <img className='w-16 rounded-full' src="https://i.pinimg.com/736x/45/51/18/45511811d2a613a3f780f75829307928.jpg" alt="rinStore" />
-        </div>
-
-        <div className='flex gap-2'>
-          <SearchBar />
-          <div className='flex gap-1 px-1'>
-            <input type="image" src={heartIcon} className='w-4 h-4 filter bg-img-white' />
-            <CartIcon />
+        {/* T1 typically puts the logo on the left. Let's place it on the left but keep links next to it or center. */}
+        <div className='flex items-center gap-10'>
+          <div className='text-t1-text font-black text-3xl italic tracking-tighter'>
+            CLOTHES STORE
           </div>
+
+          {/* Hidden UL in mobile */}
+          <div className='hidden lg:block ml-4'>
+            <NavMenuListMedium />
+          </div>
+        </div>
+
+        <div className='flex gap-6 items-center'>
+          <SearchBar />
+          <input type="image" src={heartIcon} className='w-5 h-5 filter invert opacity-80 hover:opacity-100 transition-opacity' />
+          <CartIcon />
           <DropdownLanguage />
         </div>
       </div>
