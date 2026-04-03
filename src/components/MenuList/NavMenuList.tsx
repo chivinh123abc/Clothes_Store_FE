@@ -37,7 +37,7 @@ export const NavMenuListModal = () => {
         <a href="">NEW</a>
       </li>
       <li className="border border-gray-100 px-2 py-2">
-        <Link to="/BEST">BEST</Link>
+        <Link to="/best">BEST</Link>
       </li>
       <li className="relative border border-gray-100 px-2 py-2">
         <a href="" className="">
@@ -149,7 +149,7 @@ export const NavMenuListMedium = () => {
         <a href="" className="hover:text-t1-red transition-colors cursor-pointer">NEW</a>
       </li>
       <li>
-        <a href="" className="hover:text-t1-red transition-colors cursor-pointer">BEST</a>
+        <Link to="/best" className="hover:text-t1-red transition-colors cursor-pointer">BEST</Link>
       </li>
       <li>
         <DropdownItem title="SHOP" content={ShopContent} />

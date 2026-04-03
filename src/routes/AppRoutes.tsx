@@ -2,7 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import Home from '../pages/Home/Home'
 import Register from '../pages/Register'
-import BEST from "../pages/BEST/BEST";
+import Best from '../pages/Best/Best';
 
 const Private = ({ children }: { children: React.ReactElement }) => {
     const { user } = useAuth()
@@ -15,7 +15,7 @@ export default function AppRoutes() {
             <Route path='/' element={<Home />} />
             <Route path='/register' element={<Register />} />
             <Route path='/checkout' element={<Private><div>Checkout</div></Private>} />
-            <Route path="/BEST" element={<BEST />} />
+            <Route path="/best" element={<Best />} />
         </Routes>
     )
 }

@@ -4,7 +4,7 @@ import { ProductList } from "~/components/Product/ProductList";
 import NavModal from "~/components/Modals/NavModal/NavModal";
 import Navbar from "~/components/Navbar/Navbar";
 
-function BEST() {
+function Best() {
   const [openNav, setOpenNav] = useState(false);
 
   useEffect(() => {
@@ -25,4 +25,4 @@ function BEST() {
   );
 }
 
-export default BEST;
+export default Best;
