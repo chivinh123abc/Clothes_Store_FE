@@ -8,43 +8,46 @@
 //   { label: "Q&A", href: "#" },
 // ];
 
-import { useState } from 'react'
-import { FlyoutLink } from '../DropdownLanguage/DropdownLanguage'
-import angleDownIcon from '~/assets/FAIcon/angle-down-solid-full.svg'
+import { useState } from "react";
+import { FlyoutLink } from "../DropdownLanguage/DropdownLanguage";
+import angleDownIcon from "~/assets/FAIcon/angle-down-solid-full.svg";
+import { Link } from "react-router-dom";
 
 // 1. For Medal
 export const NavMenuListModal = () => {
-  const [activeMenu, setActiveMenu] = useState<'shop' | 'legacy' | 'community' | null>(null)
+  const [activeMenu, setActiveMenu] = useState<
+    "shop" | "legacy" | "community" | null
+  >(null);
 
   const onFocusShop = () => {
-    setActiveMenu(activeMenu === 'shop' ? null : 'shop')
-  }
+    setActiveMenu(activeMenu === "shop" ? null : "shop");
+  };
 
   const onFocusLegacy = () => {
-    setActiveMenu(activeMenu === 'legacy' ? null : 'legacy')
-  }
+    setActiveMenu(activeMenu === "legacy" ? null : "legacy");
+  };
 
   const onFocusCommunity = () => {
-    setActiveMenu(activeMenu === 'community' ? null : 'community')
-  }
+    setActiveMenu(activeMenu === "community" ? null : "community");
+  };
 
   return (
     <ul className="flex flex-col gap-0">
       <li className="border border-gray-100 px-2 py-2">
-        <a href="">
-          NEW
-        </a>
+        <a href="">NEW</a>
       </li>
       <li className="border border-gray-100 px-2 py-2">
-        <a className='' href="">
-          BEST
-        </a>
+        <Link to="/BEST">BEST</Link>
       </li>
       <li className="relative border border-gray-100 px-2 py-2">
-        <a href='' className=''>SHOP</a>
+        <a href="" className="">
+          SHOP
+        </a>
         <input
           onClick={onFocusShop}
-          type="image" src={angleDownIcon} className={`w-5 h-5 absolute inset-0 translate-y-1/3 translate-x-40 z-20 transition-transform duration-300 ease-linear ${(activeMenu === 'shop') ? 'rotate-180' : 'rotate-0'}`}
+          type="image"
+          src={angleDownIcon}
+          className={`w-5 h-5 absolute inset-0 translate-y-1/3 translate-x-40 z-20 transition-transform duration-300 ease-linear ${activeMenu === "shop" ? "rotate-180" : "rotate-0"}`}
         />
       </li>
       {activeMenu === 'shop' || true ? (
@@ -53,10 +56,14 @@ export const NavMenuListModal = () => {
         </li>
       ) : null}
       <li className="relative border border-gray-100 px-2 py-2">
-        <a href='' className=''>LEGACY</a>
+        <a href="" className="">
+          LEGACY
+        </a>
         <input
           onClick={onFocusLegacy}
-          type="image" src={angleDownIcon} className={`w-5 h-5 absolute inset-0 translate-y-1/3 translate-x-40 z-20 transition-transform duration-300 ${(activeMenu === 'legacy') ? 'rotate-180' : 'rotate-0'}`}
+          type="image"
+          src={angleDownIcon}
+          className={`w-5 h-5 absolute inset-0 translate-y-1/3 translate-x-40 z-20 transition-transform duration-300 ${activeMenu === "legacy" ? "rotate-180" : "rotate-0"}`}
         />
       </li>
       {activeMenu === 'legacy' || true ? (
@@ -65,10 +72,14 @@ export const NavMenuListModal = () => {
         </li>
       ) : null}
       <li className="relative border border-gray-100 px-2 py-2">
-        <a href='' className=''>COMMUNITY</a>
+        <a href="" className="">
+          COMMUNITY
+        </a>
         <input
           onClick={onFocusCommunity}
-          type="image" src={angleDownIcon} className={`w-5 h-5 absolute inset-0 translate-y-1/3 translate-x-40 z-20 transition-transform duration-300 ${(activeMenu === 'community') ? 'rotate-180' : 'rotate-0'}`}
+          type="image"
+          src={angleDownIcon}
+          className={`w-5 h-5 absolute inset-0 translate-y-1/3 translate-x-40 z-20 transition-transform duration-300 ${activeMenu === "community" ? "rotate-180" : "rotate-0"}`}
         />
       </li>
       {activeMenu === 'community' || true ? (
@@ -77,13 +88,11 @@ export const NavMenuListModal = () => {
         </li>
       ) : null}
       <li className="border border-gray-100 px-2 py-2">
-        <a href="">
-          Q&A
-        </a>
+        <a href="">Q&A</a>
       </li>
     </ul>
-  )
-}
+  );
+};
 
 const ShopExpand = ({ active }: { active: boolean }) => {
   return (
@@ -143,22 +152,28 @@ export const NavMenuListMedium = () => {
         <a href="" className="hover:text-t1-red transition-colors cursor-pointer">BEST</a>
       </li>
       <li>
-        <DropdownItem title='SHOP' content={ShopContent} />
+        <DropdownItem title="SHOP" content={ShopContent} />
       </li>
       <li>
-        <DropdownItem title='LEGACY' content={LegacyContent} />
+        <DropdownItem title="LEGACY" content={LegacyContent} />
       </li>
       <li>
-        <DropdownItem title='COMMUNITY' content={CommunityContent} />
+        <DropdownItem title="COMMUNITY" content={CommunityContent} />
       </li>
       <li>
         <a href="" className="hover:text-t1-red transition-colors cursor-pointer">Q&A</a>
       </li>
     </ul>
-  )
-}
+  );
+};
 
-const DropdownItem = ({ title, content }: { title: string, content: React.ComponentType }) => {
+const DropdownItem = ({
+  title,
+  content,
+}: {
+  title: string;
+  content: React.ComponentType;
+}) => {
   return (
     <div className='flex justify-center hover:text-t1-red transition-colors cursor-pointer'>
       <FlyoutLink href='#' FlyoutContent={content}>
@@ -167,8 +182,8 @@ const DropdownItem = ({ title, content }: { title: string, content: React.Compon
         </div>
       </FlyoutLink>
     </div>
-  )
-}
+  );
+};
 
 const ShopContent = () => {
   return (
@@ -179,8 +194,8 @@ const ShopContent = () => {
       <a href="" className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white hover:translate-x-1 transition-all'>COLLABORATION</a>
       <a href="" className='block text-xs font-inter tracking-widest text-t1-red hover:text-red-500 hover:translate-x-1 transition-all'>SALE</a>
     </div>
-  )
-}
+  );
+};
 
 const LegacyContent = () => {
   return (
@@ -191,8 +206,8 @@ const LegacyContent = () => {
       <a href="" className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white hover:translate-x-1 transition-all'>APPAREL</a>
       <a href="" className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white hover:translate-x-1 transition-all'>GIFT & ACCESSORIES</a>
     </div>
-  )
-}
+  );
+};
 
 const CommunityContent = () => {
   return (
@@ -202,5 +217,5 @@ const CommunityContent = () => {
       <a href="" className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white hover:translate-x-1 transition-all'>EVENT</a>
       <a href="" className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white hover:translate-x-1 transition-all'>FAQ</a>
     </div>
-  )
-}
+  );
+};

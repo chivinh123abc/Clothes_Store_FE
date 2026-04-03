@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LoginModal from '~/components/Modals/LoginModal';
 import { useAuth } from '~/hooks/useAuth';
+import { Link } from "react-router-dom";
 
 function Banner() {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
