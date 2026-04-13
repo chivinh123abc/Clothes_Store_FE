@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
+import { X, Mail, Lock, Loader2 } from 'lucide-react'
 import axios from 'axios'
 import { userApi } from '../../../apis/userApi'
 import { useAuth } from '../../../hooks/useAuth'
@@ -24,8 +26,6 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
     }
   }, [open])
 
-  if (!open) return null
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
@@ -36,9 +36,9 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
       onClose()
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || 'Email hoặc mật khẩu không đúng')
+        setError(err.response?.data?.message || 'Invalid email or password')
       } else {
-        setError('Email hoặc mật khẩu không đúng')
+        setError('Login failed. Please try again.')
       }
     } finally {
       setIsLoading(false)
@@ -46,76 +46,132 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
   }
 
   return (
-    // Overlay nền mờ
-    <div
-      className="fixed inset-0 z-[200] flex justify-center items-center bg-black/50 transition-colors"
-      onClick={onClose}
-    >
-      {/* Box nội dung Modal */}
-      <div
-        className="bg-white w-[90%] max-w-md p-8 rounded-lg shadow-xl relative animate-in fade-in zoom-in duration-200"
-        onClick={(e) => e.stopPropagation()} // Chặn sự kiện click đóng modal khi bấm vào thẻ div cha
-      >
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-500 hover:text-black font-bold text-xl leading-none transition-colors"
-          aria-label="Close"
-        >
-          &times;
-        </button>
+    <AnimatePresence>
+      {open && (
+        <div className="fixed inset-0 z-[200] flex justify-center items-center px-4 overflow-hidden">
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="absolute inset-0 bg-black/80 backdrop-blur-md"
+          />
 
-        <h2 className="text-2xl font-bold mb-6 text-center uppercase tracking-wide">Đăng nhập</h2>
-
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1 uppercase text-gray-600">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-4 py-2 outline-none focus:border-black transition-colors"
-              placeholder="Nhập email của bạn"
-              required
-            />
-          </div>
-          <div className="mb-6">
-            <label className="block text-sm font-medium mb-1 uppercase text-gray-600">Mật khẩu</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-4 py-2 outline-none focus:border-black transition-colors"
-              placeholder="Nhập mật khẩu"
-              required
-            />
-          </div>
-
-          {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-
-          <button
-            type="submit"
-            disabled={isLoading}
-            className={`w-full bg-black text-white py-3 rounded-md font-bold uppercase tracking-wider transition-colors ${isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-800'}`}
+          {/* Modal Container */}
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.95, opacity: 0, y: 20 }}
+            transition={{ type: 'spring', duration: 0.5, bounce: 0.3 }}
+            className="bg-[#111111] w-full max-w-[420px] rounded-none border border-white/5 shadow-2xl relative z-10 overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
           >
-            {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
-          </button>
-        </form>
+            {/* Design accents */}
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-t1-red to-transparent opacity-50"></div>
 
-        <div className="mt-5 text-center text-sm text-gray-500">
-          Chưa có tài khoản?{' '}
-          <button
-            type="button"
-            onClick={() => {
-              onClose()
-              navigate('/register')
-            }}
-            className="text-black font-semibold underline hover:text-gray-700 transition"
-          >
-            Đăng ký ngay
-          </button>
+            <div className="p-10 md:p-12">
+              <button
+                type="button"
+                onClick={onClose}
+                className="absolute top-6 right-6 text-gray-500 hover:text-white transition-colors duration-300"
+              >
+                <X size={20} />
+              </button>
+
+              <div className="text-center mb-10">
+                <span className="text-t1-red font-oswald font-black text-sm tracking-[0.4em] uppercase mb-4 block">Welcome Back</span>
+                <h2 className="text-4xl font-oswald font-black text-white italic uppercase tracking-tighter">
+                  SIGN IN
+                </h2>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div>
+                  <label className="block text-[10px] font-oswald font-bold mb-2 uppercase text-gray-500 tracking-[0.2em]">
+                    EMAIL ADDRESS
+                  </label>
+                  <div className="relative group">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within:text-t1-red transition-colors">
+                      <Mail size={16} />
+                    </div>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full bg-black border border-white/10 rounded-none pl-12 pr-4 py-4 outline-none focus:border-t1-red/50 text-white transition-all duration-300 font-inter text-sm placeholder:text-gray-700"
+                      placeholder="name@example.com"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="block text-[10px] font-oswald font-bold uppercase text-gray-500 tracking-[0.2em]">
+                      PASSWORD
+                    </label>
+                    <button type="button" className="text-[9px] font-inter text-gray-600 hover:text-white uppercase tracking-widest transition-colors">
+                      FORGOT?
+                    </button>
+                  </div>
+                  <div className="relative group">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within:text-t1-red transition-colors">
+                      <Lock size={16} />
+                    </div>
+                    <input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full bg-black border border-white/10 rounded-none pl-12 pr-4 py-4 outline-none focus:border-t1-red/50 text-white transition-all duration-300 font-inter text-sm placeholder:text-gray-700"
+                      placeholder="••••••••"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {error && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-t1-red text-[10px] font-bold uppercase tracking-widest text-center"
+                  >
+                    {error}
+                  </motion.p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-t1-red text-white h-14 font-oswald font-black text-sm uppercase tracking-[0.2em] transition-all duration-500 hover:bg-white hover:text-black flex items-center justify-center shadow-[0_10px_30px_rgba(226,1,45,0.2)] hover:shadow-[0_15px_40px_rgba(255,255,255,0.2)] disabled:opacity-50"
+                >
+                  {isLoading ? (
+                    <Loader2 size={20} className="animate-spin" />
+                  ) : (
+                    'ENTER STORE'
+                  )}
+                </button>
+              </form>
+
+              <div className="mt-10 pt-8 border-t border-white/5 text-center">
+                <p className="text-[10px] text-gray-500 font-inter tracking-[0.1em] uppercase">
+                  DON'T HAVE AN ACCOUNT?{' '}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onClose()
+                      navigate('/register')
+                    }}
+                    className="text-white font-bold hover:text-t1-red transition-colors ml-2"
+                  >
+                    CREATE ONE
+                  </button>
+                </p>
+              </div>
+            </div>
+          </motion.div>
         </div>
-      </div>
-    </div>
+      )}
+    </AnimatePresence>
   )
 }

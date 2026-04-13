@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { userApi } from '../../apis/userApi'
 import { useAuth } from '../../hooks/useAuth'
 import type { RegisterRequestDto } from '../../types/user'
+import Layout from '../../components/layout/Layout'
+import Footer from '../../components/layout/Footer'
 
 interface RegisterForm extends RegisterRequestDto {
     confirmPassword: string
@@ -97,148 +99,150 @@ const RegisterPage: React.FC = () => {
   }
 
   return (
-    <div className='min-h-screen bg-white flex items-center justify-center px-4 py-12'>
-      <div className='w-full max-w-md'>
-        <h1 className='text-2xl font-bold text-center uppercase tracking-wide mb-8'>
-                    Tạo tài khoản
-        </h1>
+    <Layout footer={<Footer />}>
+      <div className='bg-t1-dark flex items-center justify-center px-4 py-20'>
+        <div className='w-full max-w-md bg-[#1a1a1a] p-10 border border-white/5 shadow-2xl'>
+          <h1 className='text-4xl font-oswald font-black text-center uppercase tracking-tighter mb-10 text-white italic'>
+            Sign Up
+          </h1>
 
-        <form onSubmit={handleSubmit} noValidate>
-          {/* Username */}
-          <div className='mb-4'>
-            <label className='block text-sm font-medium mb-1 uppercase text-gray-600'>
-                            Tên người dùng
-            </label>
-            <input
-              type='text'
-              name='username'
-              value={form.username}
-              onChange={handleChange}
-              placeholder='Nhập tên người dùng'
-              className='w-full border border-gray-300 rounded-md px-4 py-2 outline-none focus:border-black transition-colors'
-            />
-            {errors.username && (
-              <p className='mt-1 text-xs text-red-500'>{errors.username}</p>
-            )}
-          </div>
-
-          {/* Email */}
-          <div className='mb-4'>
-            <label className='block text-sm font-medium mb-1 uppercase text-gray-600'>
-                            Email
-            </label>
-            <input
-              type='email'
-              name='email'
-              value={form.email}
-              onChange={handleChange}
-              placeholder='Nhập email của bạn'
-              className='w-full border border-gray-300 rounded-md px-4 py-2 outline-none focus:border-black transition-colors'
-            />
-            {errors.email && (
-              <p className='mt-1 text-xs text-red-500'>{errors.email}</p>
-            )}
-          </div>
-
-          {/* Phone */}
-          <div className='mb-4'>
-            <label className='block text-sm font-medium mb-1 uppercase text-gray-600'>
-                            Số điện thoại <span className='text-gray-400 normal-case'>(tuỳ chọn)</span>
-            </label>
-            <input
-              type='tel'
-              name='phone_number'
-              value={form.phone_number}
-              onChange={handleChange}
-              placeholder='0901 234 567'
-              className='w-full border border-gray-300 rounded-md px-4 py-2 outline-none focus:border-black transition-colors'
-            />
-            {errors.phone_number && (
-              <p className='mt-1 text-xs text-red-500'>{errors.phone_number}</p>
-            )}
-          </div>
-
-          {/* Password */}
-          <div className='mb-4'>
-            <label className='block text-sm font-medium mb-1 uppercase text-gray-600'>
-                            Mật khẩu
-            </label>
-            <div className='relative'>
+          <form onSubmit={handleSubmit} noValidate>
+            {/* Username */}
+            <div className='mb-6'>
+              <label className='block text-xs font-oswald font-bold mb-2 uppercase text-gray-400 tracking-widest'>
+                Username
+              </label>
               <input
-                type={showPassword ? 'text' : 'password'}
-                name='password'
-                value={form.password}
+                type='text'
+                name='username'
+                value={form.username}
                 onChange={handleChange}
-                placeholder='Nhập mật khẩu'
-                className='w-full border border-gray-300 rounded-md px-4 py-2 outline-none focus:border-black transition-colors pr-10'
+                placeholder='Choose your username'
+                className='w-full bg-black border border-white/10 rounded-none px-4 py-3 outline-none focus:border-t1-red text-white transition-colors font-inter text-sm'
               />
-              <button
-                type='button'
-                onClick={() => setShowPassword(v => !v)}
-                className='absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black transition-colors'
-              >
-                {showPassword ? '🙈' : '👁️'}
-              </button>
+              {errors.username && (
+                <p className='mt-2 text-[10px] text-t1-red font-bold uppercase tracking-widest'>{errors.username}</p>
+              )}
             </div>
-            {errors.password && (
-              <p className='mt-1 text-xs text-red-500'>{errors.password}</p>
-            )}
-          </div>
 
-          {/* Confirm Password */}
-          <div className='mb-6'>
-            <label className='block text-sm font-medium mb-1 uppercase text-gray-600'>
-                            Xác nhận mật khẩu
-            </label>
-            <div className='relative'>
+            {/* Email */}
+            <div className='mb-6'>
+              <label className='block text-xs font-oswald font-bold mb-2 uppercase text-gray-400 tracking-widest'>
+                Email Address
+              </label>
               <input
-                type={showConfirm ? 'text' : 'password'}
-                name='confirmPassword'
-                value={form.confirmPassword}
+                type='email'
+                name='email'
+                value={form.email}
                 onChange={handleChange}
-                placeholder='Nhập lại mật khẩu'
-                className='w-full border border-gray-300 rounded-md px-4 py-2 outline-none focus:border-black transition-colors pr-10'
+                placeholder='Enter your email'
+                className='w-full bg-black border border-white/10 rounded-none px-4 py-3 outline-none focus:border-t1-red text-white transition-colors font-inter text-sm'
               />
-              <button
-                type='button'
-                onClick={() => setShowConfirm(v => !v)}
-                className='absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black transition-colors'
-              >
-                {showConfirm ? '🙈' : '👁️'}
-              </button>
+              {errors.email && (
+                <p className='mt-2 text-[10px] text-t1-red font-bold uppercase tracking-widest'>{errors.email}</p>
+              )}
             </div>
-            {errors.confirmPassword && (
-              <p className='mt-1 text-xs text-red-500'>{errors.confirmPassword}</p>
+
+            {/* Phone */}
+            <div className='mb-6'>
+              <label className='block text-xs font-oswald font-bold mb-2 uppercase text-gray-400 tracking-widest'>
+                Phone Number <span className='text-gray-600 normal-case'>(Optional)</span>
+              </label>
+              <input
+                type='tel'
+                name='phone_number'
+                value={form.phone_number}
+                onChange={handleChange}
+                placeholder='09xx xxx xxx'
+                className='w-full bg-black border border-white/10 rounded-none px-4 py-3 outline-none focus:border-t1-red text-white transition-colors font-inter text-sm'
+              />
+              {errors.phone_number && (
+                <p className='mt-2 text-[10px] text-t1-red font-bold uppercase tracking-widest'>{errors.phone_number}</p>
+              )}
+            </div>
+
+            {/* Password */}
+            <div className='mb-6'>
+              <label className='block text-xs font-oswald font-bold mb-2 uppercase text-gray-400 tracking-widest'>
+                Password
+              </label>
+              <div className='relative'>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  name='password'
+                  value={form.password}
+                  onChange={handleChange}
+                  placeholder='Create a password'
+                  className='w-full bg-black border border-white/10 rounded-none px-4 py-3 outline-none focus:border-t1-red text-white transition-colors font-inter text-sm pr-12'
+                />
+                <button
+                  type='button'
+                  onClick={() => setShowPassword(v => !v)}
+                  className='absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors text-xs'
+                >
+                  {showPassword ? 'HIDE' : 'SHOW'}
+                </button>
+              </div>
+              {errors.password && (
+                <p className='mt-2 text-[10px] text-t1-red font-bold uppercase tracking-widest'>{errors.password}</p>
+              )}
+            </div>
+
+            {/* Confirm Password */}
+            <div className='mb-10'>
+              <label className='block text-xs font-oswald font-bold mb-2 uppercase text-gray-400 tracking-widest'>
+                Confirm Password
+              </label>
+              <div className='relative'>
+                <input
+                  type={showConfirm ? 'text' : 'password'}
+                  name='confirmPassword'
+                  value={form.confirmPassword}
+                  onChange={handleChange}
+                  placeholder='Repeat password'
+                  className='w-full bg-black border border-white/10 rounded-none px-4 py-3 outline-none focus:border-t1-red text-white transition-colors font-inter text-sm pr-12'
+                />
+                <button
+                  type='button'
+                  onClick={() => setShowConfirm(v => !v)}
+                  className='absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors text-xs'
+                >
+                  {showConfirm ? 'HIDE' : 'SHOW'}
+                </button>
+              </div>
+              {errors.confirmPassword && (
+                <p className='mt-2 text-[10px] text-t1-red font-bold uppercase tracking-widest'>{errors.confirmPassword}</p>
+              )}
+            </div>
+
+            {/* Server error */}
+            {error && (
+              <p className='mb-6 text-xs text-t1-red text-center font-bold uppercase tracking-widest'>{error}</p>
             )}
+
+            {/* Submit */}
+            <button
+              type='submit'
+              disabled={isLoading}
+              className='w-full bg-t1-red text-white py-4 font-oswald font-black uppercase tracking-[0.2em] hover:bg-white hover:text-t1-dark transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(226,1,45,0.2)] hover:shadow-[0_0_30px_rgba(255,255,255,0.2)]'
+            >
+              {isLoading ? 'Processing...' : 'Create Account'}
+            </button>
+          </form>
+
+          <div className='mt-8 text-center text-xs text-gray-500 font-inter tracking-wider'>
+            Already have an account?{' '}
+            <button
+              type='button'
+              onClick={() => navigate('/')}
+              className='text-white font-bold underline hover:text-t1-red transition-colors uppercase'
+            >
+              Sign In
+            </button>
           </div>
-
-          {/* Server error */}
-          {error && (
-            <p className='mb-4 text-sm text-red-500 text-center'>{error}</p>
-          )}
-
-          {/* Submit */}
-          <button
-            type='submit'
-            disabled={isLoading}
-            className='w-full bg-black text-white py-3 rounded-md font-bold uppercase tracking-wider hover:bg-gray-800 transition-colors disabled:opacity-60 disabled:cursor-not-allowed'
-          >
-            {isLoading ? 'Đang tạo tài khoản...' : 'Tạo tài khoản'}
-          </button>
-        </form>
-
-        <div className='mt-5 text-center text-sm text-gray-500'>
-                    Đã có tài khoản?{' '}
-          <button
-            type='button'
-            onClick={() => navigate('/')}
-            className='text-black font-semibold underline hover:text-gray-700 transition'
-          >
-                        Đăng nhập
-          </button>
         </div>
       </div>
-    </div>
+    </Layout>
   )
 }
 
