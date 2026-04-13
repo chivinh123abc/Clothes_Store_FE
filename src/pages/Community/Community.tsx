@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, Link } from 'react-router-dom'
 import Banner from '~/components/Banner/Banner'
 import Navbar from '~/components/Navbar/Navbar'
 import NavModal from '~/components/Modals/NavModal/NavModal'
@@ -63,7 +63,9 @@ function Community() {
       <div className='py-20 px-4 md:px-10 lg:px-16 max-w-7xl mx-auto'>
         {/* Title */}
         <h1 className='font-oswald font-black text-5xl mt-10 mb-10 text-center tracking-widest text-t1-text italic uppercase'>
-          COMMUNITY
+          <Link to='/community?tab=NOTICE' className='hover:text-t1-red transition-colors'>
+            COMMUNITY
+          </Link>
         </h1>
 
         {/* Tab Navigation */}

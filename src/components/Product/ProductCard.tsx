@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Heart, ShoppingCart } from 'lucide-react'
-import { motion } from 'motion/react'
+import { Heart, ShoppingCart, Check } from 'lucide-react'
+import { motion, AnimatePresence } from 'motion/react'
+import { useCart } from '~/contexts/CartContext'
 
 interface ProductCardProps {
   id: string;
@@ -22,86 +23,121 @@ export function ProductCard({
   salePrice,
   soldOut
 }: ProductCardProps) {
-  const [isHovered, setIsHovered] = useState(false)
+  const [isAdded, setIsAdded] = useState(false)
+  const { addCartItem } = useCart()
+
+  useEffect(() => {
+    let timeout: ReturnType<typeof setTimeout>
+    if (isAdded) {
+      timeout = setTimeout(() => setIsAdded(false), 2000)
+    }
+    return () => clearTimeout(timeout)
+  }, [isAdded])
 
   return (
     <motion.div
       className="group relative"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <Link to={`/product/${id}`} className="block">
-        <div className="relative aspect-[3/4] bg-[#E5E5E5] rounded-lg overflow-hidden mb-4">
+      <Link to={`/product/${id}`} className='block'>
+        <div className='relative aspect-[3/4] bg-[#222222] overflow-hidden mb-4 border border-t1-gray/50 group-hover:border-t1-red/50 transition-colors duration-300'>
           <img
             src={image}
             alt={name}
-            className={`w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 ${
-              soldOut ? ' opacity-60 ' : ''
+            className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 ${
+              soldOut ? ' opacity-40 ' : ''
             }`}
           />
 
           {/* Badge */}
           {!soldOut && badge && (
             <span
-              className={`absolute top-4 left-4 z-20 px-3 py-1 text-xs font-semibold rounded ${
+              className={`absolute top-0 left-0 z-20 px-4 py-1.5 text-[10px] font-oswald font-bold tracking-widest ${
                 badge === 'NEW'
-                  ? 'bg-black text-white'
-                  : 'bg-[#FF4D4F] text-white'
+                  ? 'bg-t1-text text-t1-dark'
+                  : 'bg-t1-red text-white'
               }`}
             >
               {badge}
             </span>
           )}
           {soldOut && (
-            <div className="absolute inset-0 z-20 flex items-center justify-center">
-              <span className="px-6 py-3 text-lg md:text-2xl font-bold tracking-widest uppercase text-white rounded font-mono font-bold bg-black/40">
+            <div className='absolute inset-0 z-20 flex items-center justify-center bg-black/60'>
+              <span className='px-6 py-3 text-xl font-oswald font-bold tracking-[0.2em] uppercase text-white border-2 border-white/20 italic'>
                 SOLD OUT
               </span>
             </div>
           )}
 
           {/* Wishlist Button */}
-          <button className="absolute top-4 right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-[#A18D6D] hover:text-white">
+          <button className='absolute top-4 right-4 z-30 w-10 h-10 bg-t1-dark/80 backdrop-blur-md border border-white/10 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-t1-red hover:border-t1-red hover:shadow-[0_0_15px_rgba(226,1,45,0.4)]'>
             <Heart size={18} />
           </button>
 
           {/* Add to Cart Button - only show when not sold out */}
           {!soldOut && (
-            <motion.button
-              initial={{ opacity: 0, y: 20 }}
-              animate={isHovered ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-              transition={{ duration: 0.2 }}
-              className="absolute bottom-4 left-4 right-4 bg-white hover:bg-[#A18D6D] hover:text-white py-3 rounded font-medium transition-colors flex items-center justify-center gap-2"
+            <button
+              className={`absolute bottom-4 right-4 z-30 w-11 h-11 backdrop-blur-md border rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 overflow-hidden ${
+                isAdded
+                  ? 'bg-green-500 border-green-400 text-white shadow-[0_0_15px_rgba(34,197,94,0.5)] scale-110'
+                  : 'bg-white/90 border-white text-t1-dark hover:bg-t1-red hover:border-t1-red hover:text-white hover:shadow-[0_0_15px_rgba(226,1,45,0.5)] hover:scale-110'
+              }`}
               onClick={(e) => {
                 e.preventDefault()
-                // Add to cart logic
+                setIsAdded(true)
+                addCartItem({
+                  id,
+                  name,
+                  price: salePrice ?? price,
+                  imageUrl: image
+                })
               }}
             >
-              <ShoppingCart size={18} />
-              Add to Cart
-            </motion.button>
+              <AnimatePresence mode='wait'>
+                {isAdded ? (
+                  <motion.div
+                    key="added"
+                    initial={{ scale: 0.2, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.8, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <Check size={20} strokeWidth={3} />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="add"
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.5, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <ShoppingCart size={18} strokeWidth={2.5} />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </button>
           )}
         </div>
 
-        <div className="space-y-1 border border-gray-200 rounded-sm p-4 relative -top-[22px] bg-white shadow-sm">
-          <h3 className="font-medium text-sm group-hover:text-[#A18D6D] transition-colors">
+        <div className='space-y-3 p-2 relative transition-all duration-300'>
+          <h3 className='font-oswald font-bold text-lg uppercase tracking-wide group-hover:text-t1-red transition-colors duration-300 truncate'>
             {name}
           </h3>
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#F5F5F5] border border-gray-200 rounded-md">
+          <div className='flex items-center gap-3'>
             {salePrice ? (
-              <>
-                <span className="font-semibold text-[#FF4D4F]">
+              <div className='flex items-baseline gap-2'>
+                <span className='font-oswald font-bold text-xl text-t1-red'>
                   ${salePrice.toFixed(2)}
                 </span>
-                <span className="text-sm text-gray-400 line-through">
+                <span className='text-xs text-gray-500 line-through font-light'>
                   ${price.toFixed(2)}
                 </span>
-              </>
+              </div>
             ) : (
-              <span className="font-semibold">${price.toFixed(2)}</span>
+              <span className='font-oswald font-bold text-xl text-t1-text tracking-wide'>${price.toFixed(2)}</span>
             )}
           </div>
         </div>
