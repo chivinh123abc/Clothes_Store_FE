@@ -27,7 +27,7 @@ export const FlyoutLink = ({ children, href, FlyoutContent }: { children: React.
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
     >
-      <Link to={href} className='relative text-inherit transition-colors group-hover:text-t1-red'>
+      <Link to={href} className='relative z-10 text-inherit transition-colors group-hover:text-t1-red cursor-pointer'>
         {children}
       </Link>
 
@@ -41,7 +41,7 @@ export const FlyoutLink = ({ children, href, FlyoutContent }: { children: React.
             transition={{ duration: 0.3, ease: 'easeOut' }}
             className='absolute top-10 left-1/2 -translate-x-1/2 z-50'
           >
-            <div className='absolute -top-6 left-0 right-0 h-6 bg-transparent' />
+            <div className='absolute -top-6 left-0 right-0 h-6 bg-transparent cursor-default' />
             {/* <div className='absolute left-1/2 top-0 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rotate-45 bg-white -z-1' /> */}
             <FlyoutContent />
           </motion.div>

@@ -35,16 +35,15 @@ export default function SearchBar() {
   // Apply sliding effect using transform
   useEffect(() => {
     if (!listRef.current) return
-    // console.log('index: ', index)
     if (index === data.length + 1) {
       listRef.current.style.transition = 'transform 0s'
       listRef.current.style.transform = 'translateY(0px)'
       requestAnimationFrame(() => {
-        setIndex(1) // hoặc 0 nếu bạn duplicate item đầu ở cuối
-        // Sau khi setIndex, useEffect lần sau sẽ chạy với transition bình thường
+        setIndex(1)
       })
     } else {
       listRef.current.style.transition = 'transform 0.5s ease-in-out'
+      // h-6 is 24px
       listRef.current.style.transform = `translateY(-${index * 24}px)`
     }
   }, [index])
@@ -55,14 +54,16 @@ export default function SearchBar() {
     <form
       action="/search"
       method="GET"
-      className="search_form flex md:border-b items-center relative h-6"
+      className="search_form flex items-center relative h-6 gap-2 md:border-b border-transparent md:border-t1-gray/40 hover:border-t1-gray transition-colors group"
     >
-      <p className="hidden md:block">SEARCH&nbsp;&nbsp;</p>
+      <p className="hidden md:block font-oswald text-base tracking-widest text-[#f1f1f1] whitespace-nowrap cursor-pointer" onClick={() => setIsFocused(true)}>
+        SEARCH&nbsp;&nbsp;
+      </p>
 
-      <div className="relative flex items-center h-6 hidden md:flex">
+      <div className="relative flex items-center h-full w-0 md:w-36 xl:w-56 transition-all duration-300 overflow-hidden">
         <input
           type="text"
-          className="w-32 h-full focus:outline-none relative z-10 bg-transparent font-inter text-base tracking-normal"
+          className="w-full h-full focus:outline-none relative z-10 bg-transparent font-inter text-sm text-white placeholder:text-transparent"
           value={value}
           onFocus={() => setIsFocused(true)}
           onBlur={blurSearchBar}
@@ -71,12 +72,12 @@ export default function SearchBar() {
 
         {/* SLIDE PLACEHOLDER */}
         {!hidePlaceholder && (
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 overflow-hidden h-6 pointer-events-none w-full">
-            <div ref={listRef}>
+          <div className="absolute left-0 top-0 h-full pointer-events-none w-full overflow-hidden">
+            <div ref={listRef} className="flex flex-col">
               {extend.map((item, idx) => (
-                <div key={idx} className="flex gap-2 h-6 items-center font-inter text-sm tracking-normal">
-                  <span className="text-t1-red font-bold translate-y-[1px]">{item.num}</span>
-                  <span className="text-white whitespace-nowrap translate-y-[1px]">{item.text}</span>
+                <div key={idx} className="flex gap-2 h-6 min-h-[24px] items-center font-inter text-sm w-full">
+                  <span className="text-t1-red font-bold text-[10px] sm:text-xs translate-y-[1px]">{item.num}</span>
+                  <span className="text-gray-400 whitespace-nowrap overflow-hidden text-ellipsis translate-y-[1px]">{item.text}</span>
                 </div>
               ))}
             </div>

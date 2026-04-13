@@ -12,6 +12,7 @@ import React, { useState } from 'react'
 import { FlyoutLink } from '../DropdownLanguage/DropdownLanguage'
 import angleDownIcon from '~/assets/FAIcon/angle-down-solid-full.svg'
 import { Link } from 'react-router-dom'
+import { AnimatePresence, motion } from 'framer-motion'
 
 // 1. For Medal
 export const NavMenuListModal = () => {
@@ -32,112 +33,129 @@ export const NavMenuListModal = () => {
   }
 
   return (
-    <ul className="flex flex-col gap-0">
-      <li className="border border-gray-100 px-2 py-2">
-        <Link to="/new">NEW</Link>
+    <ul className="flex flex-col gap-0 text-white font-oswald text-lg tracking-widest">
+      <li className="border-b border-t1-gray/30 px-4 py-4 hover:bg-white/5 transition-colors">
+        <Link to="/new" className="hover:text-t1-red">NEW</Link>
       </li>
-      <li className="border border-gray-100 px-2 py-2">
-        <Link to="/best">BEST</Link>
+      <li className="border-b border-t1-gray/30 px-4 py-4 hover:bg-white/5 transition-colors">
+        <Link to="/best" className="hover:text-t1-red">BEST</Link>
       </li>
-      <li className="relative border border-gray-100 px-2 py-2">
-        <Link to="/shop" className="">
+      <li className="relative border-b border-t1-gray/30 px-4 py-4 hover:bg-white/5 transition-colors">
+        <Link to="/shop" className="hover:text-t1-red">
           SHOP
         </Link>
         <input
           onClick={onFocusShop}
           type="image"
           src={angleDownIcon}
-          className={`w-5 h-5 absolute inset-0 translate-y-1/3 translate-x-40 z-20 transition-transform duration-300 ease-linear ${activeMenu === 'shop' ? 'rotate-180' : 'rotate-0'}`}
+          className={`w-5 h-5 absolute right-4 top-1/2 -translate-y-1/2 z-20 filter invert opacity-70 transition-transform duration-300 ease-linear ${activeMenu === 'shop' ? 'rotate-180' : 'rotate-0'}`}
         />
       </li>
-      {activeMenu === 'shop' ? (
-        <li className="w-full">
-          <ShopExpand active={activeMenu === 'shop'} />
-        </li>
-      ) : null}
-      <li className="relative border border-gray-100 px-2 py-2">
-        <a href="" className="">
+      <AnimatePresence initial={false}>
+        {activeMenu === 'shop' && (
+          <motion.li
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="w-full overflow-hidden"
+          >
+            <ShopExpand />
+          </motion.li>
+        )}
+      </AnimatePresence>
+      <li className="relative border-b border-t1-gray/30 px-4 py-4 hover:bg-white/5 transition-colors">
+        <a href="" className="hover:text-t1-red">
           LEGACY
         </a>
         <input
           onClick={onFocusLegacy}
           type="image"
           src={angleDownIcon}
-          className={`w-5 h-5 absolute inset-0 translate-y-1/3 translate-x-40 z-20 transition-transform duration-300 ${activeMenu === 'legacy' ? 'rotate-180' : 'rotate-0'}`}
+          className={`w-5 h-5 absolute right-4 top-1/2 -translate-y-1/2 z-20 filter invert opacity-70 transition-transform duration-300 ${activeMenu === 'legacy' ? 'rotate-180' : 'rotate-0'}`}
         />
       </li>
-      {activeMenu === 'legacy' ? (
-        <li className="w-full">
-          <LegacyExpand active={activeMenu === 'legacy'} />
-        </li>
-      ) : null}
-      <li className="relative border border-gray-100 px-2 py-2">
-        <Link to='/community?tab=NOTICE' className=''>
+      <AnimatePresence initial={false}>
+        {activeMenu === 'legacy' && (
+          <motion.li
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="w-full overflow-hidden"
+          >
+            <LegacyExpand />
+          </motion.li>
+        )}
+      </AnimatePresence>
+      <li className="relative border-b border-t1-gray/30 px-4 py-4 hover:bg-white/5 transition-colors">
+        <Link to='/community?tab=NOTICE' className='hover:text-t1-red'>
           COMMUNITY
         </Link>
         <input
           onClick={onFocusCommunity}
           type="image"
           src={angleDownIcon}
-          className={`w-5 h-5 absolute inset-0 translate-y-1/3 translate-x-40 z-20 transition-transform duration-300 ${activeMenu === 'community' ? 'rotate-180' : 'rotate-0'}`}
+          className={`w-5 h-5 absolute right-4 top-1/2 -translate-y-1/2 z-20 filter invert opacity-70 transition-transform duration-300 ${activeMenu === 'community' ? 'rotate-180' : 'rotate-0'}`}
         />
       </li>
-      {activeMenu === 'community' ? (
-        <li className="w-full">
-          <CommunityExpand active={activeMenu === 'community'} />
-        </li>
-      ) : null}
-      <li className="border border-gray-100 px-2 py-2">
-        <a href="">Q&A</a>
+      <AnimatePresence initial={false}>
+        {activeMenu === 'community' && (
+          <motion.li
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="w-full overflow-hidden"
+          >
+            <CommunityExpand />
+          </motion.li>
+        )}
+      </AnimatePresence>
+      <li className="border-b border-t1-gray/30 px-4 py-4 hover:bg-white/5 transition-colors">
+        <a href="" className="hover:text-t1-red">Q&A</a>
       </li>
     </ul>
   )
 }
 
-const ShopExpand = ({ active }: { active: boolean }) => {
+const ShopExpand = () => {
   return (
-    <div className={`grid transition-all duration-300 ease-in-out ${active ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
-      <div className="overflow-hidden">
-        <ul className="font-light bg-gray-50 pl-4 py-2 flex flex-col gap-2">
-          <li><a href="" className="hover:text-t1-red transition-colors">ALL</a></li>
-          <li><a href="" className="hover:text-t1-red transition-colors">TEAM KIT</a></li>
-          <li><a href="" className="hover:text-t1-red transition-colors">COLLECTION</a></li>
-          <li><a href="" className="hover:text-t1-red transition-colors">COLLABORATION</a></li>
-          <li><a href="" className="hover:text-t1-red transition-colors">SALE</a></li>
-        </ul>
-      </div>
+    <div className='bg-white/5'>
+      <ul className="font-inter font-light text-sm pl-8 py-4 flex flex-col gap-4 text-gray-400">
+        <li><a href="" className="hover:text-white transition-colors uppercase">ALL</a></li>
+        <li><a href="" className="hover:text-white transition-colors uppercase">TEAM KIT</a></li>
+        <li><a href="" className="hover:text-white transition-colors uppercase">COLLECTION</a></li>
+        <li><a href="" className="hover:text-white transition-colors uppercase">COLLABORATION</a></li>
+        <li><a href="" className="hover:text-white transition-colors uppercase">SALE</a></li>
+      </ul>
     </div>
   )
 }
 
-const LegacyExpand = ({ active }: { active: boolean }) => {
+const LegacyExpand = () => {
   return (
-    <div className={`grid transition-all duration-300 ease-in-out ${active ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
-      <div className="overflow-hidden">
-        <ul className="font-light bg-gray-50 pl-4 py-2 flex flex-col gap-2">
-          <li><a href="" className="hover:text-t1-red transition-colors">2025 WORLD COLLECTION</a></li>
-          <li><a href="" className="hover:text-t1-red transition-colors">2024 WORLD COLLECTION</a></li>
-          <li><a href="" className="hover:text-t1-red transition-colors">2023 WORLD COLLECTION</a></li>
-          <li><a href="" className="hover:text-t1-red transition-colors">APPAREL</a></li>
-          <li><a href="" className="hover:text-t1-red transition-colors">GIFT & ACCESSORIES</a></li>
-        </ul>
-      </div>
+    <div className='bg-white/5'>
+      <ul className="font-inter font-light text-sm pl-8 py-4 flex flex-col gap-4 text-gray-400">
+        <li><a href="" className="hover:text-white transition-colors uppercase">2025 WORLD COLLECTION</a></li>
+        <li><a href="" className="hover:text-white transition-colors uppercase">2024 WORLD COLLECTION</a></li>
+        <li><a href="" className="hover:text-white transition-colors uppercase">2023 WORLD COLLECTION</a></li>
+        <li><a href="" className="hover:text-white transition-colors uppercase">APPAREL</a></li>
+        <li><a href="" className="hover:text-white transition-colors uppercase">GIFT & ACCESSORIES</a></li>
+      </ul>
     </div>
   )
 }
 
-const CommunityExpand = ({ active }: { active: boolean }) => {
+const CommunityExpand = () => {
   return (
-    <div className={`grid transition-all duration-300 ease-in-out ${active ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
-      <div className="overflow-hidden">
-        <ul className="font-light bg-gray-50 pl-4 py-2 flex flex-col gap-2">
-          {/* Thay <a> bằng <Link> và thêm đường dẫn tab */}
-          <li><Link to="/community?tab=NOTICE" className="hover:text-t1-red transition-colors">NOTICE</Link></li>
-          <li><Link to="/community?tab=REVIEW" className="hover:text-t1-red transition-colors">REVIEW</Link></li>
-          <li><Link to="/community?tab=EVENT" className="hover:text-t1-red transition-colors">EVENT</Link></li>
-          <li><Link to="/community?tab=FAQ" className="hover:text-t1-red transition-colors">FAQ</Link></li>
-        </ul>
-      </div>
+    <div className='bg-white/5'>
+      <ul className="font-inter font-light text-sm pl-8 py-4 flex flex-col gap-4 text-gray-400">
+        <li><Link to="/community?tab=NOTICE" className="hover:text-white transition-colors uppercase">NOTICE</Link></li>
+        <li><Link to="/community?tab=REVIEW" className="hover:text-white transition-colors uppercase">REVIEW</Link></li>
+        <li><Link to="/community?tab=EVENT" className="hover:text-white transition-colors uppercase">EVENT</Link></li>
+        <li><Link to="/community?tab=FAQ" className="hover:text-white transition-colors uppercase">FAQ</Link></li>
+      </ul>
     </div>
   )
 }
@@ -178,7 +196,7 @@ const DropdownItem = ({
   href?: string
 }) => {
   return (
-    <div className='flex justify-center hover:text-t1-red transition-colors cursor-pointer'>
+    <div className='flex justify-center hover:text-t1-red transition-colors'>
       <FlyoutLink href={href} FlyoutContent={content}>
         <div className='flex justify-center items-center'>
           <span className=''>{title}</span>

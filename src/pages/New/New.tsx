@@ -4,7 +4,7 @@ import { ProductList } from '~/components/Product/ProductList'
 import NavModal from '~/components/Modals/NavModal/NavModal'
 import Navbar from '~/components/Navbar/Navbar'
 
-function Best() {
+function New() {
   const [openNav, setOpenNav] = useState(false)
 
   useEffect(() => {
@@ -17,10 +17,10 @@ function Best() {
       <Navbar setOpenNav={setOpenNav} />
       <NavModal open={openNav} onClose={() => setOpenNav(false)}>{null}</NavModal>
       <div className='pb-20'>
-        <ProductList filter='best' />
+        <ProductList filter='new' />
       </div>
     </div>
   )
 }
 
-export default Best
+export default New
