@@ -22,7 +22,7 @@ export default function AppRoutes() {
       <Route path="/best" element={<Best />} />
       <Route path="/product/:id" element={<div>Product Detail Placeholder</div>} />
       <Route path="/collection" element={<div>Collection Placeholder</div>} />
-      <Route path='/community' element={<Community />} /> 
-   </Routes>
+      <Route path='/community' element={<Community />} />
+    </Routes>
   )
 }

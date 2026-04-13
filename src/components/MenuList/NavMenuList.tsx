@@ -72,9 +72,9 @@ export const NavMenuListModal = () => {
         </li>
       ) : null}
       <li className="relative border border-gray-100 px-2 py-2">
-        <a href="" className="">
+        <Link to='/community?tab=NOTICE' className=''>
           COMMUNITY
-        </a>
+        </Link>
         <input
           onClick={onFocusCommunity}
           type="image"
@@ -159,7 +159,7 @@ export const NavMenuListMedium = () => {
         <DropdownItem title="LEGACY" content={LegacyContent} />
       </li>
       <li>
-        <DropdownItem title="COMMUNITY" content={CommunityContent} />
+        <DropdownItem title='COMMUNITY' content={CommunityContent} href='/community?tab=NOTICE' />
       </li>
       <li>
         <a href="" className="hover:text-t1-red transition-colors cursor-pointer">Q&A</a>
@@ -170,14 +170,16 @@ export const NavMenuListMedium = () => {
 
 const DropdownItem = ({
   title,
-  content
+  content,
+  href = '#'
 }: {
-  title: string;
-  content: React.ComponentType;
+  title: string
+  content: React.ComponentType
+  href?: string
 }) => {
   return (
     <div className='flex justify-center hover:text-t1-red transition-colors cursor-pointer'>
-      <FlyoutLink href='#' FlyoutContent={content}>
+      <FlyoutLink href={href} FlyoutContent={content}>
         <div className='flex justify-center items-center'>
           <span className=''>{title}</span>
         </div>
