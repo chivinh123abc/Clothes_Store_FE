@@ -7,36 +7,36 @@ import BGImage from '~/assets/Background/first_bg_img.jpg'
 
 // --- MOCK DATA (Dữ liệu mẫu) ---
 const notices = [
-  { id: 1, title: "[THÔNG BÁO] Ra mắt bộ sưu tập 2026 Official Uniform", date: "2026-04-03", author: "Admin" },
-  { id: 2, title: "[BẢO TRÌ] Nâng cấp hệ thống thanh toán", date: "2026-03-28", author: "System" },
-  { id: 3, title: "[SỰ KIỆN] Chào đón thành viên mới với mã giảm giá 10%", date: "2026-03-15", author: "Admin" },
+  { id: 1, title: '[THÔNG BÁO] Ra mắt bộ sưu tập 2026 Official Uniform', date: '2026-04-03', author: 'Admin' },
+  { id: 2, title: '[BẢO TRÌ] Nâng cấp hệ thống thanh toán', date: '2026-03-28', author: 'System' },
+  { id: 3, title: '[SỰ KIỆN] Chào đón thành viên mới với mã giảm giá 10%', date: '2026-03-15', author: 'Admin' }
 ]
 
 const reviews = [
-  { id: 1, user: "FakerFan", rating: 5, text: "Áo khoác 2026 chất lượng quá tuyệt vời. Đóng gói rất cẩn thận!", item: "2026 Official Jacket" },
-  { id: 2, user: "ChovyLife", rating: 4, text: "Giao hàng nhanh, form áo đẹp nhưng hơi rộng so với size bảng.", item: "T1 Short Sleeve" },
-  { id: 3, user: "ZeusGoat", rating: 5, text: "Chất vải mát, logo in sắc nét. Will buy again 100%!", item: "2026 Official Uniform" },
+  { id: 1, user: 'FakerFan', rating: 5, text: 'Áo khoác 2026 chất lượng quá tuyệt vời. Đóng gói rất cẩn thận!', item: '2026 Official Jacket' },
+  { id: 2, user: 'ChovyLife', rating: 4, text: 'Giao hàng nhanh, form áo đẹp nhưng hơi rộng so với size bảng.', item: 'T1 Short Sleeve' },
+  { id: 3, user: 'ZeusGoat', rating: 5, text: 'Chất vải mát, logo in sắc nét. Will buy again 100%!', item: '2026 Official Uniform' }
 ]
 
 const events = [
-  { id: 1, title: "MIDSUMMER SALE 2026", status: "ONGOING", desc: "Giảm giá lên đến 50% cho các sản phẩm mùa hè.", img: BGImage },
-  { id: 2, title: "WORLDS 2026 GIVEAWAY", status: "UPCOMING", desc: "Dự đoán kết quả, nhận ngay Official Uniform.", img: "https://i.pinimg.com/736x/f6/14/00/f61400d720bc2c4dbd8eb4bbf949cc8b.jpg" },
+  { id: 1, title: 'MIDSUMMER SALE 2026', status: 'ONGOING', desc: 'Giảm giá lên đến 50% cho các sản phẩm mùa hè.', img: BGImage },
+  { id: 2, title: 'WORLDS 2026 GIVEAWAY', status: 'UPCOMING', desc: 'Dự đoán kết quả, nhận ngay Official Uniform.', img: 'https://i.pinimg.com/736x/f6/14/00/f61400d720bc2c4dbd8eb4bbf949cc8b.jpg' }
 ]
 
 const faqs = [
-  { id: 1, question: "Thời gian giao hàng mất bao lâu?", answer: "Đối với khu vực nội thành, thời gian giao hàng từ 1-2 ngày. Đối với các tỉnh thành khác, thời gian dự kiến từ 3-5 ngày làm việc." },
-  { id: 2, question: "Tôi có thể đổi trả hàng không?", answer: "Có. Bạn có thể đổi trả sản phẩm trong vòng 7 ngày kể từ khi nhận hàng, với điều kiện tem mác còn nguyên và chưa qua sử dụng." },
-  { id: 3, question: "Làm sao để theo dõi đơn hàng của tôi?", answer: "Bạn có thể đăng nhập vào tài khoản, vào mục 'Order History' để theo dõi trạng thái vận chuyển của đơn hàng." },
+  { id: 1, question: 'Thời gian giao hàng mất bao lâu?', answer: 'Đối với khu vực nội thành, thời gian giao hàng từ 1-2 ngày. Đối với các tỉnh thành khác, thời gian dự kiến từ 3-5 ngày làm việc.' },
+  { id: 2, question: 'Tôi có thể đổi trả hàng không?', answer: 'Có. Bạn có thể đổi trả sản phẩm trong vòng 7 ngày kể từ khi nhận hàng, với điều kiện tem mác còn nguyên và chưa qua sử dụng.' },
+  { id: 3, question: 'Làm sao để theo dõi đơn hàng của tôi?', answer: 'Bạn có thể đăng nhập vào tài khoản, vào mục \'Order History\' để theo dõi trạng thái vận chuyển của đơn hàng.' }
 ]
 
 function Community() {
   const [openNav, setOpenNav] = useState(false)
   const [searchParams, setSearchParams] = useSearchParams()
-  
+
   // Logic: Lấy tab từ URL, nếu không có mặc định là NOTICE
   const tabFromUrl = searchParams.get('tab')?.toUpperCase() || 'NOTICE'
   const [activeTab, setActiveTab] = useState(tabFromUrl)
-  
+
   // Logic: Accordion cho FAQ
   const [openFaqId, setOpenFaqId] = useState<number | null>(null)
 
@@ -85,7 +85,7 @@ function Community() {
 
         {/* Content Area */}
         <div className='min-h-[50vh]'>
-          
+
           {/* NOTICE TAB */}
           {activeTab === 'NOTICE' && (
             <div className='bg-[#1b1b1b] border border-t1-gray shadow-2xl p-6 animate-fade-in'>
@@ -119,7 +119,7 @@ function Community() {
                 <div key={review.id} className='bg-[#1b1b1b] p-8 border border-t1-gray shadow-xl relative group hover:border-t1-red transition-all duration-300'>
                   <div className='absolute top-0 right-0 bg-t1-red text-white text-[10px] font-oswald px-3 py-1 tracking-widest'>VERIFIED</div>
                   <div className='flex items-center space-x-1 mb-4 text-t1-red text-xl'>
-                    {"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}
+                    {'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}
                   </div>
                   <p className='text-gray-300 font-light italic mb-6 leading-relaxed'>"{review.text}"</p>
                   <div className='border-t border-t1-gray/50 pt-4'>
