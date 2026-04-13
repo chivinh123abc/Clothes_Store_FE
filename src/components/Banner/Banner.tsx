@@ -14,8 +14,8 @@ function Banner() {
         <div className='hidden sm:block opacity-80 hover:opacity-100 transition-opacity'>
           <p>GLOBAL / USD</p>
         </div>
-        <div className='font-oswald tracking-[0.2em] text-[#e2012d] font-bold'>
-          <a href="">TALK LESS DO MORE</a>
+        <div className='font-oswald tracking-[0.2em] text-[#e2012d] font-bold uppercase'>
+          FREE SHIPPING ON ORDERS OVER $150
         </div>
         <div className='space-x-3 hidden sm:flex items-center opacity-80'>
           {user ? (

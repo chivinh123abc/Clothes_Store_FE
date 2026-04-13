@@ -53,11 +53,11 @@ export const FlyoutLink = ({ children, href, FlyoutContent }: { children: React.
 
 const LanguageContent = () => {
   return (
-    <div className='w-16 bg-white shadow-xl text-center'>
-      <a href="" className='block text-sm py-1'>KR</a>
-      <a href="" className='block text-sm py-1'>CN</a>
-      <a href="" className='block text-sm py-1'>VN</a>
-      <a href="" className='block text-sm py-1'>RS</a>
+    <div className='w-16 bg-t1-dark shadow-xl text-center'>
+      <a href="" className='block text-sm py-1 text-t1-text hover:text-t1-red transition-colors cursor-pointer'>KR</a>
+      <a href="" className='block text-sm py-1 text-t1-text hover:text-t1-red transition-colors cursor-pointer'>CN</a>
+      <a href="" className='block text-sm py-1 text-t1-text hover:text-t1-red transition-colors cursor-pointer'>VN</a>
+      <a href="" className='block text-sm py-1 text-t1-text hover:text-t1-red transition-colors cursor-pointer'>RS</a>
     </div>
   )
 }

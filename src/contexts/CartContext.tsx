@@ -7,15 +7,16 @@ export interface CartItem {
   name: string;
   price: number;
   imageUrl: string;
+  size: string;
   quantity: number;
 }
 
 interface CartContextType {
   items: CartItem[];
-  addCartItem: (item: Omit<CartItem, 'quantity'>) => void;
-  removeCartItem: (id: string) => void;
-  incrementQuantity: (id: string) => void;
-  decrementQuantity: (id: string) => void;
+  addCartItem: (item: Omit<CartItem, 'quantity'>, quantity?: number) => void;
+  removeCartItem: (id: string, size: string) => void;
+  incrementQuantity: (id: string, size: string) => void;
+  decrementQuantity: (id: string, size: string) => void;
   clearCart: () => void;
   totalItems: number;
   totalPrice: number;
@@ -26,34 +27,44 @@ const CartContext = createContext<CartContextType | undefined>(undefined)
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
 
-  const addCartItem = (product: Omit<CartItem, 'quantity'>) => {
+  const addCartItem = (product: Omit<CartItem, 'quantity'>, quantityToAdd: number = 1) => {
     setItems((prevItems) => {
-      const existingItem = prevItems.find((item) => item.id === product.id)
+      const existingItem = prevItems.find(
+        (item) => item.id === product.id && item.size === product.size
+      )
       if (existingItem) {
         return prevItems.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+          item.id === product.id && item.size === product.size
+            ? { ...item, quantity: item.quantity + quantityToAdd }
+            : item
         )
       }
-      return [...prevItems, { ...product, quantity: 1 }]
+      return [...prevItems, { ...product, quantity: quantityToAdd }]
     })
   }
 
-  const removeCartItem = (id: string) => {
-    setItems((prevItems) => prevItems.filter((item) => item.id !== id))
+  const removeCartItem = (id: string, size: string) => {
+    setItems((prevItems) =>
+      prevItems.filter((item) => !(item.id === id && item.size === size))
+    )
   }
 
-  const incrementQuantity = (id: string) => {
+  const incrementQuantity = (id: string, size: string) => {
     setItems((prevItems) =>
       prevItems.map((item) =>
-        item.id === id ? { ...item, quantity: item.quantity + 1 } : item
+        item.id === id && item.size === size
+          ? { ...item, quantity: item.quantity + 1 }
+          : item
       )
     )
   }
 
-  const decrementQuantity = (id: string) => {
+  const decrementQuantity = (id: string, size: string) => {
     setItems((prevItems) =>
       prevItems.map((item) =>
-        item.id === id ? { ...item, quantity: Math.max(1, item.quantity - 1) } : item
+        item.id === id && item.size === size
+          ? { ...item, quantity: Math.max(1, item.quantity - 1) }
+          : item
       )
     )
   }

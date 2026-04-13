@@ -91,7 +91,8 @@ export function ProductCard({
                   id,
                   name,
                   price: salePrice ?? price,
-                  imageUrl: image
+                  imageUrl: image,
+                  size: 'M'
                 })
               }}
             >

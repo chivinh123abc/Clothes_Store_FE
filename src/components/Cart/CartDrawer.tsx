@@ -75,20 +75,23 @@ function CartDrawer({ open, onClose }: CartDrawerProps) {
                             <Link to={`/product/${item.id}`} onClick={onClose} className='font-oswald font-bold text-base tracking-wide text-white uppercase hover:text-t1-red transition-colors line-clamp-2 pr-2'>
                               {item.name}
                             </Link>
-                            <button onClick={() => removeCartItem(item.id)} className='text-gray-600 hover:text-t1-red transition-colors flex-shrink-0 mt-1'>
+                            <button onClick={() => removeCartItem(item.id, item.size)} className='text-gray-600 hover:text-t1-red transition-colors flex-shrink-0 mt-1'>
                               <Trash2 size={16} />
                             </button>
                           </div>
-                          <p className='font-incosolata font-bold text-t1-red text-sm mt-1 mb-2'>${item.price.toFixed(2)}</p>
+                          <div className='flex items-center gap-3 mt-1 mb-2'>
+                            <p className='font-incosolata font-bold text-t1-red text-sm'>${item.price.toFixed(2)}</p>
+                            <span className="text-[10px] bg-t1-gray/20 text-gray-400 px-2 py-0.5 font-oswald font-bold tracking-widest border border-t1-gray/10 uppercase">SIZE: {item.size}</span>
+                          </div>
                           
                           {/* Quantity Controls */}
                           <div className='mt-auto flex items-center justify-between'>
                             <div className='flex items-center gap-3 bg-t1-dark border border-t1-gray/30 w-fit px-2 py-1'>
-                              <button onClick={() => decrementQuantity(item.id)} className='text-gray-400 hover:text-white p-1 transition-colors'>
+                              <button onClick={() => decrementQuantity(item.id, item.size)} className='text-gray-400 hover:text-white p-1 transition-colors'>
                                 <Minus size={12} strokeWidth={3} />
                               </button>
                               <span className='font-inter text-xs text-white font-medium w-4 text-center'>{item.quantity}</span>
-                              <button onClick={() => incrementQuantity(item.id)} className='text-gray-400 hover:text-white p-1 transition-colors'>
+                              <button onClick={() => incrementQuantity(item.id, item.size)} className='text-gray-400 hover:text-white p-1 transition-colors'>
                                 <Plus size={12} strokeWidth={3} />
                               </button>
                             </div>
