@@ -11,11 +11,11 @@ const config: Config = {
         't1-red': '#E4002B',
         't1-dark': '#111111',
         't1-gray': '#222222',
-        't1-text': '#f4f4f4',
+        't1-text': '#f4f4f4'
       },
       fontFamily: {
         't1-body': ['Inter', 'sans-serif'],
-        't1-heading': ['Oswald', 'sans-serif'],
+        't1-heading': ['Oswald', 'sans-serif']
       }
     }
   },
