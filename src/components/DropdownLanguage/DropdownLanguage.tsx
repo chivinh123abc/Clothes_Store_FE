@@ -1,6 +1,7 @@
 import type React from 'react'
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
+import { Link } from 'react-router-dom'
 import FAIcon from '~/assets/FAIcon/angle-down-solid-full.svg'
 
 function DropdownLanguage() {
@@ -26,9 +27,9 @@ export const FlyoutLink = ({ children, href, FlyoutContent }: { children: React.
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
     >
-      <a href={href} className='relative text-inherit transition-colors group-hover:text-t1-red'>
+      <Link to={href} className='relative text-inherit transition-colors group-hover:text-t1-red'>
         {children}
-      </a>
+      </Link>
 
       {/* RENDER FLYOUT CONTENT */}
       <AnimatePresence>

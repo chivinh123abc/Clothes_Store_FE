@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { FreeMode, Navigation, Scrollbar } from 'swiper/modules'
 import 'swiper/css'
@@ -9,25 +9,25 @@ import UniformProductCard from './UniformProductCard'
 
 // Dummy Data
 const newProducts = [
-  { name: "[Pre-Sale] Other Friends Cushion Keychain Set", price: "$12.60", imageUrl: "https://i.pinimg.com/736x/8a/6d/a4/8a6da44fd555cdef4768b409557d5022.jpg", soldOut: true },
-  { name: "Animal Friends Zip-Up Hoodie - Circus Edition", price: "$70.00", imageUrl: "https://i.pinimg.com/736x/6b/09/e9/6b09e91287d1010f3c16e889d5b9f66d.jpg" },
-  { name: "Animal Friends Collect Book - Circus Edition", price: "$14.80", imageUrl: "https://i.pinimg.com/736x/8a/6d/a4/8a6da44fd555cdef4768b409557d5022.jpg" },
-  { name: "Animal Friends Acrylic Keychain - Circus Edition", price: "$8.20", imageUrl: "https://i.pinimg.com/736x/6b/09/e9/6b09e91287d1010f3c16e889d5b9f66d.jpg" },
-  { name: "Animal Friends Ticket Keychain - Circus Edition", price: "$9.20", imageUrl: "https://i.pinimg.com/736x/8a22.j/6d/a4/8a6da44fd555cdef4768b409557d50pg", soldOut: true },
-  { name: "Animal Friends Poster - Circus Edition", price: "$15.00", imageUrl: "https://i.pinimg.com/736x/6b/09/e9/6b09e91287d1010f3c16e889d5b9f66d.jpg" },
+  { name: '[Pre-Sale] Other Friends Cushion Keychain Set', price: '$12.60', imageUrl: 'https://i.pinimg.com/736x/8a/6d/a4/8a6da44fd555cdef4768b409557d5022.jpg', soldOut: true },
+  { name: 'Animal Friends Zip-Up Hoodie - Circus Edition', price: '$70.00', imageUrl: 'https://i.pinimg.com/736x/6b/09/e9/6b09e91287d1010f3c16e889d5b9f66d.jpg' },
+  { name: 'Animal Friends Collect Book - Circus Edition', price: '$14.80', imageUrl: 'https://i.pinimg.com/736x/8a/6d/a4/8a6da44fd555cdef4768b409557d5022.jpg' },
+  { name: 'Animal Friends Acrylic Keychain - Circus Edition', price: '$8.20', imageUrl: 'https://i.pinimg.com/736x/6b/09/e9/6b09e91287d1010f3c16e889d5b9f66d.jpg' },
+  { name: 'Animal Friends Ticket Keychain - Circus Edition', price: '$9.20', imageUrl: 'https://i.pinimg.com/736x/8a22.j/6d/a4/8a6da44fd555cdef4768b409557d50pg', soldOut: true },
+  { name: 'Animal Friends Poster - Circus Edition', price: '$15.00', imageUrl: 'https://i.pinimg.com/736x/6b/09/e9/6b09e91287d1010f3c16e889d5b9f66d.jpg' }
 ]
 
 const bestProducts = [
-  { name: "[LoL] 2026 DIY Marking Kit", price: "$10.00", imageUrl: "https://i.pinimg.com/736x/6b/09/e9/6b09e91287d1010f3c16e889d5b9f66d.jpg" },
-  { name: "[LoL] 2026 Uniform Jacket", price: "$160.00", imageUrl: "https://i.pinimg.com/736x/8a/6d/a4/8a6da44fd555cdef4768b409557d5022.jpg", soldOut: true },
-  { name: "[LoL] 2026 Uniform Jersey", price: "$113.00", imageUrl: "https://i.pinimg.com/736x/6b/09/e9/6b09e91287d1010f3c16e889d5b9f66d.jpg" },
-  { name: "2026 Uniform Pants", price: "$88.00", imageUrl: "https://i.pinimg.com/736x/8a/6d/a4/8a6da44fd555cdef4768b409557d5022.jpg" },
+  { name: '[LoL] 2026 DIY Marking Kit', price: '$10.00', imageUrl: 'https://i.pinimg.com/736x/6b/09/e9/6b09e91287d1010f3c16e889d5b9f66d.jpg' },
+  { name: '[LoL] 2026 Uniform Jacket', price: '$160.00', imageUrl: 'https://i.pinimg.com/736x/8a/6d/a4/8a6da44fd555cdef4768b409557d5022.jpg', soldOut: true },
+  { name: '[LoL] 2026 Uniform Jersey', price: '$113.00', imageUrl: 'https://i.pinimg.com/736x/6b/09/e9/6b09e91287d1010f3c16e889d5b9f66d.jpg' },
+  { name: '2026 Uniform Pants', price: '$88.00', imageUrl: 'https://i.pinimg.com/736x/8a/6d/a4/8a6da44fd555cdef4768b409557d5022.jpg' }
 ]
 
 const saleProducts = [
-  { name: "T1 Worlds 2023 Cap", price: "$20.00", originalPrice: "$25.00", discountPercentage: 20, imageUrl: "https://i.pinimg.com/736x/8a/6d/a4/8a6da44fd555cdef4768b409557d5022.jpg" },
-  { name: "T1 Varsity Jacket", price: "$72.00", originalPrice: "$90.00", discountPercentage: 20, imageUrl: "https://i.pinimg.com/736x/6b/09/e9/6b09e91287d1010f3c16e889d5b9f66d.jpg" },
-  { name: "Faker Hall of Legends Poster", price: "$10.50", originalPrice: "$15.00", discountPercentage: 30, imageUrl: "https://i.pinimg.com/736x/8a/6d/a4/8a6da44fd555cdef4768b409557d5022.jpg" },
+  { name: 'T1 Worlds 2023 Cap', price: '$20.00', originalPrice: '$25.00', discountPercentage: 20, imageUrl: 'https://i.pinimg.com/736x/8a/6d/a4/8a6da44fd555cdef4768b409557d5022.jpg' },
+  { name: 'T1 Varsity Jacket', price: '$72.00', originalPrice: '$90.00', discountPercentage: 20, imageUrl: 'https://i.pinimg.com/736x/6b/09/e9/6b09e91287d1010f3c16e889d5b9f66d.jpg' },
+  { name: 'Faker Hall of Legends Poster', price: '$10.50', originalPrice: '$15.00', discountPercentage: 30, imageUrl: 'https://i.pinimg.com/736x/8a/6d/a4/8a6da44fd555cdef4768b409557d5022.jpg' }
 ]
 
 const tabData: Record<string, any[]> = {
@@ -92,10 +92,10 @@ export const ProductTabContainer = () => {
               <UniformProductCard
                 name={prod.name}
                 price={prod.price}
-                originalPrice={"originalPrice" in prod ? prod.originalPrice : undefined}
-                discountPercentage={"discountPercentage" in prod ? prod.discountPercentage : undefined}
+                originalPrice={'originalPrice' in prod ? prod.originalPrice : undefined}
+                discountPercentage={'discountPercentage' in prod ? prod.discountPercentage : undefined}
                 imageUrl={prod.imageUrl}
-                soldOut={"soldOut" in prod ? prod.soldOut : false}
+                soldOut={'soldOut' in prod ? prod.soldOut : false}
               />
             </SwiperSlide>
           ))}

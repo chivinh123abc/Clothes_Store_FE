@@ -1,5 +1,7 @@
+import { Link } from 'react-router-dom'
 
 interface ProductProps {
+  id?: string
   name: string
   price: string
   originalPrice?: string
@@ -8,9 +10,9 @@ interface ProductProps {
   soldOut?: boolean
 }
 
-export default function UniformProductCard({ name, price, originalPrice, discountPercentage, imageUrl, soldOut }: ProductProps) {
+export default function UniformProductCard({ id, name, price, originalPrice, discountPercentage, imageUrl, soldOut }: ProductProps) {
   return (
-    <a href="#" className="flex flex-col h-full bg-[#1b1b1b] border-r border-[#333] transition-transform duration-300 group">
+    <Link to={id ? `/product/${id}` : '#'} className="flex flex-col h-full bg-[#1b1b1b] border-r border-[#333] transition-transform duration-300 group">
       {/* Top Image Section */}
       <div className="bg-white relative overflow-hidden w-full aspect-square flex items-center justify-center">
         <img
@@ -48,6 +50,6 @@ export default function UniformProductCard({ name, price, originalPrice, discoun
           )}
         </div>
       </div>
-    </a>
+    </Link>
   )
 }

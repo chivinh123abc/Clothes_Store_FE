@@ -1,4 +1,5 @@
 import SearchBar from '~/components/SearchBar/SearchBar'
+import { Link } from 'react-router-dom'
 import CartIcon from '../Cart/CartIcon'
 import DropdownLanguage from '../DropdownLanguage/DropdownLanguage'
 import { useEffect, useState, type Dispatch, type SetStateAction } from 'react'
@@ -34,9 +35,9 @@ function Navbar({ setOpenNav }: NavbarProps) {
 
         {/* T1 typically puts the logo on the left. Let's place it on the left but keep links next to it or center. */}
         <div className='flex items-center gap-10'>
-          <div className='text-t1-text font-black text-3xl italic tracking-tighter'>
+          <Link to='/' className='text-t1-text font-black text-3xl italic tracking-tighter hover:text-t1-red transition-colors cursor-pointer'>
             CLOTHES STORE
-          </div>
+          </Link>
 
           {/* Hidden UL in mobile */}
           <div className='hidden lg:block ml-4'>

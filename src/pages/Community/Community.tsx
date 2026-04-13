@@ -121,7 +121,7 @@ function Community() {
                   <div className='flex items-center space-x-1 mb-4 text-t1-red text-xl'>
                     {'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}
                   </div>
-                  <p className='text-gray-300 font-light italic mb-6 leading-relaxed'>"{review.text}"</p>
+                  <p className='text-gray-300 font-light italic mb-6 leading-relaxed'>'{review.text}'</p>
                   <div className='border-t border-t1-gray/50 pt-4'>
                     <p className='font-oswald font-bold tracking-wider text-white uppercase'>{review.user}</p>
                     <p className='text-[10px] text-t1-red uppercase tracking-widest mt-1'>Product: {review.item}</p>

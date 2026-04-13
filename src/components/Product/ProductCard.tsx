@@ -1,14 +1,14 @@
-import { useState } from "react";
-import { Link } from "react-router";
-import { Heart, ShoppingCart } from "lucide-react";
-import { motion } from "motion/react";
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
+import { Heart, ShoppingCart } from 'lucide-react'
+import { motion } from 'motion/react'
 
 interface ProductCardProps {
   id: string;
   name: string;
   price: number;
   image: string;
-  badge?: "NEW" | "SALE";
+  badge?: 'NEW' | 'SALE';
   salePrice?: number;
   soldOut?: boolean;
 }
@@ -20,9 +20,9 @@ export function ProductCard({
   image,
   badge,
   salePrice,
-  soldOut,
+  soldOut
 }: ProductCardProps) {
-  const [isHovered, setIsHovered] = useState(false);
+  const [isHovered, setIsHovered] = useState(false)
 
   return (
     <motion.div
@@ -39,7 +39,7 @@ export function ProductCard({
             src={image}
             alt={name}
             className={`w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 ${
-              soldOut ? " opacity-60 " : ""
+              soldOut ? ' opacity-60 ' : ''
             }`}
           />
 
@@ -47,9 +47,9 @@ export function ProductCard({
           {!soldOut && badge && (
             <span
               className={`absolute top-4 left-4 z-20 px-3 py-1 text-xs font-semibold rounded ${
-                badge === "NEW"
-                  ? "bg-black text-white"
-                  : "bg-[#FF4D4F] text-white"
+                badge === 'NEW'
+                  ? 'bg-black text-white'
+                  : 'bg-[#FF4D4F] text-white'
               }`}
             >
               {badge}
@@ -76,7 +76,7 @@ export function ProductCard({
               transition={{ duration: 0.2 }}
               className="absolute bottom-4 left-4 right-4 bg-white hover:bg-[#A18D6D] hover:text-white py-3 rounded font-medium transition-colors flex items-center justify-center gap-2"
               onClick={(e) => {
-                e.preventDefault();
+                e.preventDefault()
                 // Add to cart logic
               }}
             >
@@ -107,5 +107,5 @@ export function ProductCard({
         </div>
       </Link>
     </motion.div>
-  );
+  )
 }
