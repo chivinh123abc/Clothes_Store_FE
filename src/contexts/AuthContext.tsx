@@ -1,10 +1,12 @@
-import React, { createContext, useState, useEffect } from 'react'
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useState, useEffect } from 'react'
 import type { ReactNode } from 'react'
 import type { AuthResponseDto } from '../types/user'
 
 export interface AuthContextType {
   user: AuthResponseDto | null
-  setUser: (u: AuthResponseDto | null) => void
+  // eslint-disable-next-line no-unused-vars
+  setUser: (user: AuthResponseDto | null) => void
   logout: () => void
 }
 
@@ -18,8 +20,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser) as AuthResponseDto
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setUserState(parsedUser)
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error('Failed to parse auth_user', error)
       }
     }

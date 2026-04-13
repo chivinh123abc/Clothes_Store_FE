@@ -23,6 +23,7 @@ axiosClient.interceptors.request.use(
 
 axiosClient.interceptors.response.use(
   (response) => {
+    // eslint-disable-next-line no-console
     console.log(`✅ Connection with BE success from FE! Request: ${response.config.url}`)
     return response
   },

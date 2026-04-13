@@ -1,21 +1,26 @@
+import React from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import Home from '../pages/Home/Home'
 import Register from '../pages/Register'
-import Best from '../pages/Best/Best';
+import Best from '../pages/Best/Best'
 
 const Private = ({ children }: { children: React.ReactElement }) => {
-    const { user } = useAuth()
-    return user ? children : <Navigate to='/' />
+  const { user } = useAuth()
+  return user ? children : <Navigate to='/' />
 }
 
 export default function AppRoutes() {
-    return (
-        <Routes>
-            <Route path='/' element={<Home />} />
-            <Route path='/register' element={<Register />} />
-            <Route path='/checkout' element={<Private><div>Checkout</div></Private>} />
-            <Route path="/best" element={<Best />} />
-        </Routes>
-    )
+  return (
+    <Routes>
+      <Route path='/' element={<Home />} />
+      <Route path='/register' element={<Register />} />
+      <Route path='/new' element={<div>New Arrivals Placeholder</div>} />
+      <Route path='/shop' element={<div>Shop All Placeholder</div>} />
+      <Route path='/checkout' element={<Private><div>Checkout</div></Private>} />
+      <Route path="/best" element={<Best />} />
+      <Route path="/product/:id" element={<div>Product Detail Placeholder</div>} />
+      <Route path="/collection" element={<div>Collection Placeholder</div>} />
+    </Routes>
+  )
 }

@@ -8,49 +8,49 @@
 //   { label: "Q&A", href: "#" },
 // ];
 
-import { useState } from "react";
-import { FlyoutLink } from "../DropdownLanguage/DropdownLanguage";
-import angleDownIcon from "~/assets/FAIcon/angle-down-solid-full.svg";
-import { Link } from "react-router-dom";
+import React, { useState } from 'react'
+import { FlyoutLink } from '../DropdownLanguage/DropdownLanguage'
+import angleDownIcon from '~/assets/FAIcon/angle-down-solid-full.svg'
+import { Link } from 'react-router-dom'
 
 // 1. For Medal
 export const NavMenuListModal = () => {
   const [activeMenu, setActiveMenu] = useState<
-    "shop" | "legacy" | "community" | null
-  >(null);
+    'shop' | 'legacy' | 'community' | null
+  >(null)
 
   const onFocusShop = () => {
-    setActiveMenu(activeMenu === "shop" ? null : "shop");
-  };
+    setActiveMenu(activeMenu === 'shop' ? null : 'shop')
+  }
 
   const onFocusLegacy = () => {
-    setActiveMenu(activeMenu === "legacy" ? null : "legacy");
-  };
+    setActiveMenu(activeMenu === 'legacy' ? null : 'legacy')
+  }
 
   const onFocusCommunity = () => {
-    setActiveMenu(activeMenu === "community" ? null : "community");
-  };
+    setActiveMenu(activeMenu === 'community' ? null : 'community')
+  }
 
   return (
     <ul className="flex flex-col gap-0">
       <li className="border border-gray-100 px-2 py-2">
-        <a href="">NEW</a>
+        <Link to="/new">NEW</Link>
       </li>
       <li className="border border-gray-100 px-2 py-2">
         <Link to="/best">BEST</Link>
       </li>
       <li className="relative border border-gray-100 px-2 py-2">
-        <a href="" className="">
+        <Link to="/shop" className="">
           SHOP
-        </a>
+        </Link>
         <input
           onClick={onFocusShop}
           type="image"
           src={angleDownIcon}
-          className={`w-5 h-5 absolute inset-0 translate-y-1/3 translate-x-40 z-20 transition-transform duration-300 ease-linear ${activeMenu === "shop" ? "rotate-180" : "rotate-0"}`}
+          className={`w-5 h-5 absolute inset-0 translate-y-1/3 translate-x-40 z-20 transition-transform duration-300 ease-linear ${activeMenu === 'shop' ? 'rotate-180' : 'rotate-0'}`}
         />
       </li>
-      {activeMenu === 'shop' || true ? (
+      {activeMenu === 'shop' ? (
         <li className="w-full">
           <ShopExpand active={activeMenu === 'shop'} />
         </li>
@@ -63,10 +63,10 @@ export const NavMenuListModal = () => {
           onClick={onFocusLegacy}
           type="image"
           src={angleDownIcon}
-          className={`w-5 h-5 absolute inset-0 translate-y-1/3 translate-x-40 z-20 transition-transform duration-300 ${activeMenu === "legacy" ? "rotate-180" : "rotate-0"}`}
+          className={`w-5 h-5 absolute inset-0 translate-y-1/3 translate-x-40 z-20 transition-transform duration-300 ${activeMenu === 'legacy' ? 'rotate-180' : 'rotate-0'}`}
         />
       </li>
-      {activeMenu === 'legacy' || true ? (
+      {activeMenu === 'legacy' ? (
         <li className="w-full">
           <LegacyExpand active={activeMenu === 'legacy'} />
         </li>
@@ -79,10 +79,10 @@ export const NavMenuListModal = () => {
           onClick={onFocusCommunity}
           type="image"
           src={angleDownIcon}
-          className={`w-5 h-5 absolute inset-0 translate-y-1/3 translate-x-40 z-20 transition-transform duration-300 ${activeMenu === "community" ? "rotate-180" : "rotate-0"}`}
+          className={`w-5 h-5 absolute inset-0 translate-y-1/3 translate-x-40 z-20 transition-transform duration-300 ${activeMenu === 'community' ? 'rotate-180' : 'rotate-0'}`}
         />
       </li>
-      {activeMenu === 'community' || true ? (
+      {activeMenu === 'community' ? (
         <li className="w-full">
           <CommunityExpand active={activeMenu === 'community'} />
         </li>
@@ -91,8 +91,8 @@ export const NavMenuListModal = () => {
         <a href="">Q&A</a>
       </li>
     </ul>
-  );
-};
+  )
+}
 
 const ShopExpand = ({ active }: { active: boolean }) => {
   return (
@@ -146,7 +146,7 @@ export const NavMenuListMedium = () => {
   return (
     <ul className="flex flex-row gap-[3vw]">
       <li>
-        <a href="" className="hover:text-t1-red transition-colors cursor-pointer">NEW</a>
+        <Link to="/new" className="hover:text-t1-red transition-colors cursor-pointer">NEW</Link>
       </li>
       <li>
         <Link to="/best" className="hover:text-t1-red transition-colors cursor-pointer">BEST</Link>
@@ -164,12 +164,12 @@ export const NavMenuListMedium = () => {
         <a href="" className="hover:text-t1-red transition-colors cursor-pointer">Q&A</a>
       </li>
     </ul>
-  );
-};
+  )
+}
 
 const DropdownItem = ({
   title,
-  content,
+  content
 }: {
   title: string;
   content: React.ComponentType;
@@ -182,20 +182,20 @@ const DropdownItem = ({
         </div>
       </FlyoutLink>
     </div>
-  );
-};
+  )
+}
 
 const ShopContent = () => {
   return (
     <div className='w-48 bg-[#111111]/95 backdrop-blur-md shadow-2xl border-t-[3px] border-t-t1-red p-5 flex flex-col gap-3'>
-      <a href="" className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white hover:translate-x-1 transition-all'>ALL</a>
+      <Link to="/shop" className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white hover:translate-x-1 transition-all'>ALL</Link>
       <a href="" className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white hover:translate-x-1 transition-all'>TEAM KIT</a>
       <a href="" className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white hover:translate-x-1 transition-all'>COLLECTION</a>
       <a href="" className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white hover:translate-x-1 transition-all'>COLLABORATION</a>
       <a href="" className='block text-xs font-inter tracking-widest text-t1-red hover:text-red-500 hover:translate-x-1 transition-all'>SALE</a>
     </div>
-  );
-};
+  )
+}
 
 const LegacyContent = () => {
   return (
@@ -206,8 +206,8 @@ const LegacyContent = () => {
       <a href="" className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white hover:translate-x-1 transition-all'>APPAREL</a>
       <a href="" className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white hover:translate-x-1 transition-all'>GIFT & ACCESSORIES</a>
     </div>
-  );
-};
+  )
+}
 
 const CommunityContent = () => {
   return (
@@ -217,5 +217,5 @@ const CommunityContent = () => {
       <a href="" className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white hover:translate-x-1 transition-all'>EVENT</a>
       <a href="" className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white hover:translate-x-1 transition-all'>FAQ</a>
     </div>
-  );
-};
+  )
+}

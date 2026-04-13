@@ -1,13 +1,12 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import LoginModal from '~/components/Modals/LoginModal';
-import { useAuth } from '~/hooks/useAuth';
-import { Link } from "react-router-dom";
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import LoginModal from '~/components/Modals/LoginModal'
+import { useAuth } from '~/hooks/useAuth'
 
 function Banner() {
-  const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  const [isLoginOpen, setIsLoginOpen] = useState(false)
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
 
   return (
     <>
@@ -23,7 +22,7 @@ function Banner() {
             <>
               <button className="hover:text-white transition-colors" onClick={() => navigate('/my-page')}>MY PAGE</button>
               <span>/</span>
-              <button className="hover:text-[#e2012d] transition-colors" onClick={() => { logout(); navigate('/'); }}>LOGOUT</button>
+              <button className="hover:text-[#e2012d] transition-colors" onClick={() => { logout(); navigate('/') }}>LOGOUT</button>
             </>
           ) : (
             <>
