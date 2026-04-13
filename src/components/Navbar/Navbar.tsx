@@ -24,13 +24,13 @@ function Navbar({ setOpenNav }: NavbarProps) {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
+  const navBgClass = isTop
+    ? 'bg-black/20 backdrop-blur-sm border-white/5'
+    : 'bg-[#111111]/80 backdrop-blur-xl border-[#333]'
+
   return (
     <nav className={'text-t1-text fixed top-8 w-screen z-50 transition-all duration-300 font-oswald text-lg tracking-wider'}>
-      <div className={`flex justify-between items-center h-[60px] md:h-[70px] px-4 md:px-8 border-b transition-all duration-500 ${
-        isTop
-          ? 'bg-black/20 backdrop-blur-sm border-white/5'
-          : 'bg-[#111111]/80 backdrop-blur-xl border-[#333]'
-      }`}>
+      <div className={`flex justify-between items-center h-[60px] md:h-[70px] px-4 md:px-8 border-b transition-all duration-500 ${navBgClass}`}>
 
         <div className='lg:hidden'>
           <input onClick={() => setOpenNav(true)} type="image" src={menuIcon} className='w-5 h-5 filter invert' />

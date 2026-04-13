@@ -18,6 +18,7 @@ import { combinedProducts } from '~/data/products'
 import { ProductCard } from '~/components/Product/ProductCard'
 import Layout from '~/components/layout/Layout'
 import Footer from '~/components/layout/Footer'
+import { sizes } from '~/data/productDetailData'
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>()
@@ -74,8 +75,6 @@ export default function ProductDetail() {
     }, quantity)
     setTimeout(() => setIsAdded(false), 2000)
   }
-
-  const sizes = ['S', 'M', 'L', 'XL', 'XXL']
 
   return (
     <Layout footer={<Footer />} bleed={true}>
@@ -155,7 +154,7 @@ export default function ProductDetail() {
                   <button className="text-[10px] font-inter text-t1-red hover:underline uppercase tracking-widest">Size Guide</button>
                 </div>
                 <div className="flex flex-wrap gap-3">
-                  {sizes.map((size) => (
+                  {sizes.map((size: string) => (
                     <button
                       key={size}
                       onClick={() => setSelectedSize(size)}

@@ -10,13 +10,7 @@ import 'swiper/css/free-mode'
 import 'swiper/css/scrollbar'
 import UniformProductCard from './UniformProductCard'
 
-const DUMMY_PRODUCTS = [
-  { name: '[LoL] 2026 DIY Marking Kit', price: '$10.00', imageUrl: 'https://i.pinimg.com/736x/8a/6d/a4/8a6da44fd555cdef4768b409557d5022.jpg' },
-  { name: '[LoL] 2026 Uniform Jacket', price: '$160.00', imageUrl: 'https://i.pinimg.com/736x/6b/09/e9/6b09e91287d1010f3c16e889d5b9f66d.jpg' },
-  { name: '[LoL] 2026 Uniform Jersey', price: '$113.00', imageUrl: 'https://i.pinimg.com/736x/8a/6d/a4/8a6da44fd555cdef4768b409557d5022.jpg' },
-  { name: '[VAL] 2026 DIY Marking Kit', price: '$10.00', imageUrl: 'https://i.pinimg.com/736x/6b/09/e9/6b09e91287d1010f3c16e889d5b9f66d.jpg' },
-  { name: '2026 Uniform Pants', price: '$88.00', imageUrl: 'https://i.pinimg.com/736x/8a/6d/a4/8a6da44fd555cdef4768b409557d5022.jpg' }
-]
+import { DUMMY_PRODUCTS } from '~/data/homeData'
 
 export const UniformSlider = () => {
   return (
