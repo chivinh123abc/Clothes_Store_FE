@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth'
 import Home from '../pages/Home/Home'
 import Register from '../pages/Register'
 import Best from '../pages/Best/Best'
+import Community from '../pages/Community/Community' // 1. Import trang Community vào đây
 
 const Private = ({ children }: { children: React.ReactElement }) => {
   const { user } = useAuth()
@@ -21,6 +22,7 @@ export default function AppRoutes() {
       <Route path="/best" element={<Best />} />
       <Route path="/product/:id" element={<div>Product Detail Placeholder</div>} />
       <Route path="/collection" element={<div>Collection Placeholder</div>} />
-    </Routes>
+      <Route path='/community' element={<Community />} /> 
+   </Routes>
   )
 }

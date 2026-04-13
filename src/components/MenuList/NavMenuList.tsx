@@ -131,10 +131,11 @@ const CommunityExpand = ({ active }: { active: boolean }) => {
     <div className={`grid transition-all duration-300 ease-in-out ${active ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
       <div className="overflow-hidden">
         <ul className="font-light bg-gray-50 pl-4 py-2 flex flex-col gap-2">
-          <li><a href="" className="hover:text-t1-red transition-colors">NOTICE</a></li>
-          <li><a href="" className="hover:text-t1-red transition-colors">REVIEW</a></li>
-          <li><a href="" className="hover:text-t1-red transition-colors">EVENT</a></li>
-          <li><a href="" className="hover:text-t1-red transition-colors">FAQ</a></li>
+          {/* Thay <a> bằng <Link> và thêm đường dẫn tab */}
+          <li><Link to="/community?tab=NOTICE" className="hover:text-t1-red transition-colors">NOTICE</Link></li>
+          <li><Link to="/community?tab=REVIEW" className="hover:text-t1-red transition-colors">REVIEW</Link></li>
+          <li><Link to="/community?tab=EVENT" className="hover:text-t1-red transition-colors">EVENT</Link></li>
+          <li><Link to="/community?tab=FAQ" className="hover:text-t1-red transition-colors">FAQ</Link></li>
         </ul>
       </div>
     </div>
@@ -212,10 +213,10 @@ const LegacyContent = () => {
 const CommunityContent = () => {
   return (
     <div className='w-40 bg-[#111111]/95 backdrop-blur-md shadow-2xl border-t-[3px] border-t-t1-red p-5 flex flex-col gap-3'>
-      <a href="" className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white hover:translate-x-1 transition-all'>NOTICE</a>
-      <a href="" className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white hover:translate-x-1 transition-all'>REVIEW</a>
-      <a href="" className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white hover:translate-x-1 transition-all'>EVENT</a>
-      <a href="" className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white hover:translate-x-1 transition-all'>FAQ</a>
+      <Link to="/community?tab=NOTICE" className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white hover:translate-x-1 transition-all'>NOTICE</Link>
+      <Link to="/community?tab=REVIEW" className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white hover:translate-x-1 transition-all'>REVIEW</Link>
+      <Link to="/community?tab=EVENT" className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white hover:translate-x-1 transition-all'>EVENT</Link>
+      <Link to="/community?tab=FAQ" className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white hover:translate-x-1 transition-all'>FAQ</Link>
     </div>
   )
 }
