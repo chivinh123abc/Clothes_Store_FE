@@ -15,7 +15,7 @@ function Banner() {
           <p>GLOBAL / USD</p>
         </div>
         <div className='font-oswald tracking-[0.2em] text-[#e2012d] font-bold uppercase'>
-          FREE SHIPPING ON ORDERS OVER $150
+          JUST DO IT
         </div>
         <div className='space-x-3 hidden sm:flex items-center opacity-80'>
           {user ? (

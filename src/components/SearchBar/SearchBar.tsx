@@ -1,11 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 
-const data = [
-  { num: '1', text: 'Quan GENG' },
-  { num: '2', text: 'Ao T1' },
-  { num: '3', text: 'Giay HLE' },
-  { num: '4', text: 'Tat KT' }
-]
+import { searchSuggestions as data } from '~/data/searchData'
 
 export default function SearchBar() {
   const [isFocused, setIsFocused] = useState(false)

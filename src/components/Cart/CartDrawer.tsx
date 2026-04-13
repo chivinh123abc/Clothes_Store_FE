@@ -83,7 +83,7 @@ function CartDrawer({ open, onClose }: CartDrawerProps) {
                             <p className='font-incosolata font-bold text-t1-red text-sm'>${item.price.toFixed(2)}</p>
                             <span className="text-[10px] bg-t1-gray/20 text-gray-400 px-2 py-0.5 font-oswald font-bold tracking-widest border border-t1-gray/10 uppercase">SIZE: {item.size}</span>
                           </div>
-                          
+
                           {/* Quantity Controls */}
                           <div className='mt-auto flex items-center justify-between'>
                             <div className='flex items-center gap-3 bg-t1-dark border border-t1-gray/30 w-fit px-2 py-1'>
