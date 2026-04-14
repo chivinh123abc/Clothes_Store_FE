@@ -18,11 +18,9 @@ const OfflineShopSection = () => {
               <button
                 key={shop.id}
                 onClick={() => setActiveShop(shop)}
-                className={`px-8 py-3 font-oswald font-bold tracking-widest uppercase transition-all duration-300 border ${
-                  activeShop.id === shop.id
-                    ? 'bg-t1-red border-t1-red text-white shadow-[0_0_20px_rgba(226,1,45,0.3)]'
-                    : 'bg-transparent border-white/10 text-white/50 hover:text-white hover:border-white/30'
-                }`}
+                className={`px-8 py-3 font-oswald font-bold tracking-widest uppercase transition-all duration-300 border ${activeShop.id === shop.id
+                  ? 'bg-t1-red border-t1-red text-white shadow-[0_0_20px_rgba(226,1,45,0.3)]'
+                  : 'bg-transparent border-white/10 text-white/50 hover:text-white hover:border-white/30'}`}
               >
                 {shop.name}
               </button>

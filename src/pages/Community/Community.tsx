@@ -69,7 +69,7 @@ function Community() {
               key={tab}
               onClick={() => handleTabChange(tab)}
               className={`relative py-5 font-oswald text-sm md:text-xl tracking-widest font-bold transition-all duration-300 px-4 ${activeTab === tab ? 'text-white' : 'text-gray-500 hover:text-gray-300'
-                }`}
+              }`}
             >
               {tab === 'QA' ? 'Q&A' : tab}
               {activeTab === tab && (
@@ -199,7 +199,7 @@ function Community() {
                       <span className={`px-4 py-1.5 font-oswald text-xs tracking-[0.3em] border ${event.status === 'ONGOING'
                         ? 'border-t1-red text-t1-red bg-t1-red/10 shadow-[0_0_15px_rgba(226,1,45,0.3)]'
                         : 'border-white/30 text-white/60'
-                        }`}>
+                      }`}>
                         {event.status}
                       </span>
                       <span className='text-gray-500 font-inter text-xs tracking-widest'>Ends: {event.end}</span>
@@ -246,7 +246,7 @@ function Community() {
                         className={`px-4 py-1.5 text-[10px] font-oswald font-bold tracking-widest transition-all duration-300 ${activeCategory === cat
                           ? 'bg-t1-red text-white shadow-[0_0_15px_rgba(226,1,45,0.4)]'
                           : 'bg-white/5 text-gray-500 hover:text-white hover:bg-white/10'
-                          }`}
+                        }`}
                       >
                         {cat}
                       </button>
@@ -391,7 +391,7 @@ function Community() {
                           <div className='flex items-center gap-3 transition-all duration-300'>
                             {item.isSecret && <Lock size={14} className='text-t1-red shrink-0' />}
                             <h4 className={`font-oswald text-lg md:text-xl font-bold uppercase tracking-tight ${openFaqId === item.id ? 'text-white' : 'text-gray-400 group-hover:text-gray-200'
-                              }`}>
+                            }`}>
                               {item.isSecret ? Array(25).fill('•').join('') : item.question}
                             </h4>
                           </div>
@@ -447,10 +447,10 @@ function Community() {
                 (item.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
                   item.category.toLowerCase().includes(searchQuery.toLowerCase()))
               ).length === 0 && (
-                  <div className='py-20 text-center border border-white/5 bg-[#161616]'>
-                    <p className='font-oswald text-gray-600 tracking-[0.3em] font-bold uppercase'>NO RESULTS FOUND</p>
-                  </div>
-                )}
+                <div className='py-20 text-center border border-white/5 bg-[#161616]'>
+                  <p className='font-oswald text-gray-600 tracking-[0.3em] font-bold uppercase'>NO RESULTS FOUND</p>
+                </div>
+              )}
             </motion.div>
           )}
 

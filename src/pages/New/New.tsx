@@ -10,7 +10,7 @@ function New() {
 
   return (
     <Layout footer={<Footer />} bleed={true}>
-      <div className='pt-32 pb-20'>
+      <div className='pb-20'>
         <ProductList filter='new' />
       </div>
     </Layout>

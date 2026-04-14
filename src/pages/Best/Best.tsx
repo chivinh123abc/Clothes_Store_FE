@@ -10,7 +10,7 @@ function Best() {
 
   return (
     <Layout footer={<Footer />} bleed={true}>
-      <div className='pt-32 pb-20'>
+      <div className='pb-20'>
         <ProductList filter='best' />
       </div>
     </Layout>

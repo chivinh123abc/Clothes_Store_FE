@@ -84,6 +84,8 @@ export const generateMockProducts = (count: number): Product[] => {
     ]
   }
   const items: Product[] = []
+  const sizeOptions = ['S', 'M', 'L', 'XL']
+  const colorOptions = ['Black', 'White', 'Gray', 'Red', 'Beige']
 
   for (let i = 0; i < count; i++) {
     const category = categories[i % categories.length]
@@ -98,7 +100,9 @@ export const generateMockProducts = (count: number): Product[] => {
       bestseller: Math.random() > 0.85,
       createdAt: new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000).toISOString(),
       soldOut: Math.random() > 0.9,
-      description: 'Premium quality merchandise designed for elite performance. Featuring breathable fabrics and the iconic T1 logo, this piece is built for comfort and style, whether you are on stage or on the streets.'
+      description: 'Premium quality merchandise designed for elite performance. Featuring breathable fabrics and the iconic T1 logo, this piece is built for comfort and style, whether you are on stage or on the streets.',
+      sizes: sizeOptions.slice(0, Math.floor(Math.random() * 4) + 1),
+      colors: colorOptions.slice(0, Math.floor(Math.random() * 3) + 1)
     })
   }
   return items
