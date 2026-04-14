@@ -24,6 +24,7 @@ export default function AppRoutes() {
       <Route path='/register' element={<Register />} />
       <Route path='/new' element={<New />} />
       <Route path='/shop' element={<Shop />} />
+      <Route path='/shop/*' element={<Shop />} />
       <Route path='/checkout' element={
         <Private>
           <Layout footer={<Footer />}>

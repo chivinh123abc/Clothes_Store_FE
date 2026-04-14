@@ -9,4 +9,6 @@ export type Product = {
   createdAt: string;
   soldOut: boolean;
   description?: string;
+  sizes?: string[];
+  colors?: string[];
 }

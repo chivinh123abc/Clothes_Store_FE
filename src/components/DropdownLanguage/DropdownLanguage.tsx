@@ -27,7 +27,7 @@ export const FlyoutLink = ({ children, href, FlyoutContent }: { children: React.
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
     >
-      <Link to={href} className='relative z-10 text-inherit transition-colors group-hover:text-t1-red cursor-pointer'>
+      <Link to={href} className='relative z-[60] text-inherit transition-colors group-hover:text-t1-red cursor-pointer'>
         {children}
       </Link>
 

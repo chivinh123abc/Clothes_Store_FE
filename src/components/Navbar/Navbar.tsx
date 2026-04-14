@@ -8,6 +8,8 @@ import { NavMenuListMedium } from '../MenuList/NavMenuList'
 import heartIcon from '~/assets/SearchBar/heart.png'
 import menuIcon from '~/assets/Navbar/menu.png'
 
+import { motion } from 'framer-motion'
+
 interface NavbarProps {
   setOpenNav: Dispatch<SetStateAction<boolean>>;
 }
@@ -24,13 +26,29 @@ function Navbar({ setOpenNav }: NavbarProps) {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  const navBgClass = isTop
-    ? 'bg-black/20 backdrop-blur-sm border-white/5'
-    : 'bg-[#111111]/80 backdrop-blur-xl border-[#333]'
-
   return (
-    <nav className={'text-t1-text fixed top-8 w-screen z-50 transition-all duration-300 font-oswald text-lg tracking-wider'}>
-      <div className={`flex justify-between items-center h-[60px] md:h-[70px] px-4 md:px-8 border-b transition-all duration-500 ${navBgClass}`}>
+    <motion.nav
+      initial={false}
+      animate={{
+        top: 24,
+        width: '100%'
+      }}
+      transition={{ duration: 0.1 }}
+      className="text-t1-text fixed z-50 font-oswald text-lg tracking-wider"
+    >
+      <motion.div
+        animate={{
+          height: 70,
+          backgroundColor: isTop ? 'rgba(17, 17, 17, 0)' : 'rgba(17, 17, 17, 0.95)',
+          backdropFilter: isTop ? 'blur(0px)' : 'blur(70px)',
+          borderColor: 'transparent',
+          borderRadius: 0,
+          paddingLeft: 24,
+          paddingRight: 24
+        }}
+        transition={{ duration: 0.4 }}
+        className="flex justify-between items-center w-full border-b transition-colors"
+      >
 
         <div className='lg:hidden'>
           <input onClick={() => setOpenNav(true)} type="image" src={menuIcon} className='w-5 h-5 filter invert' />
@@ -56,10 +74,10 @@ function Navbar({ setOpenNav }: NavbarProps) {
             <DropdownLanguage />
           </div>
         </div>
-      </div>
+      </motion.div>
 
       <CartDrawer open={isCartOpen} onClose={() => setIsCartOpen(false)} />
-    </nav>
+    </motion.nav>
   )
 }
 
