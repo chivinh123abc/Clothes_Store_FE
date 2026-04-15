@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { SHOPS } from '~/data/shopData'
+import { useLanguage } from '~/contexts/LanguageContext'
 
 const OfflineShopSection = () => {
+  const { t } = useLanguage()
   const [activeShop, setActiveShop] = useState(SHOPS[0])
 
   return (
@@ -10,7 +12,7 @@ const OfflineShopSection = () => {
       <div className="px-4 md:px-10 lg:px-20 mx-auto max-w-[1600px]">
         <div className="flex flex-col items-center mb-16">
           <h2 className="font-oswald text-4xl font-black text-white uppercase tracking-widest italic mb-8">
-            Offline Shop
+            {t('home.offlineTitle')}
           </h2>
 
           <div className="flex gap-4">
@@ -55,15 +57,15 @@ const OfflineShopSection = () => {
                 <h3 className="font-oswald text-4xl font-black text-white mb-6 uppercase tracking-tight">{activeShop.name}</h3>
                 <div className="space-y-4 font-inter text-xs text-gray-300">
                   <div className="flex gap-3">
-                    <span className="text-t1-red font-bold uppercase w-16">Address</span>
+                    <span className="text-t1-red font-bold uppercase w-16">{t('profile.location')}</span>
                     <span className="flex-1 opacity-80">{activeShop.address}</span>
                   </div>
                   <div className="flex gap-3">
-                    <span className="text-t1-red font-bold uppercase w-16">Phone</span>
+                    <span className="text-t1-red font-bold uppercase w-16">{t('profile.phone')}</span>
                     <span className="flex-1 opacity-80">{activeShop.phone}</span>
                   </div>
                   <div className="flex gap-3">
-                    <span className="text-t1-red font-bold uppercase w-16">Hours</span>
+                    <span className="text-t1-red font-bold uppercase w-16">{t('footer.hours')}</span>
                     <span className="flex-1 opacity-80">{activeShop.hours}</span>
                   </div>
                 </div>

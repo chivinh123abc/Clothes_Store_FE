@@ -10,11 +10,13 @@ import {
   Clock,
   Edit3,
   Filter,
-  MessageSquare
+  MessageSquare,
+  Package
 } from 'lucide-react'
 import Layout from '~/components/layout/Layout'
 import Footer from '~/components/layout/Footer'
 import BGImage from '~/assets/Background/first_bg_img.jpg'
+import { useLanguage } from '~/contexts/LanguageContext'
 
 import {
   notices,
@@ -26,6 +28,7 @@ import {
 const tabList = ['NOTICE', 'REVIEW', 'EVENT', 'QA']
 
 function Community() {
+  const { t } = useLanguage()
   const [searchParams, setSearchParams] = useSearchParams()
   const tabFromUrl = searchParams.get('tab')?.toUpperCase() || 'NOTICE'
   const [activeTab, setActiveTab] = useState(tabFromUrl)
@@ -52,26 +55,25 @@ function Community() {
         <div className='absolute inset-0 bg-gradient-to-t from-t1-dark via-black/40 to-transparent' />
         <div className='absolute inset-0 flex flex-col items-center justify-center'>
           <h1 className='font-oswald font-black text-6xl md:text-8xl uppercase tracking-widest text-white italic drop-shadow-2xl'>
-            COMMUNITY
+            {t('nav.community')}
           </h1>
           <div className='w-20 h-1 bg-t1-red mt-4' />
           <p className='text-gray-400 font-inter text-sm tracking-widest mt-4 uppercase'>
-            Notice · Review · Event · FAQ
+            {t('community.heroSub')}
           </p>
         </div>
       </div>
 
       {/* Tab Navigation */}
-      <div className='sticky top-[102px] z-40 bg-t1-dark/90 backdrop-blur-xl border-b border-white/5'>
+      <div className='sticky top-[94px] z-40 bg-t1-dark/95 backdrop-blur-xl border-b border-white/5'>
         <div className='flex justify-center gap-2 md:gap-8 px-4 max-w-6xl mx-auto'>
           {tabList.map((tab) => (
             <button
               key={tab}
               onClick={() => handleTabChange(tab)}
-              className={`relative py-5 font-oswald text-sm md:text-xl tracking-widest font-bold transition-all duration-300 px-4 ${activeTab === tab ? 'text-white' : 'text-gray-500 hover:text-gray-300'
-              }`}
+              className={`relative py-5 font-oswald text-sm md:text-xl tracking-widest font-bold transition-all duration-300 px-4 ${activeTab === tab ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}
             >
-              {tab === 'QA' ? 'Q&A' : tab}
+              {tab === 'QA' ? 'Q&A' : t(`nav.${tab.toLowerCase()}`)}
               {activeTab === tab && (
                 <motion.span
                   layoutId='tab-underline'
@@ -98,23 +100,36 @@ function Community() {
             >
               <div className='bg-[#161616] border border-white/5 shadow-2xl overflow-hidden'>
                 {/* Pinned notice */}
-                {notices.filter(n => n.pinned).map(notice => (
-                  <div key={notice.id} className='flex items-center gap-4 px-6 py-4 bg-t1-red/10 border-b border-t1-red/20'>
-                    <span className='text-[10px] font-oswald font-bold text-t1-red border border-t1-red px-2 py-0.5 tracking-widest shrink-0'>📌 PINNED</span>
-                    <p className='font-oswald font-bold text-white tracking-wide truncate'>{notice.title}</p>
-                    <span className='text-gray-500 text-xs ml-auto shrink-0 hidden md:block'>{notice.date}</span>
-                  </div>
-                ))}
                 <table className='w-full text-left border-collapse'>
                   <thead>
                     <tr className='border-b border-white/5 text-xs text-gray-500 font-inter uppercase tracking-widest'>
-                      <th className='py-4 px-6 w-20 hidden md:table-cell'>No.</th>
-                      <th className='py-4 px-6'>Title</th>
-                      <th className='py-4 px-6 w-28 hidden md:table-cell text-center'>Author</th>
-                      <th className='py-4 px-6 w-32 text-right'>Date</th>
+                      <th className='py-4 px-6 w-20 hidden md:table-cell'>{t('community.no')}</th>
+                      <th className='py-4 px-6'>{t('community.subject')}</th>
+                      <th className='py-4 px-6 w-28 hidden md:table-cell text-center'>{t('community.author')}</th>
+                      <th className='py-4 px-6 w-32 text-right'>{t('community.date')}</th>
                     </tr>
                   </thead>
                   <tbody>
+                    {/* Pinned Notices */}
+                    {notices.filter(n => n.pinned).map(notice => (
+                      <tr
+                        key={notice.id}
+                        className='bg-t1-red/10 border-b border-t1-red/20 hover:bg-t1-red/15 transition-colors duration-200 cursor-pointer group'
+                      >
+                        <td className='py-4 px-6 hidden md:table-cell text-center'>
+                          <span className='text-t1-red'><Package size={14} className='inline' /></span>
+                        </td>
+                        <td className='py-4 px-6'>
+                          <div className='flex items-center gap-3'>
+                            <span className='text-[9px] font-oswald font-bold text-t1-red border border-t1-red px-1.5 py-0.5 tracking-widest shrink-0'>{t('community.pinned')}</span>
+                            <span className='font-oswald font-bold text-white tracking-wide truncate group-hover:text-t1-red transition-colors'>{notice.title}</span>
+                          </div>
+                        </td>
+                        <td className='py-4 px-6 text-xs text-gray-400 hidden md:table-cell text-center'>{notice.author}</td>
+                        <td className='py-4 px-6 text-xs text-gray-400 text-right font-inter'>{notice.date}</td>
+                      </tr>
+                    ))}
+                    {/* Regular Notices */}
                     {notices.filter(n => !n.pinned).map((notice, index) => (
                       <tr
                         key={notice.id}
@@ -151,7 +166,7 @@ function Community() {
                   className='bg-[#161616] p-8 border border-white/5 shadow-xl group hover:border-t1-red/40 transition-all duration-300 relative flex flex-col'
                 >
                   <div className='absolute top-0 right-0 bg-t1-red text-white text-[9px] font-oswald px-3 py-1 tracking-widest'>
-                    VERIFIED
+                    {t('community.verified')}
                   </div>
                   <div className='flex gap-0.5 mb-5 text-t1-red text-lg'>
                     {'★'.repeat(review.rating)}
@@ -198,11 +213,10 @@ function Community() {
                     <div className='flex items-center gap-4 mb-6'>
                       <span className={`px-4 py-1.5 font-oswald text-xs tracking-[0.3em] border ${event.status === 'ONGOING'
                         ? 'border-t1-red text-t1-red bg-t1-red/10 shadow-[0_0_15px_rgba(226,1,45,0.3)]'
-                        : 'border-white/30 text-white/60'
-                      }`}>
-                        {event.status}
+                        : 'border-white/30 text-white/60'}`}>
+                        {event.status === 'ONGOING' ? t('community.ongoing') : t('community.ended')}
                       </span>
-                      <span className='text-gray-500 font-inter text-xs tracking-widest'>Ends: {event.end}</span>
+                      <span className='text-gray-500 font-inter text-xs tracking-widest'>{t('community.ends')} {event.end}</span>
                     </div>
                     <h2 className='font-oswald text-4xl md:text-6xl font-black tracking-tight text-white uppercase italic mb-4 leading-none'>
                       {event.title}
@@ -212,7 +226,7 @@ function Community() {
                     </p>
                     <div>
                       <button className='font-oswald font-bold text-sm tracking-[0.3em] uppercase px-10 py-3 border border-white text-white hover:bg-white hover:text-t1-dark transition-all duration-300'>
-                        VIEW DETAIL →
+                        {t('community.viewDetail')} →
                       </button>
                     </div>
                   </div>
@@ -236,7 +250,7 @@ function Community() {
                 <div className='w-full lg:w-auto space-y-4'>
                   <div className='flex items-center gap-2 text-gray-400 mb-2'>
                     <Filter size={14} />
-                    <span className='text-[10px] font-oswald font-bold uppercase tracking-widest'>Filter by Category</span>
+                    <span className='text-[10px] font-oswald font-bold uppercase tracking-widest'>{t('community.filterBy')}</span>
                   </div>
                   <div className='flex flex-wrap gap-2'>
                     {['ALL', 'DELIVERY', 'PRODUCT', 'PAYMENT', 'ORDER'].map((cat) => (
@@ -245,10 +259,9 @@ function Community() {
                         onClick={() => setActiveCategory(cat)}
                         className={`px-4 py-1.5 text-[10px] font-oswald font-bold tracking-widest transition-all duration-300 ${activeCategory === cat
                           ? 'bg-t1-red text-white shadow-[0_0_15px_rgba(226,1,45,0.4)]'
-                          : 'bg-white/5 text-gray-500 hover:text-white hover:bg-white/10'
-                        }`}
+                          : 'bg-white/5 text-gray-500 hover:text-white hover:bg-white/10'}`}
                       >
-                        {cat}
+                        {cat === 'ALL' ? t('nav.all') : t(`nav.${cat.toLowerCase()}`)}
                       </button>
                     ))}
                   </div>
@@ -259,7 +272,7 @@ function Community() {
                     <Search className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within:text-t1-red transition-colors' size={16} />
                     <input
                       type="text"
-                      placeholder="SEARCH Q&A..."
+                      placeholder={t('community.searchQA')}
                       className='w-full bg-black border border-white/10 py-3 pl-10 pr-4 text-xs font-inter text-white outline-none focus:border-t1-red transition-all'
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
@@ -270,7 +283,7 @@ function Community() {
                     className='bg-white text-black font-oswald font-black text-xs tracking-[0.2em] px-6 py-3 flex items-center justify-center gap-2 hover:bg-t1-red hover:text-white transition-all transform hover:-translate-y-0.5 whitespace-nowrap'
                   >
                     <Edit3 size={14} />
-                    ASK A QUESTION
+                    {t('community.askQuestion')}
                   </button>
                 </div>
               </div>
@@ -288,49 +301,49 @@ function Community() {
                       <div className='absolute top-0 left-0 w-full h-[2px] bg-t1-red' />
                       <h3 className='font-oswald font-black text-2xl text-white italic uppercase tracking-wider mb-8 flex items-center gap-3'>
                         <MessageSquare className='text-t1-red' size={24} />
-                        WRITE A QUESTION
+                        {t('community.writeQuestion')}
                       </h3>
 
                       <div className='grid grid-cols-1 md:grid-cols-2 gap-8 mb-8'>
                         <div className='space-y-2'>
-                          <label className='block text-[10px] font-oswald font-bold text-gray-500 tracking-widest uppercase'>Category</label>
+                          <label className='block text-[10px] font-oswald font-bold text-gray-500 tracking-widest uppercase'>{t('community.category')}</label>
                           <select className='w-full bg-black border border-white/10 py-4 px-4 text-sm text-white focus:border-t1-red outline-none transition-all'>
-                            <option>PRODUCT ENQUIRY</option>
-                            <option>DELIVERY STATUS</option>
-                            <option>PAYMENT ISSUES</option>
-                            <option>RETURN & EXCHANGE</option>
-                            <option>OTHERS</option>
+                            <option>{t('nav.product')}</option>
+                            <option>{t('nav.delivery')}</option>
+                            <option>{t('nav.payment')}</option>
+                            <option>{t('nav.order')}</option>
+                            <option>{t('community.others')}</option>
                           </select>
                         </div>
                         <div className='space-y-2'>
-                          <label className='block text-[10px] font-oswald font-bold text-gray-500 tracking-widest uppercase'>Public / Secret</label>
+                          <label className='block text-[10px] font-oswald font-bold text-gray-500 tracking-widest uppercase'>{t('community.public')} / {t('community.secret')}</label>
                           <div className='flex items-center gap-6 h-[54px]'>
                             <label className='flex items-center gap-2 cursor-pointer group'>
                               <input type="radio" name="secret" defaultChecked className='accent-t1-red w-4 h-4' />
-                              <span className='text-xs text-gray-300 group-hover:text-white transition-colors'>PUBLIC</span>
+                              <span className='text-xs text-gray-300 group-hover:text-white transition-colors'>{t('community.public')}</span>
                             </label>
                             <label className='flex items-center gap-2 cursor-pointer group'>
                               <input type="radio" name="secret" className='accent-t1-red w-4 h-4' />
                               <span className='text-xs text-gray-300 group-hover:text-white transition-colors flex items-center gap-1.5'>
-                                SECRET <Lock size={12} className='text-t1-red' />
+                                {t('community.secret')} <Lock size={12} className='text-t1-red' />
                               </span>
                             </label>
                           </div>
                         </div>
                         <div className='md:col-span-2 space-y-2'>
-                          <label className='block text-[10px] font-oswald font-bold text-gray-500 tracking-widest uppercase'>Subject</label>
+                          <label className='block text-[10px] font-oswald font-bold text-gray-500 tracking-widest uppercase'>{t('community.subject')}</label>
                           <input
                             type="text"
                             className='w-full bg-black border border-white/10 py-4 px-4 text-sm text-white focus:border-t1-red outline-none transition-all'
-                            placeholder="WHAT WOULD YOU LIKE TO ASK?"
+                            placeholder={t('community.subject').toUpperCase()}
                           />
                         </div>
                         <div className='md:col-span-2 space-y-2'>
-                          <label className='block text-[10px] font-oswald font-bold text-gray-500 tracking-widest uppercase'>Content</label>
+                          <label className='block text-[10px] font-oswald font-bold text-gray-500 tracking-widest uppercase'>{t('community.content')}</label>
                           <textarea
                             rows={5}
                             className='w-full bg-black border border-white/10 py-4 px-4 text-sm text-white focus:border-t1-red outline-none transition-all resize-none font-inter placeholder:text-gray-700'
-                            placeholder="PLEASE DESCRIBE YOUR CONCERN IN DETAIL..."
+                            placeholder={t('community.content').toUpperCase()}
                           />
                         </div>
                       </div>
@@ -340,10 +353,10 @@ function Community() {
                           onClick={() => setIsWriting(false)}
                           className='px-8 py-3 font-oswald font-bold text-xs tracking-widest text-gray-500 hover:text-white transition-colors'
                         >
-                          CANCEL
+                          {t('community.cancel')}
                         </button>
                         <button className='px-12 py-3 bg-t1-red text-white font-oswald font-black text-xs tracking-[0.2em] shadow-[0_10px_20px_rgba(226,1,45,0.3)] hover:bg-white hover:text-black transition-all'>
-                          SUBMIT QUESTION
+                          {t('community.submit')}
                         </button>
                       </div>
                     </div>
@@ -375,23 +388,22 @@ function Community() {
                         <div className='flex flex-col md:flex-row md:items-center gap-4 md:gap-10 w-full'>
                           <div className='flex items-center gap-4 min-w-[140px]'>
                             <span className='text-[10px] font-oswald font-bold text-t1-red tracking-widest bg-t1-red/10 px-2 py-0.5 border border-t1-red/20'>
-                              {item.category}
+                              {t(`nav.${item.category.toLowerCase()}`)}
                             </span>
                             {item.status === 'ANSWERED' ? (
                               <span className='flex items-center gap-1.5 text-[9px] font-inter font-bold text-emerald-500 border border-emerald-500/20 px-2 py-0.5 uppercase tracking-tighter'>
-                                <CheckCircle size={10} /> ANSWERED
+                                <CheckCircle size={10} /> {t('status.delivered')}
                               </span>
                             ) : (
                               <span className='flex items-center gap-1.5 text-[9px] font-inter font-bold text-amber-500 border border-amber-500/20 px-2 py-0.5 uppercase tracking-tighter'>
-                                <Clock size={10} /> PENDING
+                                <Clock size={10} /> {t('status.pending')}
                               </span>
                             )}
                           </div>
 
                           <div className='flex items-center gap-3 transition-all duration-300'>
                             {item.isSecret && <Lock size={14} className='text-t1-red shrink-0' />}
-                            <h4 className={`font-oswald text-lg md:text-xl font-bold uppercase tracking-tight ${openFaqId === item.id ? 'text-white' : 'text-gray-400 group-hover:text-gray-200'
-                            }`}>
+                            <h4 className={`font-oswald text-lg md:text-xl font-bold uppercase tracking-tight ${openFaqId === item.id ? 'text-white' : 'text-gray-400 group-hover:text-gray-200'}`}>
                               {item.isSecret ? Array(25).fill('•').join('') : item.question}
                             </h4>
                           </div>
@@ -422,14 +434,14 @@ function Community() {
                               <div className='space-y-4 max-w-4xl'>
                                 <p className='text-gray-300 font-inter text-base leading-relaxed'>
                                   {item.isSecret
-                                    ? 'THÔNG TIN NÀY LÀ RIÊNG TƯ. VUI LÒNG ĐĂNG NHẬP HOẶC KIỂM TRA MẬT KHẨU ĐỂ XEM NỘI DUNG.'
-                                    : item.answer || 'CÂU HỎI ĐANG ĐƯỢC CHỜ XỬ LÝ. CHÚNG TÔI SẼ PHẢN HỒI TRONG THỜI GIAN SỚM NHẤT.'
+                                    ? t('community.secretMessage')
+                                    : item.answer || t('community.pendingMessage')
                                   }
                                 </p>
                                 {item.status === 'ANSWERED' && (
                                   <div className='pt-6 border-t border-white/5'>
                                     <p className='text-[10px] text-gray-600 font-inter uppercase tracking-[0.2em]'>
-                                      Response from {item.category} TEAM · {item.date}
+                                      {t('community.responseFrom')} {t(`nav.${item.category.toLowerCase()}`)} TEAM · {item.date}
                                     </p>
                                   </div>
                                 )}
@@ -446,11 +458,9 @@ function Community() {
                 (activeCategory === 'ALL' || item.category === activeCategory) &&
                 (item.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
                   item.category.toLowerCase().includes(searchQuery.toLowerCase()))
-              ).length === 0 && (
-                <div className='py-20 text-center border border-white/5 bg-[#161616]'>
-                  <p className='font-oswald text-gray-600 tracking-[0.3em] font-bold uppercase'>NO RESULTS FOUND</p>
-                </div>
-              )}
+              ).length === 0 && (<div className='py-20 text-center border border-white/5 bg-[#161616]'>
+                <p className='font-oswald text-gray-600 tracking-[0.3em] font-bold uppercase'>{t('community.noResults')}</p>
+              </div>)}
             </motion.div>
           )}
 

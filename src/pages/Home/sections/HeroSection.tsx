@@ -1,7 +1,9 @@
 import { motion } from 'framer-motion'
 import heroImg from '~/assets/Background/hero_fashion.png'
+import { useLanguage } from '~/contexts/LanguageContext'
 
 const HeroSection = () => {
+  const { t } = useLanguage()
   return (
     <section className="relative w-full h-[70vh] md:h-[90vh] overflow-hidden bg-black">
       {/* Background with zoom effect */}
@@ -27,11 +29,11 @@ const HeroSection = () => {
           transition={{ duration: 0.8, delay: 0.5 }}
         >
           <h2 className="font-momo-signature text-3xl md:text-5xl text-white mb-2 drop-shadow-lg italic">
-            Elegance in Motion
+            {t('home.heroSubtitle')}
           </h2>
           <h1 className="font-oswald text-6xl md:text-9xl font-black text-white uppercase tracking-tighter leading-none mb-8 drop-shadow-2xl">
-            <span className="block">MODERN URBAN</span>
-            <span className="text-white">COLLECTION</span>
+            <span className="block">{t('home.heroTitle1')}</span>
+            <span className="text-white">{t('home.heroTitle2')}</span>
           </h1>
 
           <div className="flex justify-center items-center gap-2 mb-10">
@@ -56,7 +58,7 @@ const HeroSection = () => {
             <span className="absolute inset-0 bg-t1-red transition-transform duration-300 group-hover:translate-x-full" />
             <span className="absolute inset-0 bg-white translate-x-[-101%] transition-transform duration-300 group-hover:translate-x-0" />
             <span className="relative z-10 text-white group-hover:text-t1-dark transition-colors duration-300 uppercase">
-              Explore Collection
+              {t('home.heroButton')}
             </span>
           </motion.button>
         </motion.div>

@@ -5,46 +5,13 @@ import { useAuth } from '../../hooks/useAuth'
 import type { RegisterRequestDto } from '../../types/user'
 import Layout from '../../components/layout/Layout'
 import Footer from '../../components/layout/Footer'
+import { useLanguage } from '~/contexts/LanguageContext'
 
 interface RegisterForm extends RegisterRequestDto {
     confirmPassword: string
 }
 
 type FormErrors = Partial<Record<keyof RegisterForm, string>>
-
-const validate = (form: RegisterForm): FormErrors => {
-  const errors: FormErrors = {}
-
-  if (!form.username.trim()) {
-    errors.username = 'Vui lòng nhập tên người dùng'
-  } else if (form.username.trim().length < 3) {
-    errors.username = 'Tên người dùng tối thiểu 3 ký tự'
-  }
-
-  if (!form.email) {
-    errors.email = 'Vui lòng nhập email'
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-    errors.email = 'Email không hợp lệ'
-  }
-
-  if (!form.password) {
-    errors.password = 'Vui lòng nhập mật khẩu'
-  } else if (form.password.length < 6) {
-    errors.password = 'Mật khẩu tối thiểu 6 ký tự'
-  }
-
-  if (form.phone_number && !/^(0|\+84)[3-9]\d{8}$/.test(form.phone_number.replace(/\s/g, ''))) {
-    errors.phone_number = 'Số điện thoại không hợp lệ'
-  }
-
-  if (!form.confirmPassword) {
-    errors.confirmPassword = 'Vui lòng xác nhận mật khẩu'
-  } else if (form.confirmPassword !== form.password) {
-    errors.confirmPassword = 'Mật khẩu xác nhận không khớp'
-  }
-
-  return errors
-}
 
 const initialForm: RegisterForm = {
   username: '',
@@ -55,6 +22,41 @@ const initialForm: RegisterForm = {
 }
 
 const RegisterPage: React.FC = () => {
+  const { t } = useLanguage()
+
+  const validate = (form: RegisterForm): FormErrors => {
+    const errors: FormErrors = {}
+
+    if (!form.username.trim()) {
+      errors.username = t('auth.required')
+    } else if (form.username.trim().length < 3) {
+      errors.username = t('auth.minChars', { count: 3 })
+    }
+
+    if (!form.email) {
+      errors.email = t('auth.required')
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      errors.email = t('auth.invalidEmail')
+    }
+
+    if (!form.password) {
+      errors.password = t('auth.required')
+    } else if (form.password.length < 6) {
+      errors.password = t('auth.minChars', { count: 6 })
+    }
+
+    if (form.phone_number && !/^(0|\+84)[3-9]\d{8}$/.test(form.phone_number.replace(/\s/g, ''))) {
+      errors.phone_number = t('auth.invalidPhone')
+    }
+
+    if (!form.confirmPassword) {
+      errors.confirmPassword = t('auth.required')
+    } else if (form.confirmPassword !== form.password) {
+      errors.confirmPassword = t('auth.mismatch')
+    }
+
+    return errors
+  }
   const navigate = useNavigate()
   const { setUser } = useAuth()
 
@@ -69,7 +71,7 @@ const RegisterPage: React.FC = () => {
     const { name, value } = e.target
     setForm(prev => ({ ...prev, [name]: value }))
     if (errors[name as keyof RegisterForm]) {
-      setErrors(prev => ({ ...prev, [name]: '' }))
+      setErrors((prev: FormErrors) => ({ ...prev, [name]: '' }))
     }
     if (error) setError('')
   }
@@ -91,7 +93,7 @@ const RegisterPage: React.FC = () => {
     } catch (err: unknown) {
       const message =
                 (err as { response?: { data?: { message?: string } } })
-                  ?.response?.data?.message ?? 'Đăng ký thất bại. Vui lòng thử lại.'
+                  ?.response?.data?.message ?? t('auth.registerFailed')
       setError(message)
     } finally {
       setIsLoading(false)
@@ -103,21 +105,21 @@ const RegisterPage: React.FC = () => {
       <div className='bg-t1-dark flex items-center justify-center px-4 py-20'>
         <div className='w-full max-w-md bg-[#1a1a1a] p-10 border border-white/5 shadow-2xl'>
           <h1 className='text-4xl font-oswald font-black text-center uppercase tracking-tighter mb-10 text-white italic'>
-            Sign Up
+            {t('auth.signup')}
           </h1>
 
           <form onSubmit={handleSubmit} noValidate>
             {/* Username */}
             <div className='mb-6'>
               <label className='block text-xs font-oswald font-bold mb-2 uppercase text-gray-400 tracking-widest'>
-                Username
+                {t('auth.username')}
               </label>
               <input
                 type='text'
                 name='username'
                 value={form.username}
                 onChange={handleChange}
-                placeholder='Choose your username'
+                placeholder={t('auth.usernamePlaceholder')}
                 className='w-full bg-black border border-white/10 rounded-none px-4 py-3 outline-none focus:border-t1-red text-white transition-colors font-inter text-sm'
               />
               {errors.username && (
@@ -128,14 +130,14 @@ const RegisterPage: React.FC = () => {
             {/* Email */}
             <div className='mb-6'>
               <label className='block text-xs font-oswald font-bold mb-2 uppercase text-gray-400 tracking-widest'>
-                Email Address
+                {t('auth.email')}
               </label>
               <input
                 type='email'
                 name='email'
                 value={form.email}
                 onChange={handleChange}
-                placeholder='Enter your email'
+                placeholder={t('auth.emailPlaceholder')}
                 className='w-full bg-black border border-white/10 rounded-none px-4 py-3 outline-none focus:border-t1-red text-white transition-colors font-inter text-sm'
               />
               {errors.email && (
@@ -146,7 +148,7 @@ const RegisterPage: React.FC = () => {
             {/* Phone */}
             <div className='mb-6'>
               <label className='block text-xs font-oswald font-bold mb-2 uppercase text-gray-400 tracking-widest'>
-                Phone Number <span className='text-gray-600 normal-case'>(Optional)</span>
+                {t('profile.phone')} <span className='text-gray-600 normal-case'>(Optional)</span>
               </label>
               <input
                 type='tel'
@@ -164,7 +166,7 @@ const RegisterPage: React.FC = () => {
             {/* Password */}
             <div className='mb-6'>
               <label className='block text-xs font-oswald font-bold mb-2 uppercase text-gray-400 tracking-widest'>
-                Password
+                {t('auth.password')}
               </label>
               <div className='relative'>
                 <input
@@ -172,7 +174,7 @@ const RegisterPage: React.FC = () => {
                   name='password'
                   value={form.password}
                   onChange={handleChange}
-                  placeholder='Create a password'
+                  placeholder={t('auth.passwordPlaceholder')}
                   className='w-full bg-black border border-white/10 rounded-none px-4 py-3 outline-none focus:border-t1-red text-white transition-colors font-inter text-sm pr-12'
                 />
                 <button
@@ -180,7 +182,7 @@ const RegisterPage: React.FC = () => {
                   onClick={() => setShowPassword(v => !v)}
                   className='absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors text-xs'
                 >
-                  {showPassword ? 'HIDE' : 'SHOW'}
+                  {showPassword ? t('auth.hide') : t('auth.show')}
                 </button>
               </div>
               {errors.password && (
@@ -191,7 +193,7 @@ const RegisterPage: React.FC = () => {
             {/* Confirm Password */}
             <div className='mb-10'>
               <label className='block text-xs font-oswald font-bold mb-2 uppercase text-gray-400 tracking-widest'>
-                Confirm Password
+                {t('auth.confirmPassword')}
               </label>
               <div className='relative'>
                 <input
@@ -199,7 +201,7 @@ const RegisterPage: React.FC = () => {
                   name='confirmPassword'
                   value={form.confirmPassword}
                   onChange={handleChange}
-                  placeholder='Repeat password'
+                  placeholder={t('auth.confirmPasswordPlaceholder')}
                   className='w-full bg-black border border-white/10 rounded-none px-4 py-3 outline-none focus:border-t1-red text-white transition-colors font-inter text-sm pr-12'
                 />
                 <button
@@ -207,7 +209,7 @@ const RegisterPage: React.FC = () => {
                   onClick={() => setShowConfirm(v => !v)}
                   className='absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors text-xs'
                 >
-                  {showConfirm ? 'HIDE' : 'SHOW'}
+                  {showConfirm ? t('auth.hide') : t('auth.show')}
                 </button>
               </div>
               {errors.confirmPassword && (
@@ -226,18 +228,18 @@ const RegisterPage: React.FC = () => {
               disabled={isLoading}
               className='w-full bg-t1-red text-white py-4 font-oswald font-black uppercase tracking-[0.2em] hover:bg-white hover:text-t1-dark transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(226,1,45,0.2)] hover:shadow-[0_0_30px_rgba(255,255,255,0.2)]'
             >
-              {isLoading ? 'Processing...' : 'Create Account'}
+              {isLoading ? t('auth.processing') : t('auth.createAccount')}
             </button>
           </form>
 
           <div className='mt-8 text-center text-xs text-gray-500 font-inter tracking-wider'>
-            Already have an account?{' '}
+            {t('auth.hasAccount')}{' '}
             <button
               type='button'
               onClick={() => navigate('/')}
               className='text-white font-bold underline hover:text-t1-red transition-colors uppercase'
             >
-              Sign In
+              {t('auth.login')}
             </button>
           </div>
         </div>

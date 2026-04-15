@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom'
+import { useLanguage } from '~/contexts/LanguageContext'
 
 function SellingItemCard() {
+  const { t } = useLanguage()
   return (
     <Link className='group relative block bg-t1-dark overflow-hidden' to='/shop'>
       {/* IMAGE */}
@@ -10,9 +12,9 @@ function SellingItemCard() {
 
       {/* TEXT */}
       <div className="collection_title absolute bottom-4 left-4 md:bottom-6 md:left-5 text-white z-10">
-        <p className='font-extralight text-sm'>Exclusive for Rin Fans</p>
+        <p className='font-extralight text-sm'>{t('home.teamKitSub')}</p>
         <p></p>
-        <h3 className='font-oswald tracking-wider font-bold text-xl md:text-3xl group-hover:text-t1-red transition-colors'>TEAM KIT</h3>
+        <h3 className='font-oswald tracking-wider font-bold text-xl md:text-3xl group-hover:text-t1-red transition-colors'>{t('nav.teamKit')}</h3>
       </div>
     </Link>
   )

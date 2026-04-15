@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { ChevronLeft, ChevronRight, Star } from 'lucide-react'
-
 import { REVIEWS } from '~/data/homeData'
+import { useLanguage } from '~/contexts/LanguageContext'
 
 const ReviewSection = () => {
+  const { t } = useLanguage()
   const [currentIndex, setCurrentIndex] = useState(0)
 
   const next = () => setCurrentIndex((prev: number) => (prev + 1) % (REVIEWS.length - 3))
@@ -14,7 +15,7 @@ const ReviewSection = () => {
       <div className="px-4 md:px-10 lg:px-20 mx-auto max-w-[1600px]">
         <div className="flex justify-between items-center mb-12">
           <h2 className="font-oswald text-3xl font-black text-white uppercase tracking-widest italic">
-            Review
+            {t('nav.review')}
           </h2>
           <div className="flex gap-4">
             <button
@@ -73,7 +74,7 @@ const ReviewSection = () => {
                     </div>
                     <div className="overflow-hidden">
                       <p className="text-white font-inter text-[10px] truncate uppercase font-bold">{review.product}</p>
-                      <p className="text-[10px] text-gray-600">Ratings 5.0 | Review 1</p>
+                      <p className="text-[10px] text-gray-600">{t('home.ratings')}</p>
                     </div>
                   </div>
                 </div>

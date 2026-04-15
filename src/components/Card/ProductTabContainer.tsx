@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { FreeMode, Navigation, Scrollbar } from 'swiper/modules'
 import 'swiper/css'
@@ -8,6 +9,7 @@ import 'swiper/css/scrollbar'
 import UniformProductCard from './UniformProductCard'
 
 import { newProducts, bestProducts, saleProducts } from '~/data/homeData'
+import { useLanguage } from '~/contexts/LanguageContext'
 
 const tabData: Record<string, any[]> = {
   NEW: newProducts,
@@ -16,30 +18,40 @@ const tabData: Record<string, any[]> = {
 }
 
 export const ProductTabContainer = () => {
+  const { t } = useLanguage()
   const [activeTab, setActiveTab] = useState<'NEW' | 'BEST' | 'SALE'>('NEW')
   const products = tabData[activeTab]
+
+  const tabs = [
+    { key: 'NEW' as const, label: t('nav.new') },
+    { key: 'BEST' as const, label: t('nav.best') },
+    { key: 'SALE' as const, label: t('nav.sale') }
+  ]
 
   return (
     <div className='flex flex-col lg:flex-row w-full border-t border-t1-gray shadow-2xl bg-[#0c0c0c]'>
       {/* Sidebar */}
       <div className='lg:w-1/4 xl:w-[15%] p-5 flex flex-col justify-start border-t-[3px] border-t-t1-red'>
-        <h2 className='text-xl md:text-2xl font-oswald font-black uppercase text-white mb-4 tracking-wide'>PRODUCT</h2>
+        <h2 className='text-xl md:text-2xl font-oswald font-black uppercase text-white mb-4 tracking-wide'>{t('nav.product')}</h2>
         <div className='flex flex-col gap-0'>
-          {(['NEW', 'BEST', 'SALE'] as const).map(val => (
+          {tabs.map(tab => (
             <button
-              key={val}
-              onClick={() => setActiveTab(val)}
-              className={`flex justify-between items-center py-2.5 border-b border-[#333] font-oswald font-bold text-sm md:text-base hover:text-t1-red transition-colors ${activeTab === val ? 'text-t1-red' : 'text-white'}`}
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`flex justify-between items-center py-2.5 border-b border-[#333] font-oswald font-bold text-sm md:text-base hover:text-t1-red transition-colors ${activeTab === tab.key ? 'text-t1-red' : 'text-white'}`}
             >
-              <span className='uppercase tracking-widest'>{val}</span>
-              <span className={`text-lg md:text-xl ${activeTab === val ? 'text-t1-red' : 'text-white'}`}>+</span>
+              <span className='uppercase tracking-widest'>{tab.label}</span>
+              <span className={`text-lg md:text-xl ${activeTab === tab.key ? 'text-t1-red' : 'text-white'}`}>+</span>
             </button>
           ))}
         </div>
         <div className='mt-auto pt-4'>
-          <button className='bg-[#1a1a1a] border border-[#2a2a2a] text-[10px] uppercase font-inter text-gray-300 py-1.5 px-3 hover:bg-t1-red hover:text-white transition duration-300 w-max flex items-center gap-1'>
-            SEE ALL PRODUCTS &gt;
-          </button>
+          <Link
+            to="/shop"
+            className='bg-[#1a1a1a] border border-[#2a2a2a] text-[10px] uppercase font-inter text-gray-300 py-1.5 px-3 hover:bg-t1-red hover:text-white transition duration-300 w-max flex items-center gap-1'
+          >
+            {t('home.seeAllProducts')} &gt;
+          </Link>
         </div>
       </div>
 
