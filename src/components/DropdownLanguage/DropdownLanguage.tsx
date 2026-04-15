@@ -1,39 +1,40 @@
 import type React from 'react'
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Link } from 'react-router-dom'
+import { useLanguage } from '~/contexts/LanguageContext'
 import FAIcon from '~/assets/FAIcon/angle-down-solid-full.svg'
 
 function DropdownLanguage() {
+  const { language } = useLanguage()
+
   return (
     <div className='flex justify-center'>
-      <FlyoutLink href='#' FlyoutContent={LanguageContent}>
-        <div className='flex justify-center items-center'>
-          <span>GL</span>
-          <img src={FAIcon} alt="angleDown" className='w-3 h-3 bg-img-white' />
+      <FlyoutLink FlyoutContent={LanguageContent}>
+        <div className='flex justify-center items-center gap-1 min-w-[32px]'>
+          <span className='text-sm font-bold'>{language.toUpperCase()}</span>
+          <img src={FAIcon} alt="angleDown" className='w-2.5 h-2.5 bg-img-white' />
         </div>
       </FlyoutLink>
     </div>
   )
 }
 
-export const FlyoutLink = ({ children, href, FlyoutContent }: { children: React.ReactNode; href: string; FlyoutContent: React.ComponentType }) => {
-
+export const FlyoutLink = ({ children, FlyoutContent }: { children: React.ReactNode; FlyoutContent: React.ComponentType }) => {
   const [open, setOpen] = useState(false)
   const showFlyout = open && FlyoutContent
 
   return (
-    <div className='group relative h-fit w-fit'
+    <div
+      className='group relative h-fit w-fit'
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
     >
-      <Link to={href} className='relative z-[60] text-inherit transition-colors group-hover:text-t1-red cursor-pointer'>
+      <div className='relative z-[60] text-inherit transition-colors group-hover:text-t1-red cursor-pointer'>
         {children}
-      </Link>
+      </div>
 
-      {/* RENDER FLYOUT CONTENT */}
       <AnimatePresence>
-        {showFlyout &&
+        {showFlyout && (
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
@@ -42,22 +43,35 @@ export const FlyoutLink = ({ children, href, FlyoutContent }: { children: React.
             className='absolute top-10 left-1/2 -translate-x-1/2 z-50'
           >
             <div className='absolute -top-6 left-0 right-0 h-6 bg-transparent cursor-default' />
-            {/* <div className='absolute left-1/2 top-0 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rotate-45 bg-white -z-1' /> */}
             <FlyoutContent />
           </motion.div>
-        }
+        )}
       </AnimatePresence>
     </div>
   )
 }
 
 const LanguageContent = () => {
+  const { language, setLanguage } = useLanguage()
+
   return (
-    <div className='w-16 bg-t1-dark shadow-xl text-center'>
-      <a href="" className='block text-sm py-1 text-t1-text hover:text-t1-red transition-colors cursor-pointer'>KR</a>
-      <a href="" className='block text-sm py-1 text-t1-text hover:text-t1-red transition-colors cursor-pointer'>CN</a>
-      <a href="" className='block text-sm py-1 text-t1-text hover:text-t1-red transition-colors cursor-pointer'>VN</a>
-      <a href="" className='block text-sm py-1 text-t1-text hover:text-t1-red transition-colors cursor-pointer'>RS</a>
+    <div className='w-20 bg-[#111] border border-white/10 shadow-2xl py-2 flex flex-col'>
+      <button
+        onClick={() => setLanguage('en')}
+        className={`block text-[11px] py-2 font-oswald font-bold transition-colors cursor-pointer ${
+          language === 'en' ? 'text-t1-red bg-white/5' : 'text-gray-400 hover:text-white hover:bg-white/5'
+        }`}
+      >
+        ENGLISH
+      </button>
+      <button
+        onClick={() => setLanguage('vi')}
+        className={`block text-[11px] py-2 font-oswald font-bold transition-colors cursor-pointer ${
+          language === 'vi' ? 'text-t1-red bg-white/5' : 'text-gray-400 hover:text-white hover:bg-white/5'
+        }`}
+      >
+        TIẾNG VIỆT
+      </button>
     </div>
   )
 }

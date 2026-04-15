@@ -4,12 +4,30 @@ import { X, ChevronDown } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link, useLocation } from 'react-router-dom'
 
+const CATEGORY_FILTERS = [
+  { label: 'ALL', value: 'all' },
+  { label: 'T-SHIRT', value: 'tshirt' },
+  { label: 'SHIRT', value: 'shirt' },
+  { label: 'HOODIE', value: 'hoodie' },
+  { label: 'SWEATER', value: 'sweater' },
+  { label: 'JACKET', value: 'jacket' },
+  { label: 'PANTS', value: 'pants' },
+  { label: 'SHOES', value: 'shoes' },
+  { label: 'HAT', value: 'hat' },
+  { label: 'ACCESSORIES', value: 'accessories' },
+  { label: 'COLLECTION', value: 'collection' }
+]
+
 interface FilterSidebarProps {
   priceRange: [number, number]
   setPriceRange: (range: [number, number]) => void
   maxPrice: number
   isOpen: boolean
   onClose: () => void
+  mode?: 'shop' | 'category'
+  selectedCategories?: string[]
+  onCategoryToggle?: (cat: string) => void
+  onClearCategories?: () => void
 }
 
 const SHOP_MENU = [
@@ -120,7 +138,11 @@ export function FilterSidebar({
   setPriceRange,
   maxPrice,
   isOpen,
-  onClose
+  onClose,
+  mode = 'shop',
+  selectedCategories = [],
+  onCategoryToggle,
+  onClearCategories
 }: FilterSidebarProps) {
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -129,21 +151,76 @@ export function FilterSidebar({
 
   const sidebarContent = (
     <div className='flex flex-col h-full bg-t1-dark p-6 text-t1-text select-none'>
-      <div className='flex items-center justify-between mb-8 lg:hidden'>
-        <h2 className='font-oswald text-2xl font-bold italic uppercase'>Menu</h2>
+      <div className='flex items-center justify-between mb-8'>
+        <h2 className='font-oswald text-2xl font-bold italic uppercase'>Filters</h2>
         <button onClick={onClose} className='p-2 hover:bg-white/10 rounded-full transition-colors'>
           <X className='w-6 h-6' />
         </button>
       </div>
 
-      {/* CATEGORIES MENU */}
+      {/* CATEGORIES */}
       <div className='mb-10'>
-        <h3 className='font-oswald text-sm tracking-[0.2em] text-gray-600 uppercase mb-6'>Categories</h3>
-        <div className='space-y-1'>
-          {SHOP_MENU.map((menu) => (
-            <MenuItem key={menu.label} item={menu} onClose={onClose} />
-          ))}
+        <div className='flex items-center justify-between mb-5'>
+          <h3 className='font-oswald text-sm tracking-[0.2em] text-gray-600 uppercase'>Categories</h3>
+          {mode === 'category' && selectedCategories.length > 0 && (
+            <button
+              onClick={onClearCategories}
+              className='font-oswald text-[10px] tracking-widest uppercase text-t1-red hover:text-white transition-colors'
+            >
+              Clear
+            </button>
+          )}
         </div>
+
+        {mode === 'shop' ? (
+          <div className='space-y-1'>
+            {SHOP_MENU.map((menu) => (
+              <MenuItem key={menu.label} item={menu} onClose={onClose} />
+            ))}
+          </div>
+        ) : (
+          <div className='flex flex-col gap-2'>
+            {CATEGORY_FILTERS.filter(c => c.value !== 'all').map((cat) => {
+              const isChecked = selectedCategories.includes(cat.value)
+              return (
+                <label
+                  key={cat.value}
+                  className='flex items-center gap-3 cursor-pointer group py-1'
+                >
+                  {/* Custom checkbox */}
+                  <span
+                    onClick={() => onCategoryToggle?.(cat.value)}
+                    className={`relative flex-shrink-0 w-4 h-4 border transition-all duration-200 ${isChecked ? 'bg-t1-red border-t1-red' : 'bg-transparent border-white/20 group-hover:border-white/50'}`}
+                  >
+                    {isChecked && (
+                      <svg
+                        className='absolute inset-0 w-full h-full p-[2px] text-white'
+                        viewBox='0 0 12 12'
+                        fill='none'
+                      >
+                        <polyline
+                          points='1.5,6 5,9.5 10.5,2'
+                          stroke='currentColor'
+                          strokeWidth='1.8'
+                          strokeLinecap='round'
+                          strokeLinejoin='round'
+                        />
+                      </svg>
+                    )}
+                  </span>
+                  <span
+                    onClick={() => onCategoryToggle?.(cat.value)}
+                    className={`font-oswald text-xs uppercase tracking-widest transition-colors duration-200 select-none
+                      ${isChecked ? 'text-white font-bold' : 'text-gray-400 group-hover:text-white'}
+                    `}
+                  >
+                    {cat.label}
+                  </span>
+                </label>
+              )
+            })}
+          </div>
+        )}
       </div>
 
       {/* PRICE RANGE */}
@@ -170,6 +247,7 @@ export function FilterSidebar({
       <button
         onClick={() => {
           setPriceRange([0, maxPrice])
+          if (mode === 'category') onClearCategories?.()
         }}
         className='mt-auto py-3 border border-white/10 font-oswald text-xs tracking-widest uppercase hover:bg-white hover:text-black transition-all duration-300'
       >
@@ -180,29 +258,24 @@ export function FilterSidebar({
 
   return (
     <>
-      {/* Desktop Sidebar */}
-      <div className='hidden lg:block w-64 shrink-0 sticky top-32 h-[calc(100vh-160px)] overflow-y-auto pr-6 custom-scrollbar'>
-        {sidebarContent}
-      </div>
-
-      {/* Mobile Drawer */}
+      {/* Slide-in Drawer (all screen sizes) */}
       <motion.div
         initial={{ x: '-100%' }}
         animate={{ x: isOpen ? 0 : '-100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className='fixed inset-0 z-[100] lg:hidden w-full max-w-xs h-full shadow-2xl shadow-black/50'
+        className='fixed inset-0 z-[100] w-full max-w-xs h-full shadow-2xl shadow-black/50'
       >
         {sidebarContent}
       </motion.div>
 
-      {/* Mobile Overlay */}
+      {/* Overlay */}
       {isOpen && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          className='fixed inset-0 bg-black/60 backdrop-blur-sm z-[99] lg:hidden'
+          className='fixed inset-0 bg-black/60 backdrop-blur-sm z-[99]'
         />
       )}
     </>

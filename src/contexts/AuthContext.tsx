@@ -5,6 +5,7 @@ import type { AuthResponseDto } from '../types/user'
 
 export interface AuthContextType {
   user: AuthResponseDto | null
+  isLoading: boolean
   // eslint-disable-next-line no-unused-vars
   setUser: (user: AuthResponseDto | null) => void
   logout: () => void
@@ -14,6 +15,7 @@ export const AuthContext = createContext<AuthContextType | null>(null)
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUserState] = useState<AuthResponseDto | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const storedUser = localStorage.getItem('auth_user')
@@ -27,6 +29,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.error('Failed to parse auth_user', error)
       }
     }
+    setIsLoading(false)
   }, [])
 
   const setUser = (u: AuthResponseDto | null) => {
@@ -48,7 +51,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, setUser, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, setUser, logout }}>
       {children}
     </AuthContext.Provider>
   )

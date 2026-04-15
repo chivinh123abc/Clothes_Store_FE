@@ -1,33 +1,30 @@
-import { CollectionSlider } from '~/components/Card/CollectionSlider'
 import { UniformSlider } from '~/components/Card/UniformSlider'
 import { ProductTabContainer } from '~/components/Card/ProductTabContainer'
 import Layout from '~/components/layout/Layout'
 import Footer from '~/components/layout/Footer'
+import { useLanguage } from '~/contexts/LanguageContext'
 
 // Sections
 import HeroSection from './sections/HeroSection'
+import CollectionSection from './sections/CollectionSection'
 import CommunitySection from './sections/CommunitySection'
 import ReviewSection from './sections/ReviewSection'
 import OfflineShopSection from './sections/OfflineShopSection'
 
 function Home() {
+  const { t } = useLanguage()
   return (
     <Layout footer={<Footer />} bleed={true}>
-      {/* Hero — sits right below the banner (top-8), bleeding under navbar */}
+      {/* Hero */}
       <HeroSection />
 
-      {/* Collection / New Arrivals */}
-      <div className='py-20'>
-        <div className='font-oswald font-black text-4xl mb-12 text-center tracking-widest text-t1-text italic uppercase'>
-          New Arrivals
-        </div>
-        <CollectionSlider />
-      </div>
+      {/* Collection — 4 category cards */}
+      <CollectionSection />
 
       {/* 2026 Official Uniform */}
       <div className='pb-24 px-4 md:px-10 lg:px-20'>
         <div className='font-oswald font-bold text-3xl mb-10 text-center tracking-widest text-t1-text uppercase'>
-          2026 Official Uniform
+          {t('home.uniformTitle')}
         </div>
         <div className='flex flex-col lg:flex-row w-full border border-white/5 shadow-2xl relative overflow-hidden'>
           {/* Left Visual Accent */}
@@ -39,10 +36,10 @@ function Home() {
             </div>
             <div className='relative z-10'>
               <p className='text-sm font-inter font-light mb-2 text-gray-200 tracking-widest uppercase'>
-                Peak Performance.
+                {t('home.uniformPeak')}
               </p>
               <h2 className='text-3xl md:text-4xl font-oswald font-black text-white uppercase tracking-tighter leading-none italic'>
-                2026 OFFICIAL <br /> UNIFORM
+                {t('home.uniformLabel')}
               </h2>
             </div>
           </div>

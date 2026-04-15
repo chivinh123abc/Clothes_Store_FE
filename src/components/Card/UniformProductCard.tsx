@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useLanguage } from '~/contexts/LanguageContext'
 
 interface ProductProps {
   id?: string
@@ -11,6 +12,7 @@ interface ProductProps {
 }
 
 export default function UniformProductCard({ id, name, price, originalPrice, discountPercentage, imageUrl, soldOut }: ProductProps) {
+  const { t } = useLanguage()
   return (
     <Link to={id ? `/product/${id}` : '#'} className="flex flex-col h-full bg-[#1b1b1b] border-r border-[#333] transition-transform duration-300 group">
       {/* Top Image Section */}
@@ -23,7 +25,7 @@ export default function UniformProductCard({ id, name, price, originalPrice, dis
         {soldOut && (
           <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none bg-gray-200/50">
             <span className="text-[#333] text-2xl font-oswald font-black tracking-widest uppercase drop-shadow-sm">
-              SOLD OUT
+              {t('productDetail.soldOut')}
             </span>
           </div>
         )}

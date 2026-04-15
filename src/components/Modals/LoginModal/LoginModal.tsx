@@ -5,6 +5,7 @@ import { X, Mail, Lock, Loader2 } from 'lucide-react'
 import axios from 'axios'
 import { userApi } from '../../../apis/userApi'
 import { useAuth } from '../../../hooks/useAuth'
+import { useLanguage } from '~/contexts/LanguageContext'
 
 interface LoginModalProps {
   open: boolean
@@ -18,6 +19,7 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
   const [error, setError] = useState('')
   const { setUser } = useAuth()
   const navigate = useNavigate()
+  const { t } = useLanguage()
 
   useEffect(() => {
     if (!open) {
@@ -36,9 +38,9 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
       onClose()
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || 'Invalid email or password')
+        setError(err.response?.data?.message || t('auth.invalidLogin'))
       } else {
-        setError('Login failed. Please try again.')
+        setError(t('auth.loginFailed'))
       }
     } finally {
       setIsLoading(false)
@@ -80,16 +82,16 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
               </button>
 
               <div className="text-center mb-10">
-                <span className="text-t1-red font-oswald font-black text-sm tracking-[0.4em] uppercase mb-4 block">Welcome Back</span>
+                <span className="text-t1-red font-oswald font-black text-sm tracking-[0.4em] uppercase mb-4 block">{t('auth.welcome')}</span>
                 <h2 className="text-4xl font-oswald font-black text-white italic uppercase tracking-tighter">
-                  SIGN IN
+                  {t('auth.signIn')}
                 </h2>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
                   <label className="block text-[10px] font-oswald font-bold mb-2 uppercase text-gray-500 tracking-[0.2em]">
-                    EMAIL ADDRESS
+                    {t('auth.email')}
                   </label>
                   <div className="relative group">
                     <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within:text-t1-red transition-colors">
@@ -100,7 +102,7 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className="w-full bg-black border border-white/10 rounded-none pl-12 pr-4 py-4 outline-none focus:border-t1-red/50 text-white transition-all duration-300 font-inter text-sm placeholder:text-gray-700"
-                      placeholder="name@example.com"
+                      placeholder={t('auth.emailPlaceholder')}
                       required
                     />
                   </div>
@@ -109,10 +111,10 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
                 <div>
                   <div className="flex justify-between items-center mb-2">
                     <label className="block text-[10px] font-oswald font-bold uppercase text-gray-500 tracking-[0.2em]">
-                      PASSWORD
+                      {t('auth.password')}
                     </label>
                     <button type="button" className="text-[9px] font-inter text-gray-600 hover:text-white uppercase tracking-widest transition-colors">
-                      FORGOT?
+                      {t('auth.forgot')}
                     </button>
                   </div>
                   <div className="relative group">
@@ -148,14 +150,14 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
                   {isLoading ? (
                     <Loader2 size={20} className="animate-spin" />
                   ) : (
-                    'ENTER STORE'
+                    t('auth.enterStore')
                   )}
                 </button>
               </form>
 
               <div className="mt-10 pt-8 border-t border-white/5 text-center">
                 <p className="text-[10px] text-gray-500 font-inter tracking-[0.1em] uppercase">
-                  DON'T HAVE AN ACCOUNT?{' '}
+                  {t('auth.noAccount')}{' '}
                   <button
                     type="button"
                     onClick={() => {
@@ -164,7 +166,7 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
                     }}
                     className="text-white font-bold hover:text-t1-red transition-colors ml-2"
                   >
-                    CREATE ONE
+                    {t('auth.createOne')}
                   </button>
                 </p>
               </div>

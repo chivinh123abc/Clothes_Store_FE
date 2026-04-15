@@ -2,11 +2,13 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import LoginModal from '~/components/Modals/LoginModal'
 import { useAuth } from '~/hooks/useAuth'
+import { useLanguage } from '~/contexts/LanguageContext'
 
 function Banner() {
   const [isLoginOpen, setIsLoginOpen] = useState(false)
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const { t } = useLanguage()
 
   return (
     <>
@@ -20,17 +22,17 @@ function Banner() {
         <div className='space-x-3 hidden sm:flex items-center opacity-80'>
           {user ? (
             <>
-              <button className="hover:text-white transition-colors" onClick={() => navigate('/my-page')}>MY PAGE</button>
+              <button className="hover:text-white transition-colors" onClick={() => navigate('/my-page')}>{t('common.myPage')}</button>
               <span>/</span>
-              <button className="hover:text-[#e2012d] transition-colors" onClick={() => { logout(); navigate('/') }}>LOGOUT</button>
+              <button className="hover:text-[#e2012d] transition-colors" onClick={() => { logout(); navigate('/') }}>{t('common.logout')}</button>
             </>
           ) : (
             <>
-              <button className="hover:text-white transition-colors" onClick={() => setIsLoginOpen(true)}>LOGIN</button>
+              <button className="hover:text-white transition-colors" onClick={() => setIsLoginOpen(true)}>{t('common.login')}</button>
               <span>/</span>
-              <button className="hover:text-white transition-colors" onClick={() => navigate('/register')}>JOIN</button>
+              <button className="hover:text-white transition-colors" onClick={() => navigate('/register')}>{t('common.join')}</button>
               <span>/</span>
-              <a className="hover:text-white transition-colors cursor-pointer">ORDER</a>
+              <a className="hover:text-white transition-colors cursor-pointer">{t('common.order')}</a>
             </>
           )}
         </div>

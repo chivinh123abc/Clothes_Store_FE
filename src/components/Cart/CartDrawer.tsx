@@ -3,6 +3,7 @@ import { X, Trash2, Plus, Minus } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import { useCart } from '~/contexts/CartContext'
 import { Link } from 'react-router-dom'
+import { useLanguage } from '~/contexts/LanguageContext'
 
 interface CartDrawerProps {
   open: boolean;
@@ -11,6 +12,7 @@ interface CartDrawerProps {
 
 function CartDrawer({ open, onClose }: CartDrawerProps) {
   const { items, totalItems, totalPrice, removeCartItem, incrementQuantity, decrementQuantity } = useCart()
+  const { t } = useLanguage()
 
   return createPortal(
     <AnimatePresence>
@@ -37,7 +39,7 @@ function CartDrawer({ open, onClose }: CartDrawerProps) {
             {/* Header */}
             <div className='flex items-center justify-between px-6 py-5 border-b border-t1-gray/40 bg-black/40'>
               <h2 className='text-2xl font-oswald font-black italic tracking-[0.2em] uppercase text-white flex items-center'>
-                CART <span className="text-xs font-inter font-normal not-italic tracking-normal text-t1-red ml-3 bg-t1-red/10 px-2 py-0.5 rounded-full border border-t1-red/20">{totalItems} ITEMS</span>
+                {t('cart.title')} <span className="text-xs font-inter font-normal not-italic tracking-normal text-t1-red ml-3 bg-t1-red/10 px-2 py-0.5 rounded-full border border-t1-red/20">{totalItems} {t('cart.items')}</span>
               </h2>
               <button
                 onClick={onClose}
@@ -54,12 +56,12 @@ function CartDrawer({ open, onClose }: CartDrawerProps) {
                   <div className='w-24 h-24 rounded-full bg-t1-gray/10 flex items-center justify-center border border-t1-gray/20'>
                     <span className="text-4xl grayscale opacity-30">🛍️</span>
                   </div>
-                  <p className='text-sm text-gray-500 font-inter font-light tracking-wide'>Your cart is currently empty.</p>
+                  <p className='text-sm text-gray-500 font-inter font-light tracking-wide'>{t('cart.empty')}</p>
                   <button
                     className='py-3 px-8 bg-transparent text-t1-red uppercase text-xs font-oswald font-bold tracking-[0.2em] hover:bg-t1-red hover:text-white border-2 border-t1-red transition-all duration-300'
                     onClick={onClose}
                   >
-                    CONTINUE SHOPPING
+                    {t('cart.continueShopping')}
                   </button>
                 </div>
               ) : (
@@ -81,7 +83,7 @@ function CartDrawer({ open, onClose }: CartDrawerProps) {
                           </div>
                           <div className='flex items-center gap-3 mt-1 mb-2'>
                             <p className='font-incosolata font-bold text-t1-red text-sm'>${item.price.toFixed(2)}</p>
-                            <span className="text-[10px] bg-t1-gray/20 text-gray-400 px-2 py-0.5 font-oswald font-bold tracking-widest border border-t1-gray/10 uppercase">SIZE: {item.size}</span>
+                            <span className="text-[10px] bg-t1-gray/20 text-gray-400 px-2 py-0.5 font-oswald font-bold tracking-widest border border-t1-gray/10 uppercase">{t('cart.size')}: {item.size}</span>
                           </div>
 
                           {/* Quantity Controls */}
@@ -95,7 +97,7 @@ function CartDrawer({ open, onClose }: CartDrawerProps) {
                                 <Plus size={12} strokeWidth={3} />
                               </button>
                             </div>
-                            <span className='font-oswald text-xs tracking-wider text-gray-500'>TOTAL: <span className="text-t1-text">${(item.price * item.quantity).toFixed(2)}</span></span>
+                            <span className='font-oswald text-xs tracking-wider text-gray-500'>{t('cart.total')}: <span className="text-t1-text">${(item.price * item.quantity).toFixed(2)}</span></span>
                           </div>
                         </div>
                       </div>
@@ -108,18 +110,17 @@ function CartDrawer({ open, onClose }: CartDrawerProps) {
               {items.length > 0 && (
                 <div className='p-6 border-t border-t1-gray/40 bg-[#0a0a0a] shadow-[0_-10px_30px_rgba(0,0,0,0.5)] z-10'>
                   <div className='flex justify-between items-end mb-4'>
-                    <span className='text-xs font-inter font-bold text-gray-400 uppercase tracking-widest'>Subtotal</span>
+                    <span className='text-xs font-inter font-bold text-gray-400 uppercase tracking-widest'>{t('cart.subtotal')}</span>
                     <span className='text-3xl font-oswald font-black text-t1-red italic tracking-wide'>${totalPrice.toFixed(2)}</span>
                   </div>
-                  <p className='text-xs text-gray-500 font-inter mb-6 italic border-b border-t1-gray/20 pb-4'>Shipping & taxes calculated at checkout.</p>
+                  <p className='text-xs text-gray-500 font-inter mb-6 italic border-b border-t1-gray/20 pb-4'>{t('cart.shippingAtCheckout')}</p>
                   <button
                     className='w-full py-4 bg-t1-red text-white uppercase text-sm font-oswald font-bold tracking-[0.2em] shadow-[0_0_15px_rgba(226,1,45,0.3)] hover:shadow-[0_0_25px_rgba(226,1,45,0.7)] hover:bg-[#ff0033] transition-all duration-300 focus:outline-none'
                     onClick={() => {
-                      // Logic for checkout
-                      console.log('Proceed to Checkout', items)
+                      // Proceed to checkout logic
                     }}
                   >
-                    PROCEED TO CHECKOUT
+                    {t('cart.checkout')}
                   </button>
                 </div>
               )}

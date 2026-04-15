@@ -1,8 +1,12 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Heart, ShoppingCart, Check } from 'lucide-react'
 import { motion, AnimatePresence } from 'motion/react'
 import { useCart } from '~/contexts/CartContext'
+import { useFavorites } from '~/contexts/FavoritesContext'
+import { useAuth } from '~/hooks/useAuth'
+import LoginModal from '~/components/Modals/LoginModal/LoginModal'
+import { useLanguage } from '~/contexts/LanguageContext'
 
 interface ProductCardProps {
   id: string;
@@ -24,7 +28,23 @@ export function ProductCard({
   soldOut
 }: ProductCardProps) {
   const [isAdded, setIsAdded] = useState(false)
+  const [isLoginOpen, setIsLoginOpen] = useState(false)
   const { addCartItem } = useCart()
+  const { isFavorite, toggleFavorite } = useFavorites()
+  const { user } = useAuth()
+  const { t } = useLanguage()
+
+  const favorited = isFavorite(id)
+
+  const handleFavoriteClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!user) {
+      setIsLoginOpen(true)
+      return
+    }
+    toggleFavorite({ id, name, price, image, salePrice, soldOut: soldOut ?? false, category: '', bestseller: false, createdAt: '' })
+  }
 
   useEffect(() => {
     let timeout: ReturnType<typeof setTimeout>
@@ -60,21 +80,28 @@ export function ProductCard({
                   : 'bg-t1-red text-white'
               }`}
             >
-              {badge}
+              {badge === 'NEW' ? t('shop.newArrivals').split(' ')[0].toUpperCase() : t('shop.sale').toUpperCase()}
             </span>
           )}
           {soldOut && (
             <div className='absolute inset-0 z-20 flex items-center justify-center bg-black/60'>
               <span className='px-6 py-3 text-xl font-oswald font-bold tracking-[0.2em] uppercase text-white border-2 border-white/20 italic'>
-                SOLD OUT
+                {t('productDetail.soldOut')}
               </span>
             </div>
           )}
 
           {/* Wishlist Button */}
-          <button className='absolute top-4 right-4 z-30 w-10 h-10 bg-t1-dark/80 backdrop-blur-md border border-white/10 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-t1-red hover:border-t1-red hover:shadow-[0_0_15px_rgba(226,1,45,0.4)]'>
-            <Heart size={18} />
-          </button>
+          <motion.button
+            onClick={handleFavoriteClick}
+            whileTap={{ scale: 0.8 }}
+            className={`absolute top-4 right-4 z-30 w-10 h-10 backdrop-blur-md border rounded-full flex items-center justify-center transition-all duration-300 ${favorited ? 'opacity-100 bg-t1-red border-t1-red shadow-[0_0_15px_rgba(226,1,45,0.5)]' : 'opacity-0 group-hover:opacity-100 bg-t1-dark/80 border-white/10 hover:bg-t1-red hover:border-t1-red hover:shadow-[0_0_15px_rgba(226,1,45,0.4)]'}`}
+          >
+            <Heart
+              size={18}
+              className={`transition-all duration-200 ${favorited ? 'fill-white text-white' : 'text-white'}`}
+            />
+          </motion.button>
 
           {/* Add to Cart Button - only show when not sold out */}
           {!soldOut && (
@@ -143,6 +170,9 @@ export function ProductCard({
           </div>
         </div>
       </Link>
+
+      {/* Login gate modal */}
+      <LoginModal open={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
     </motion.div>
   )
 }
