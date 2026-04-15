@@ -14,11 +14,22 @@ import Layout from '../components/layout/Layout'
 import Footer from '../components/layout/Footer'
 import MyPage from '../pages/MyPage/MyPage'
 import SearchPage from '../pages/Search/SearchPage'
+import AdminLayout from '../components/layout/AdminLayout'
+import AdminDashboard from '../pages/Admin/AdminDashboard'
+import AdminProductList from '../pages/Admin/AdminProductList'
+import AdminProductForm from '../pages/Admin/AdminProductForm'
 
 const Private = ({ children }: { children: React.ReactElement }) => {
   const { user, isLoading } = useAuth()
   if (isLoading) return null
   return user ? children : <Navigate to='/' />
+}
+
+const AdminProtected = ({ children }: { children: React.ReactElement }) => {
+  const { user, isLoading } = useAuth()
+  if (isLoading) return null
+  if (!user || user.role !== 1) return <Navigate to='/' />
+  return <AdminLayout>{children}</AdminLayout>
 }
 
 export default function AppRoutes() {
@@ -46,6 +57,14 @@ export default function AppRoutes() {
       <Route path='/community' element={<Community />} />
       <Route path='/my-page' element={<Private><MyPage /></Private>} />
       <Route path='/search' element={<SearchPage />} />
+
+      {/* Admin Routes */}
+      <Route path='/admin' element={<AdminProtected><AdminDashboard /></AdminProtected>} />
+      <Route path='/admin/products' element={<AdminProtected><AdminProductList /></AdminProtected>} />
+      <Route path='/admin/products/add' element={<AdminProtected><AdminProductForm /></AdminProtected>} />
+      <Route path='/admin/products/edit/:id' element={<AdminProtected><AdminProductForm /></AdminProtected>} />
+      <Route path='/admin/users' element={<AdminProtected><div className='text-gray-500 font-oswald uppercase tracking-widest'>User Management Coming Soon</div></AdminProtected>} />
+      <Route path='/admin/settings' element={<AdminProtected><div className='text-gray-500 font-oswald uppercase tracking-widest'>Site Settings Coming Soon</div></AdminProtected>} />
     </Routes>
   )
 }

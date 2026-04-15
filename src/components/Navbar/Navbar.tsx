@@ -63,6 +63,14 @@ function Navbar({ setOpenNav }: NavbarProps) {
         </div>
 
         <div className='flex gap-4 md:gap-6 items-center'>
+          {user?.role === 1 && (
+            <Link
+              to='/admin'
+              className='text-[10px] font-bold text-t1-red border border-t1-red/30 px-2 py-1 rounded hover:bg-t1-red hover:text-white transition-all duration-300 tracking-[0.2em] uppercase'
+            >
+              Admin
+            </Link>
+          )}
           <SearchBar />
 
           {/* Heart / Favorites button */}

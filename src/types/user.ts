@@ -1,5 +1,5 @@
 export interface LoginRequestDto {
-  email: string
+  identifier: string
   password: string
 }
 
@@ -14,6 +14,7 @@ export interface UserResponseDto {
   user_id: number
   username: string
   email: string
+  role: number
   is_active: boolean
   created_at: string
 }
