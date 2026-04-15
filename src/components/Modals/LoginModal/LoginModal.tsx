@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Mail, Lock, Loader2 } from 'lucide-react'
+import { X, User, Lock, Loader2 } from 'lucide-react'
 import axios from 'axios'
 import { userApi } from '../../../apis/userApi'
 import { useAuth } from '../../../hooks/useAuth'
@@ -13,7 +13,7 @@ interface LoginModalProps {
 }
 
 export default function LoginModal({ open, onClose }: LoginModalProps) {
-  const [email, setEmail] = useState('')
+  const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
@@ -33,7 +33,7 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
     setIsLoading(true)
     setError('')
     try {
-      const res = await userApi.login({ email, password })
+      const res = await userApi.login({ identifier, password })
       setUser(res)
       onClose()
     } catch (err: unknown) {
@@ -95,12 +95,12 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
                   </label>
                   <div className="relative group">
                     <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within:text-t1-red transition-colors">
-                      <Mail size={16} />
+                      <User size={16} />
                     </div>
                     <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      type="text"
+                      value={identifier}
+                      onChange={(e) => setIdentifier(e.target.value)}
                       className="w-full bg-black border border-white/10 rounded-none pl-12 pr-4 py-4 outline-none focus:border-t1-red/50 text-white transition-all duration-300 font-inter text-sm placeholder:text-gray-700"
                       placeholder={t('auth.emailPlaceholder')}
                       required

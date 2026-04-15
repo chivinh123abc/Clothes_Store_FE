@@ -29,8 +29,10 @@ const RegisterPage: React.FC = () => {
 
     if (!form.username.trim()) {
       errors.username = t('auth.required')
-    } else if (form.username.trim().length < 3) {
-      errors.username = t('auth.minChars', { count: 3 })
+    } else if (form.username.trim().length < 8) {
+      errors.username = t('auth.minChars', { count: 8 })
+    } else if (form.username.includes('@')) {
+      errors.username = t('auth.usernameInvalid')
     }
 
     if (!form.email) {
