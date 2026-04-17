@@ -70,7 +70,9 @@ function CartDrawer({ open, onClose }: CartDrawerProps) {
                     {items.map((item) => (
                       <div key={item.id} className='flex gap-4 border-b border-t1-gray/20 pb-6 group'>
                         <Link to={`/product/${item.id}`} onClick={onClose} className="w-24 h-32 bg-[#222222] shrink-0 border border-t1-gray/20 group-hover:border-t1-red/50 transition-colors overflow-hidden">
-                          <img src={item.imageUrl} alt={item.name} className='w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500' />
+                          {item.imageUrl && (
+                            <img src={item.imageUrl} alt={item.name} className='w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500' />
+                          )}
                         </Link>
                         <div className='flex-1 flex flex-col pt-1'>
                           <div className='flex justify-between items-start'>

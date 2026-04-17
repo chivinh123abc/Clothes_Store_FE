@@ -58,9 +58,9 @@ export const en = {
     goalstudio: 'GOALSTUDIO',
     secretlab: 'SECRETLAB',
     razer: 'RAZER',
-    worlds2025: '2025 WINTER COLLECTION',
-    worlds2024: '2024 AUTUMN COLLECTION',
-    worlds2023: '2023 SUMMER COLLECTION',
+    worlds2025: '2025 WORLDS COLLECTION',
+    worlds2024: '2024 WORLDS COLLECTION',
+    worlds2023: '2023 WORLDS COLLECTION',
     leagueOfLegends: 'E-SPORTS EDITION',
     valorant: 'PRO GAMER SERIES'
   },

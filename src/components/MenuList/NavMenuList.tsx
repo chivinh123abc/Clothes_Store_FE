@@ -1,3 +1,4 @@
+/* eslint-disable indent */
 // Dữ liệu chung cho cả 2 menu để tránh lặp lại code
 // const NAV_ITEMS = [
 //   { label: "NEW", href: "#" },
@@ -8,12 +9,14 @@
 //   { label: "Q&A", href: "#" },
 // ];
 
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { FlyoutLink } from '../DropdownLanguage/DropdownLanguage'
 import angleDownIcon from '~/assets/FAIcon/angle-down-solid-full.svg'
 import { Link, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useLanguage } from '~/contexts/LanguageContext'
+import { useCollections } from '~/contexts/CollectionContext'
+// import type { Collection } from '~/types/collection'
 
 // 1. For Medal
 export const NavMenuListModal = () => {
@@ -277,7 +280,7 @@ export const NavMenuListMedium = () => {
         <Link to="/best" className={`hover:text-t1-red transition-colors cursor-pointer ${isActive('/best') ? 'text-t1-red' : ''}`}>{t('nav.best')}</Link>
       </li>
       <li>
-        <DropdownItem title={t('nav.shop')} content={ShopContent} href='/shop' active={isParentActive('/shop')} />
+        <DropdownItem title={t('nav.shop')} content={ShopContent} href='/shop' active={isParentActive('/shop')} align='left' />
       </li>
       <li>
         <DropdownItem title={t('nav.legacy')} content={LegacyContent} href='/legacy' active={isParentActive('/legacy')} />
@@ -293,16 +296,18 @@ const DropdownItem = ({
   title,
   content,
   href = '#',
-  active = false
+  active = false,
+  align = 'center'
 }: {
   title: string
   content: React.ComponentType
   href?: string
   active?: boolean
+  align?: 'left' | 'right' | 'center'
 }) => {
   return (
     <div className={`flex justify-center hover:text-t1-red transition-colors cursor-pointer ${active ? 'text-t1-red' : ''}`}>
-      <FlyoutLink FlyoutContent={content}>
+      <FlyoutLink FlyoutContent={content} align={align}>
         <Link to={href} className='flex justify-center items-center'>
           <span className=''>{title}</span>
         </Link>
@@ -312,79 +317,64 @@ const DropdownItem = ({
 }
 
 const ShopContent = () => {
-  const [activeSub, setActiveSub] = useState<'COLLECTION' | 'COLLABORATION' | null>(null)
-  const [activeLevel3, setActiveLevel3] = useState<'ESSENTIAL' | 'LEAGUE OF LEGENDS' | 'VALORANT' | null>(null)
+  const { collections, loading } = useCollections()
+  const [activeSubId, setActiveSubId] = useState<number | null>(null)
+  const [activeLevel3Id, setActiveLevel3Id] = useState<number | null>(null)
   const location = useLocation()
   const isActive = (path: string) => location.pathname === path
-
-  // Map sub-menus to their vertical alignment offsets
-  const getLevel2Top = () => {
-    if (activeSub === 'COLLECTION') return 'top-[56px]'
-    if (activeSub === 'COLLABORATION') return 'top-[84px]'
-    return 'top-0'
-  }
-
-  const getLevel3Top = () => {
-    if (activeLevel3 === 'ESSENTIAL') return 'top-0'
-    if (activeLevel3 === 'LEAGUE OF LEGENDS') return 'top-[28px]'
-    if (activeLevel3 === 'VALORANT') return 'top-[56px]'
-    return 'top-0'
-  }
-
   const { t } = useLanguage()
+
+  const shopRoots = useMemo(() => {
+    // We want roots that are NOT legacy
+    return collections.filter(c => c.collection_slug !== 'legacy')
+  }, [collections])
+
+  const activeSub = useMemo(() =>
+    shopRoots.find(c => c.collection_id === activeSubId),
+    [shopRoots, activeSubId])
+
+  const activeLevel3 = useMemo(() =>
+    activeSub?.children?.find(c => c.collection_id === activeLevel3Id),
+    [activeSub, activeLevel3Id])
+
+  if (loading) return null
 
   return (
     <div className='relative flex items-start bg-transparent'>
-      {/* Vertical Hover Bridge: Connects Navbar link to Menu. z-[-1] to not block clicks */}
       <div className='absolute -top-12 left-0 w-full h-12 bg-transparent z-[-1]' />
 
-      {/* Column 1: Main Shop Links Block */}
+      {/* Column 1: Main Shop Roots */}
       <div className='flex flex-col gap-3 w-44 shrink-0 bg-[#111111]/95 backdrop-blur-md shadow-2xl border-t-[3px] border-t-t1-red p-5 z-10'>
         <Link
           to="/shop"
           onMouseEnter={() => {
-            setActiveSub(null)
-            setActiveLevel3(null)
+            setActiveSubId(null)
+            setActiveLevel3Id(null)
           }}
           className={`block text-xs font-inter tracking-widest hover:text-white transition-all whitespace-nowrap ${isActive('/shop') ? 'text-white' : 'text-[#cccccc]'}`}
         >
           {t('nav.all')}
         </Link>
-        <Link
-          to="/shop/team-kit"
-          onMouseEnter={() => {
-            setActiveSub(null)
-            setActiveLevel3(null)
-          }}
-          className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white transition-all uppercase whitespace-nowrap'
-        >
-          {t('nav.teamKit')}
-        </Link>
-        <Link
-          to="/shop/collection"
-          onMouseEnter={() => {
-            setActiveSub('COLLECTION')
-            setActiveLevel3(null)
-          }}
-          className={`block text-xs font-inter tracking-widest cursor-pointer hover:text-white transition-all uppercase whitespace-nowrap ${activeSub === 'COLLECTION' ? 'text-white' : 'text-[#cccccc]'}`}
-        >
-          {t('nav.collection')}
-        </Link>
-        <Link
-          to="/shop/collaboration"
-          onMouseEnter={() => {
-            setActiveSub('COLLABORATION')
-            setActiveLevel3(null)
-          }}
-          className={`block text-xs font-inter tracking-widest cursor-pointer hover:text-white transition-all uppercase whitespace-nowrap ${activeSub === 'COLLABORATION' ? 'text-white' : 'text-[#cccccc]'}`}
-        >
-          {t('nav.collaboration')}
-        </Link>
+
+        {shopRoots.map(root => (
+          <Link
+            key={root.collection_id}
+            to={root.children && root.children.length > 0 ? `/shop/${root.collection_slug}` : `/shop/collection/${root.collection_slug}`}
+            onMouseEnter={() => {
+              setActiveSubId(root.collection_id)
+              setActiveLevel3Id(null)
+            }}
+            className={`block text-xs font-inter tracking-widest hover:text-white transition-all uppercase whitespace-nowrap ${activeSubId === root.collection_id ? 'text-white' : 'text-[#cccccc]'}`}
+          >
+            {root.collection_name}
+          </Link>
+        ))}
+
         <Link
           to="/shop/sale"
           onMouseEnter={() => {
-            setActiveSub(null)
-            setActiveLevel3(null)
+            setActiveSubId(null)
+            setActiveLevel3Id(null)
           }}
           className='block text-xs font-inter tracking-widest text-t1-red hover:text-red-500 transition-all uppercase whitespace-nowrap'
         >
@@ -392,70 +382,50 @@ const ShopContent = () => {
         </Link>
       </div>
 
-      {/* Dynamic Sub-column Block (Level 2) */}
+      {/* Column 2: Level 2 Children */}
       <AnimatePresence mode='wait'>
-        {activeSub && (
+        {activeSub && activeSub.children && activeSub.children.length > 0 && (
           <div className='absolute left-full top-0 h-full'>
-            {/* Hover Bridge 1: Fixed relative to Col 1 */}
             <div className='absolute -left-2 top-0 w-2 h-[800px] bg-transparent z-0' />
-
             <motion.div
-              key={activeSub}
+              key={activeSub.collection_id}
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -10 }}
-              className={`relative ml-0 flex flex-col gap-3 bg-[#111111]/95 backdrop-blur-md shadow-2xl border-t-[3px] border-t-t1-red p-5 min-w-[200px] z-10 ${getLevel2Top()}`}
+              className="relative ml-0 flex flex-col gap-3 bg-[#111111]/95 backdrop-blur-md shadow-2xl border-t-[3px] border-t-t1-red p-5 min-w-[200px] z-10"
             >
-              {activeSub === 'COLLECTION' && (
-                <>
-                  <Link
-                    to="/shop/collection/essential"
-                    onMouseEnter={() => setActiveLevel3('ESSENTIAL')}
-                    className={`block text-xs font-inter tracking-widest transition-all uppercase whitespace-nowrap ${activeLevel3 === 'ESSENTIAL' ? 'text-white' : 'text-[#cccccc] hover:text-white'}`}
-                  >
-                    {t('nav.essential')}
-                  </Link>
-                  <Link
-                    to="/shop/collection/league-of-legends"
-                    onMouseEnter={() => setActiveLevel3('LEAGUE OF LEGENDS')}
-                    className={`block text-xs font-inter tracking-widest transition-all uppercase whitespace-nowrap ${activeLevel3 === 'LEAGUE OF LEGENDS' ? 'text-white' : 'text-[#cccccc] hover:text-white'}`}
-                  >
-                    {t('nav.leagueOfLegends')}
-                  </Link>
-                  <Link
-                    to="/shop/collection/valorant"
-                    onMouseEnter={() => setActiveLevel3('VALORANT')}
-                    className={`block text-xs font-inter tracking-widest transition-all uppercase whitespace-nowrap ${activeLevel3 === 'VALORANT' ? 'text-white' : 'text-[#cccccc] hover:text-white'}`}
-                  >
-                    {t('nav.valorant')}
-                  </Link>
-                </>
-              )}
-              {activeSub === 'COLLABORATION' && (
-                <>
-                  <Link to="/shop/collaboration/disney" className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white transition-all uppercase whitespace-nowrap'>{t('nav.disney')}</Link>
-                  <Link to="/shop/collaboration/rinstore-x-goalstudio" className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white transition-all uppercase whitespace-nowrap'>{t('nav.goalstudio')}</Link>
-                  <Link to="/shop/collaboration/rinstore-x-secretlab" className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white transition-all uppercase whitespace-nowrap'>{t('nav.secretlab')}</Link>
-                  <Link to="/shop/collaboration/rinstore-x-razer" className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white transition-all uppercase whitespace-nowrap'>{t('nav.razer')}</Link>
-                </>
-              )}
+              {activeSub.children.map(child => (
+                <Link
+                  key={child.collection_id}
+                  to={`/shop/collection/${child.collection_slug}`}
+                  onMouseEnter={() => setActiveLevel3Id(child.collection_id)}
+                  className={`block text-xs font-inter tracking-widest transition-all uppercase whitespace-nowrap ${activeLevel3Id === child.collection_id ? 'text-white' : 'text-[#cccccc] hover:text-white'}`}
+                >
+                  {child.collection_name}
+                </Link>
+              ))}
 
-              {/* Dynamic Sub-column Block (Level 3) */}
+              {/* Column 3: Level 3 Children */}
               <AnimatePresence mode='wait'>
-                {activeLevel3 && (
+                {activeLevel3 && activeLevel3.children && activeLevel3.children.length > 0 && (
                   <div className='absolute left-full top-0 h-full'>
-                    {/* Hover Bridge 2: Fixed relative to Col 2 */}
                     <div className='absolute -left-2 top-0 w-2 h-[800px] bg-transparent z-0' />
-
                     <motion.div
-                      key={activeLevel3}
+                      key={activeLevel3.collection_id}
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -10 }}
-                      className={`relative ml-0 flex flex-col gap-3 bg-[#111111]/95 backdrop-blur-md shadow-2xl border-t-[3px] border-t-t1-red p-5 min-w-[200px] z-10 ${getLevel3Top()}`}
+                      className="relative ml-0 flex flex-col gap-3 bg-[#111111]/95 backdrop-blur-md shadow-2xl border-t-[3px] border-t-t1-red p-5 min-w-[200px] z-10"
                     >
-                      <Link to={`/shop/collection/${activeLevel3.toLowerCase().replace(/ /g, '-')}-gift-and-accessory`} className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white transition-all uppercase whitespace-nowrap'>{t('categories.gifts')}</Link>
-                      <Link to={`/shop/collection/${activeLevel3.toLowerCase().replace(/ /g, '-')}-apparel`} className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white transition-all uppercase whitespace-nowrap'>{t('categories.apparel')}</Link>
+                      {activeLevel3.children.map(gChild => (
+                        <Link
+                          key={gChild.collection_id}
+                          to={`/shop/collection/${gChild.collection_slug}`}
+                          className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white transition-all uppercase whitespace-nowrap'
+                        >
+                          {gChild.collection_name}
+                        </Link>
+                      ))}
                     </motion.div>
                   </div>
                 )}
@@ -469,18 +439,30 @@ const ShopContent = () => {
 }
 
 const LegacyContent = () => {
-  const { t } = useLanguage()
+  const { collections, loading } = useCollections()
+  // const { t } = useLanguage()
   const location = useLocation()
   const searchParams = new URLSearchParams(location.search)
   const currentSub = searchParams.get('sub')
-  const isSubActive = (sub: string) => location.pathname === '/legacy' && currentSub === sub
+  const isSubActive = (slug: string) => location.pathname === '/legacy' && currentSub === slug
+
+  const legacyCollection = useMemo(() =>
+    collections.find(c => c.collection_slug === 'legacy'),
+    [collections])
+
+  if (loading || !legacyCollection) return null
+
   return (
     <div className='w-64 bg-[#111111]/95 backdrop-blur-md shadow-2xl border-t-[3px] border-t-t1-red p-5 flex flex-col gap-3'>
-      <Link to="/legacy?sub=worlds-2025" className={`block text-xs font-inter tracking-widest hover:text-white transition-all ${isSubActive('worlds-2025') ? 'text-white' : 'text-[#cccccc]'}`}>{t('nav.worlds2025')}</Link>
-      <Link to="/legacy?sub=worlds-2024" className={`block text-xs font-inter tracking-widest hover:text-white transition-all ${isSubActive('worlds-2024') ? 'text-white' : 'text-[#cccccc]'}`}>{t('nav.worlds2024')}</Link>
-      <Link to="/legacy?sub=worlds-2023" className={`block text-xs font-inter tracking-widest hover:text-white transition-all ${isSubActive('worlds-2023') ? 'text-white' : 'text-[#cccccc]'}`}>{t('nav.worlds2023')}</Link>
-      <Link to="/legacy?sub=apparel" className={`block text-xs font-inter tracking-widest hover:text-white transition-all ${isSubActive('apparel') ? 'text-white' : 'text-[#cccccc]'}`}>{t('categories.apparel')}</Link>
-      <Link to="/legacy?sub=gifts" className={`block text-xs font-inter tracking-widest hover:text-white transition-all ${isSubActive('gifts') ? 'text-white' : 'text-[#cccccc]'}`}>{t('categories.gifts')}</Link>
+      {legacyCollection.children?.map(child => (
+        <Link
+          key={child.collection_id}
+          to={`/legacy?sub=${child.collection_slug}`}
+          className={`block text-xs font-inter tracking-widest hover:text-white transition-all ${isSubActive(child.collection_slug) ? 'text-white' : 'text-[#cccccc]'}`}
+        >
+          {child.collection_name}
+        </Link>
+      ))}
     </div>
   )
 }

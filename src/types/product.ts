@@ -2,10 +2,11 @@ export interface ProductItem {
   product_item_id: number;
   sku: string;
   stock_quantity: number;
-  product_item_image: string;
+  product_item_image: string | null;
   product_item_price: number;
   discount_id?: number | null;
   sale_price?: number | null;
+  size?: string;
 }
 
 export type Product = {
@@ -20,12 +21,9 @@ export type Product = {
   created_at: string;
   updated_at?: string;
   soldOut?: boolean;
-  collections?: string[];
+  collections?: { collection_id: number, collection_name: string, collection_slug: string }[];
+  collection_ids?: number[];
 
   // Nested variants
   items?: ProductItem[];
-
-  // Compatibility fields for filters if needed
-  sizes?: string[];
-  colors?: string[];
 }
