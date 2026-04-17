@@ -13,7 +13,7 @@ interface ProductCardProps {
   product_name: string;
   items?: {
     product_item_price: number;
-    product_item_image: string;
+    product_item_image: string | null;
     sale_price?: number | null;
   }[];
   badge?: 'NEW' | 'SALE';
@@ -75,13 +75,15 @@ export function ProductCard({
     >
       <Link to={`/product/${product_id}`} className='block'>
         <div className='relative aspect-[3/4] bg-[#222222] overflow-hidden mb-4 border border-t1-gray/50 group-hover:border-t1-red/50 transition-colors duration-300'>
-          <img
-            src={image}
-            alt={product_name}
-            className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 ${
-              soldOut ? ' opacity-40 ' : ''
-            }`}
-          />
+          {image && (
+            <img
+              src={image}
+              alt={product_name}
+              className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 ${
+                soldOut ? ' opacity-40 ' : ''
+              }`}
+            />
+          )}
 
           {/* Badge */}
           {!soldOut && badge && (

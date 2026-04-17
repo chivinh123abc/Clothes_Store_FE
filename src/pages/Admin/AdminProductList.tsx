@@ -1,30 +1,54 @@
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Edit2, Trash2, Plus, ExternalLink, Search, ShoppingBag } from 'lucide-react'
+import { useEffect, useState, useMemo } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { 
+  Edit2, 
+  Trash2, 
+  Plus, 
+  ExternalLink, 
+  Search, 
+  ShoppingBag, 
+  Filter, 
+  X 
+} from 'lucide-react'
 import productApi from '~/apis/productApi'
 import type { Product } from '~/types/product'
-import { motion, AnimatePresence } from 'framer-motion'
+import categoryApi from '~/apis/categoriesApi'
+import collectionApi from '~/apis/collectionApi'
+import type { Category } from '~/apis/categoriesApi'
+import type { Collection } from '~/types/collection'
 
 const AdminProductList = () => {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [categories, setCategories] = useState<Category[]>([])
+  const [collections, setCollections] = useState<Collection[]>([])
+  const [searchParams, setSearchParams] = useSearchParams()
 
-  const fetchProducts = async () => {
+  const categoryFilterId = searchParams.get('category_id') ? parseInt(searchParams.get('category_id')!) : null
+  const collectionFilterId = searchParams.get('collection_id') ? parseInt(searchParams.get('collection_id')!) : null
+
+  const fetchData = async () => {
     try {
-      const response = await productApi.getAll()
-      setProducts(response.data)
+      setLoading(true)
+      const [prodRes, catRes, colRes] = await Promise.all([
+        productApi.getAll(),
+        categoryApi.getCategories(),
+        collectionApi.getAll()
+      ])
+      setProducts(prodRes.data)
+      setCategories(catRes.data)
+      setCollections(colRes.data)
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to fetch products', error)
-      alert('Failed to load products')
+      console.error('Failed to fetch admin data', error)
+      alert('Failed to load products/filters')
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    fetchProducts()
+    fetchData()
   }, [])
 
   const handleDelete = async (id: number) => {
@@ -32,7 +56,7 @@ const AdminProductList = () => {
       try {
         await productApi.delete(id)
         alert('Product deleted successfully')
-        fetchProducts()
+        fetchData()
       } catch (error) {
         // eslint-disable-next-line no-console
         console.error('Failed to delete product', error)
@@ -41,10 +65,32 @@ const AdminProductList = () => {
     }
   }
 
-  const filteredProducts = products.filter(p =>
-    p.product_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.category_name?.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredProducts = useMemo(() => {
+    return products.filter(p => {
+      const matchesSearch = p.product_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.category_name?.toLowerCase().includes(searchTerm.toLowerCase())
+
+      const matchesCategory = categoryFilterId ? p.category_id === categoryFilterId : true
+      const matchesCollection = collectionFilterId ? p.collections?.some(c => c.collection_id === collectionFilterId) : true
+
+      return matchesSearch && matchesCategory && matchesCollection
+    })
+  }, [products, searchTerm, categoryFilterId, collectionFilterId])
+
+  const setFilter = (key: string, value: string) => {
+    const newParams = new URLSearchParams(searchParams)
+    if (value) {
+      newParams.set(key, value)
+    } else {
+      newParams.delete(key)
+    }
+    setSearchParams(newParams)
+  }
+
+  const clearFilters = () => {
+    setSearchParams({})
+    setSearchTerm('')
+  }
 
   if (loading) {
     return (
@@ -57,15 +103,64 @@ const AdminProductList = () => {
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4" />
-          <input
-            type="text"
-            placeholder="Search products..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-[#0a0a0a] border border-white/5 rounded-xl py-3 pl-12 pr-4 text-sm focus:border-t1-red focus:outline-none transition-colors"
-          />
+        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 flex-1">
+          {/* Search */}
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4" />
+            <input
+              type="text"
+              placeholder="Search products..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-[#0a0a0a] border border-white/5 rounded-xl py-3 pl-12 pr-4 text-sm focus:border-t1-red focus:outline-none transition-colors"
+            />
+          </div>
+
+          {/* Filters Tray */}
+          <div className="flex items-center gap-2">
+            <div className="p-2 bg-white/5 rounded-lg border border-white/5 text-gray-500">
+              <Filter size={14} />
+            </div>
+
+            {/* Category Dropdown */}
+            <select
+              value={categoryFilterId || ''}
+              onChange={(e) => setFilter('category_id', e.target.value)}
+              className="bg-[#0a0a0a] border border-white/5 rounded-xl py-3 px-4 text-xs font-oswald uppercase tracking-widest focus:border-t1-red focus:outline-none transition-colors min-w-[140px]"
+            >
+              <option value="">All Categories</option>
+              {categories.map(cat => (
+                <option key={cat.category_id} value={cat.category_id}>
+                  {cat.category_name.toUpperCase()}
+                </option>
+              ))}
+            </select>
+
+            {/* Collection Dropdown */}
+            <select
+              value={collectionFilterId || ''}
+              onChange={(e) => setFilter('collection_id', e.target.value)}
+              className="bg-[#0a0a0a] border border-white/5 rounded-xl py-3 px-4 text-xs font-oswald uppercase tracking-widest focus:border-t1-red focus:outline-none transition-colors min-w-[140px]"
+            >
+              <option value="">All Collections</option>
+              {collections.map(col => (
+                <option key={col.collection_id} value={col.collection_id}>
+                  {col.collection_name.toUpperCase()}
+                </option>
+              ))}
+            </select>
+
+            {/* Reset */}
+            {(categoryFilterId || collectionFilterId || searchTerm) && (
+              <button
+                onClick={clearFilters}
+                className="p-3 text-gray-500 hover:text-t1-red transition-colors"
+                title="Clear all filters"
+              >
+                <X size={16} />
+              </button>
+            )}
+          </div>
         </div>
         <Link
           to="/admin/products/add"
@@ -88,60 +183,52 @@ const AdminProductList = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              <AnimatePresence mode="popLayout">
-                {filteredProducts.map((product) => (
-                  <motion.tr
-                    key={product.product_id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="hover:bg-white/[0.01] transition-colors group"
-                  >
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-white/5 rounded-lg flex items-center justify-center font-bold text-gray-700">
-                          {product.product_name.charAt(0)}
-                        </div>
-                        <div>
-                          <p className="font-bold text-sm group-hover:text-t1-red transition-colors">{product.product_name}</p>
-                          <p className="text-[10px] text-gray-500 font-oswald uppercase tracking-widest">{product.product_slug}</p>
-                        </div>
+              {filteredProducts.map((product) => (
+                <tr key={product.product_id} className="hover:bg-white/[0.01] transition-colors group">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-white/5 rounded-lg flex items-center justify-center font-bold text-gray-700">
+                        {product.product_name.charAt(0)}
                       </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-xs bg-white/5 px-2 py-1 rounded text-gray-400 font-oswald uppercase tracking-widest">
-                        {product.category_name}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-xs text-gray-500">
-                      {new Date(product.created_at).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-end gap-2">
-                        <Link
-                          to={`/product/${product.product_id}`}
-                          target="_blank"
-                          className="p-2 text-gray-500 hover:text-white transition-colors"
-                        >
-                          <ExternalLink size={16} />
-                        </Link>
-                        <Link
-                          to={`/admin/products/edit/${product.product_id}`}
-                          className="p-2 text-gray-500 hover:text-blue-500 transition-colors"
-                        >
-                          <Edit2 size={16} />
-                        </Link>
-                        <button
-                          onClick={() => handleDelete(product.product_id)}
-                          className="p-2 text-gray-500 hover:text-t1-red transition-colors"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                      <div>
+                        <p className="font-bold text-sm group-hover:text-t1-red transition-colors">{product.product_name}</p>
+                        <p className="text-[10px] text-gray-500 font-oswald uppercase tracking-widest">{product.product_slug}</p>
                       </div>
-                    </td>
-                  </motion.tr>
-                ))}
-              </AnimatePresence>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="text-xs bg-white/5 px-2 py-1 rounded text-gray-400 font-oswald uppercase tracking-widest">
+                      {product.category_name}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-xs text-gray-500">
+                    {new Date(product.created_at).toLocaleDateString()}
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center justify-end gap-2">
+                      <Link
+                        to={`/product/${product.product_id}`}
+                        target="_blank"
+                        className="p-2 text-gray-500 hover:text-white transition-colors"
+                      >
+                        <ExternalLink size={16} />
+                      </Link>
+                      <Link
+                        to={`/admin/products/edit/${product.product_id}`}
+                        className="p-2 text-gray-500 hover:text-blue-500 transition-colors"
+                      >
+                        <Edit2 size={16} />
+                      </Link>
+                      <button
+                        onClick={() => handleDelete(product.product_id)}
+                        className="p-2 text-gray-500 hover:text-t1-red transition-colors"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>

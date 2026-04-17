@@ -18,6 +18,8 @@ import AdminLayout from '../components/layout/AdminLayout'
 import AdminDashboard from '../pages/Admin/AdminDashboard'
 import AdminProductList from '../pages/Admin/AdminProductList'
 import AdminProductForm from '../pages/Admin/AdminProductForm'
+import AdminCategoryList from '../pages/Admin/AdminCategoryList'
+import AdminCollectionList from '../pages/Admin/AdminCollectionList'
 
 const Private = ({ children }: { children: React.ReactElement }) => {
   const { user, isLoading } = useAuth()
@@ -63,6 +65,8 @@ export default function AppRoutes() {
       <Route path='/admin/products' element={<AdminProtected><AdminProductList /></AdminProtected>} />
       <Route path='/admin/products/add' element={<AdminProtected><AdminProductForm /></AdminProtected>} />
       <Route path='/admin/products/edit/:id' element={<AdminProtected><AdminProductForm /></AdminProtected>} />
+      <Route path='/admin/categories' element={<AdminProtected><AdminCategoryList /></AdminProtected>} />
+      <Route path='/admin/collections' element={<AdminProtected><AdminCollectionList /></AdminProtected>} />
       <Route path='/admin/users' element={<AdminProtected><div className='text-gray-500 font-oswald uppercase tracking-widest'>User Management Coming Soon</div></AdminProtected>} />
       <Route path='/admin/settings' element={<AdminProtected><div className='text-gray-500 font-oswald uppercase tracking-widest'>Site Settings Coming Soon</div></AdminProtected>} />
     </Routes>

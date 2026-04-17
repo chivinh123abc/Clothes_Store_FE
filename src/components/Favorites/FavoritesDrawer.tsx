@@ -72,7 +72,7 @@ function FavoritesDrawer({ open, onClose }: FavoritesDrawerProps) {
                 <div className='flex-1 overflow-y-auto px-6 py-6 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-t1-gray/50 hover:[&::-webkit-scrollbar-thumb]:bg-t1-red'>
                   <div className='flex flex-col gap-6'>
                     {favorites.map((item) => {
-                      const image = item.items?.[0]?.product_item_image ?? ''
+                      const image = item.items?.[0]?.product_item_image ?? null
                       const price = item.items?.[0]?.product_item_price ?? 0
                       const salePrice = item.items?.[0]?.sale_price ?? undefined
 
@@ -90,11 +90,13 @@ function FavoritesDrawer({ open, onClose }: FavoritesDrawerProps) {
                             onClick={onClose}
                             className='w-24 h-32 bg-[#222222] shrink-0 border border-t1-gray/20 group-hover:border-t1-red/50 transition-colors overflow-hidden'
                           >
-                            <img
-                              src={image}
-                              alt={item.product_name}
-                              className='w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500'
-                            />
+                            {image && (
+                              <img
+                                src={image}
+                                alt={item.product_name}
+                                className='w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500'
+                              />
+                            )}
                           </Link>
 
                           <div className='flex-1 flex flex-col pt-1'>

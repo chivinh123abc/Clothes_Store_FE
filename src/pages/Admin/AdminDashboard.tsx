@@ -1,4 +1,5 @@
-import { ShoppingBag, TrendingUp, Users, DollarSign } from 'lucide-react'
+import { ShoppingBag, TrendingUp, Users, DollarSign, Layers, Grid } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 
 const AdminDashboard = () => {
@@ -33,6 +34,31 @@ const AdminDashboard = () => {
             <p className="font-oswald font-black text-3xl italic tracking-tight">{stat.value}</p>
           </motion.div>
         ))}
+      </div>
+
+      {/* Management Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Link to="/admin/products" className="group">
+          <div className="bg-[#0a0a0a] border border-white/5 p-8 rounded-2xl group-hover:border-t1-red/50 transition-all duration-300">
+            <ShoppingBag className="text-gray-500 group-hover:text-t1-red mb-4 transition-colors" size={32} />
+            <h4 className="font-oswald font-black text-xl uppercase tracking-tight">Products</h4>
+            <p className="text-xs text-gray-500 mt-1 uppercase tracking-widest font-oswald">Manage inventory & variants</p>
+          </div>
+        </Link>
+        <Link to="/admin/categories" className="group">
+          <div className="bg-[#0a0a0a] border border-white/5 p-8 rounded-2xl group-hover:border-blue-500/50 transition-all duration-300">
+            <Layers className="text-gray-500 group-hover:text-blue-500 mb-4 transition-colors" size={32} />
+            <h4 className="font-oswald font-black text-xl uppercase tracking-tight">Categories</h4>
+            <p className="text-xs text-gray-500 mt-1 uppercase tracking-widest font-oswald">Organize product types</p>
+          </div>
+        </Link>
+        <Link to="/admin/collections" className="group">
+          <div className="bg-[#0a0a0a] border border-white/5 p-8 rounded-2xl group-hover:border-purple-500/50 transition-all duration-300">
+            <Grid className="text-gray-500 group-hover:text-purple-500 mb-4 transition-colors" size={32} />
+            <h4 className="font-oswald font-black text-xl uppercase tracking-tight">Collections</h4>
+            <p className="text-xs text-gray-500 mt-1 uppercase tracking-widest font-oswald">Handle hierarchical grouping</p>
+          </div>
+        </Link>
       </div>
 
       {/* Recent Activity / Charts Placeholder */}

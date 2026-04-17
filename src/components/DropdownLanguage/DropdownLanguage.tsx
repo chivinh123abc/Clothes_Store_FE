@@ -19,9 +19,23 @@ function DropdownLanguage() {
   )
 }
 
-export const FlyoutLink = ({ children, FlyoutContent }: { children: React.ReactNode; FlyoutContent: React.ComponentType }) => {
+export const FlyoutLink = ({
+  children,
+  FlyoutContent,
+  align = 'center'
+}: {
+  children: React.ReactNode
+  FlyoutContent: React.ComponentType
+  align?: 'left' | 'right' | 'center'
+}) => {
   const [open, setOpen] = useState(false)
   const showFlyout = open && FlyoutContent
+
+  const alignmentClasses = {
+    left: 'left-0',
+    right: 'right-0',
+    center: 'left-1/2 -translate-x-1/2'
+  }
 
   return (
     <div
@@ -40,7 +54,7 @@ export const FlyoutLink = ({ children, FlyoutContent }: { children: React.ReactN
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 15 }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
-            className='absolute top-10 left-1/2 -translate-x-1/2 z-50'
+            className={`absolute top-10 z-50 ${alignmentClasses[align]}`}
           >
             <div className='absolute -top-6 left-0 right-0 h-6 bg-transparent cursor-default' />
             <FlyoutContent />

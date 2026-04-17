@@ -31,7 +31,7 @@ const CollectionSection = () => {
       label: t('nav.players'),
       subtitle: t('home.playersSub'),
       image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&q=80&w=900&h=1200',
-      path: '/new',
+      path: '/community',
       tag: t('home.new')
     },
     {

@@ -1,15 +1,19 @@
 /* eslint-disable indent */
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import BGImage from '~/assets/Background/T1 Poster.jpg'
 import { ProductCard } from '~/components/Product/ProductCard'
 import type { Product } from '~/types/product'
-import { combinedProducts } from '~/data/products'
+// import { combinedProducts } from '~/data/products'
 import { ShopSearch } from './ShopSearch'
 import { ChevronDown, ChevronRight, SlidersHorizontal, Trash2, X } from 'lucide-react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useLanguage } from '~/contexts/LanguageContext'
-import { getCollectionFamily } from '~/data/collections'
+import { useCollections } from '~/contexts/CollectionContext'
+import productApi from '~/apis/productApi'
+import categoryApi from '~/apis/categoriesApi'
+import type { Category } from '~/apis/categoriesApi'
+import type { Collection } from '~/types/collection'
 
 type FilterType = 'all' | 'best' | 'new' | 'sale' | 'collection' | 'legacy'
 
@@ -26,60 +30,11 @@ const CATEGORY_FILTERS = [
   { label: 'PANTS', value: 'pants' },
   { label: 'SHOES', value: 'shoes' },
   { label: 'HAT', value: 'hat' },
-  { label: 'ACCESSORIES', value: 'accessories' },
-  { label: 'COLLECTION', value: 'collection' }
-]
-
-const LEGACY_TABS = [
-  { id: 'worlds-2025', label: 'T1 2025 WORLDS COLLECTION' },
-  { id: 'worlds-2024', label: 'T1 2024 WORLDS COLLECTION' },
-  { id: 'worlds-2023', label: 'T1 2023 WORLDS COLLECTION' },
-  { id: 'apparel', label: 'APPAREL' },
-  { id: 'gifts', label: 'GIFTS & ACCESSORIES' }
+  { label: 'ACCESSORIES', value: 'accessories' }
 ]
 
 // Full hierarchical shop navigation
-type NavItem = { label: string; path: string; children?: NavItem[] }
-const SHOP_NAV: NavItem[] = [
-  { label: 'ALL', path: '/shop' },
-  { label: 'TEAM KIT', path: '/shop/team-kit' },
-  {
-    label: 'COLLECTION', path: '/shop/collection',
-    children: [
-      {
-        label: 'ESSENTIAL', path: '/shop/collection/essential',
-        children: [
-          { label: 'GIFT & ACCESSORY', path: '/shop/collection/essential/gift-and-accessory' },
-          { label: 'APPAREL', path: '/shop/collection/essential/apparel' }
-        ]
-      },
-      {
-        label: 'LEAGUE OF LEGENDS', path: '/shop/collection/league-of-legends',
-        children: [
-          { label: 'GIFT & ACCESSORY', path: '/shop/collection/league-of-legends/gift-and-accessory' },
-          { label: 'APPAREL', path: '/shop/collection/league-of-legends/apparel' }
-        ]
-      },
-      {
-        label: 'VALORANT', path: '/shop/collection/valorant',
-        children: [
-          { label: 'GIFT & ACCESSORY', path: '/shop/collection/valorant/gift-and-accessory' },
-          { label: 'APPAREL', path: '/shop/collection/valorant/apparel' }
-        ]
-      }
-    ]
-  },
-  {
-    label: 'COLLABORATION', path: '/shop/collaboration',
-    children: [
-      { label: 'DISNEY', path: '/shop/collaboration/disney' },
-      { label: 'RINSTORE X GOALSTUDIO', path: '/shop/collaboration/rinstore-x-goalstudio' },
-      { label: 'RINSTORE X SECRETLAB', path: '/shop/collaboration/rinstore-x-secretlab' },
-      { label: 'RINSTORE X RAZER', path: '/shop/collaboration/rinstore-x-razer' }
-    ]
-  },
-  { label: 'SALE', path: '/shop/sale' }
-]
+type NavItem = { id?: string; label: string; path: string; children?: NavItem[] }
 
 // ── Shop nav tree component for the inline filter panel ──
 // Top-level items are horizontal chips; clicking a parent expands children vertically below.
@@ -169,7 +124,7 @@ function ShopNavTree({ items, currentPath }: { items: NavItem[]; currentPath: st
 }
 
 // ── Legacy nav tree (same UI as ShopNavLevel, but uses ?sub= query param) ──
-function LegacyNavTree({ activeTab }: { activeTab: string | null }) {
+function LegacyNavTree({ activeTab, tabs }: { activeTab: string | null; tabs: { id: string; label: string }[] }) {
   const { t } = useLanguage()
   const currentSub = activeTab
   return (
@@ -182,7 +137,7 @@ function LegacyNavTree({ activeTab }: { activeTab: string | null }) {
       >
         {t('nav.all')}
       </Link>
-      {LEGACY_TABS.map((tab) => {
+      {tabs.map((tab) => {
         const isActive = currentSub === tab.id
         const localizedLabel = tab.id === 'apparel' ? t('categories.apparel') : tab.id === 'gifts' ? t('categories.gifts') : tab.label
 
@@ -203,19 +158,99 @@ function LegacyNavTree({ activeTab }: { activeTab: string | null }) {
 }
 
 export function ProductList({ filter = 'all' }: ProductListProps) {
+  const { collections, loading: collectionsLoading, getCollectionDescendants } = useCollections()
   const { t } = useLanguage()
   const [sortBy, setSortBy] = useState('newest')
   const [visibleCount, setVisibleCount] = useState(15)
+  const [cProducts, setCProducts] = useState<Product[]>([])
 
   const [searchQuery, setSearchQuery] = useState('')
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const [categories, setCategories] = useState<Category[]>([])
   const [categoryFilters, setCategoryFilters] = useState<string[]>([])
   const [searchParams] = useSearchParams()
-  // For legacy: legacyTab is read directly from URL, no local state needed
-  const legacyTab = filter === 'legacy' ? searchParams.get('sub') : null
   const location = useLocation()
   const navigate = useNavigate()
+
+  // For legacy: legacyTab is read directly from URL, no local state needed
+  const legacyTab = filter === 'legacy' ? searchParams.get('sub') : null
+
+  // 1. Local breadcrumb/navigation tree logic
+  const SHOP_NAV: NavItem[] = useMemo(() => {
+    if (collectionsLoading) return []
+
+    const buildNavRecursive = (items: Collection[]): NavItem[] => {
+      return items.map(col => ({
+        id: col.collection_slug,
+        label: col.collection_name,
+        path: col.children && col.children.length > 0 ? `/shop/${col.collection_slug}` : `/shop/collection/${col.collection_slug}`,
+        children: col.children && col.children.length > 0 ? buildNavRecursive(col.children) : undefined
+      }))
+    }
+
+    // Exclude legacy from general shop nav
+    return buildNavRecursive(collections.filter(c => c.collection_slug !== 'legacy'))
+  }, [collections, collectionsLoading])
+
+  const LEGACY_TABS = useMemo(() => {
+    const legacy = collections.find(c => c.collection_slug === 'legacy')
+    if (!legacy || !legacy.children) return []
+    return legacy.children.map(c => ({
+      id: c.collection_slug,
+      label: c.collection_name
+    }))
+  }, [collections])
+
+  const activeCollectionSlug = useMemo(() => {
+    const path = location.pathname.toLowerCase()
+    if (filter === 'legacy') return legacyTab ?? 'legacy'
+    if (path.startsWith('/shop')) {
+      const segments = path.replace('/shop', '').split('/').filter(Boolean)
+      return segments.length > 0 ? segments[segments.length - 1] : null
+    }
+    return null
+  }, [location.pathname, filter, legacyTab])
+
+  useEffect(() => {
+    const fetchCProducts = async () => {
+      try {
+        if (collectionsLoading) return
+
+        let response
+        // Always fetch all products and filter on frontend to support hierarchical/family collections
+        // unless it's a specific leaf collection page (but even then, family logic is safer)
+        response = await productApi.getAll()
+        setCProducts(response.data)
+
+        // Reset local filters when navigating to a new category/collection
+        setSearchQuery('')
+        setCategoryFilters([])
+        // priceRange will be reset by its own useEffect when maxPrice changes
+
+        // eslint-disable-next-line no-console
+        console.log('API Products:', response.data)
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error('Failed to fetch products:', error)
+      }
+    }
+    fetchCProducts()
+  }, [activeCollectionSlug, collectionsLoading])
+
+  // Fetch categories from Backend
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await categoryApi.getCategories()
+        setCategories(response.data)
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error('Failed to fetch categories:', error)
+      }
+    }
+    fetchCategories()
+  }, [])
 
   // Determine if we are in a 'local category filter' mode (new/best pages)
   const isCategoryMode = filter === 'new' || filter === 'best' || filter === 'legacy'
@@ -223,11 +258,15 @@ export function ProductList({ filter = 'all' }: ProductListProps) {
   const NEW_PRODUCT_DAYS = 7
 
   const maxPrice = useMemo(() => {
-    return Math.ceil(Math.max(...combinedProducts.map((p) => p.items?.[0]?.sale_price ?? p.items?.[0]?.product_item_price ?? 0)))
-  }, [])
+    if (cProducts.length === 0) return 1000
+    return Math.ceil(Math.max(...cProducts.map((p) => p.items?.[0]?.sale_price ?? p.items?.[0]?.product_item_price ?? 0)))
+  }, [cProducts])
 
   const [priceRange, setPriceRange] = useState<[number, number]>([0, maxPrice])
 
+  useEffect(() => {
+    setPriceRange([0, maxPrice])
+  }, [maxPrice])
   const isNewProduct = (createdAt: string) => {
     if (!createdAt) return false
     const createdDate = new Date(createdAt)
@@ -238,7 +277,7 @@ export function ProductList({ filter = 'all' }: ProductListProps) {
   }
 
   const getFilteredProducts = () => {
-    let products = [...combinedProducts]
+    let products = [...cProducts]
 
     switch (filter) {
       case 'new':
@@ -247,9 +286,6 @@ export function ProductList({ filter = 'all' }: ProductListProps) {
       case 'best':
         products = products.filter((p) => p.is_bestseller)
         break
-      case 'collection':
-        products = products.filter((p) => p.category_name === 'collection')
-        break
       case 'legacy':
         // Apply legacy tab filter
         if (legacyTab) {
@@ -257,7 +293,7 @@ export function ProductList({ filter = 'all' }: ProductListProps) {
             case 'worlds-2025':
             case 'worlds-2024':
             case 'worlds-2023':
-              products = products.filter((p) => ['collection', 'hoodie', 'jacket'].includes(p.category_name || ''))
+              products = products.filter((p) => ['hoodie', 'jacket'].includes(p.category_name || ''))
               break
             case 'apparel':
               products = products.filter((p) => ['tshirt', 'shirt', 'hoodie', 'sweater', 'jacket', 'pants'].includes(p.category_name || ''))
@@ -273,7 +309,7 @@ export function ProductList({ filter = 'all' }: ProductListProps) {
         break
     }
 
-    if (isCategoryMode && categoryFilters.length > 0) {
+    if (categoryFilters.length > 0) {
       products = products.filter((p) => categoryFilters.includes(p.category_name || ''))
     }
 
@@ -288,26 +324,16 @@ export function ProductList({ filter = 'all' }: ProductListProps) {
     }
 
     const path = location.pathname.toLowerCase()
-    let activeCollectionSlug: string | null = null
-
-    if (filter === 'legacy') {
-      // When no ?sub= param, use the 'legacy' parent slug to show ALL legacy products
-      activeCollectionSlug = legacyTab ?? 'legacy'
-    } else if (path.startsWith('/shop')) {
-      const segments = path.replace('/shop', '').split('/').filter(Boolean)
-      if (segments.length > 0) {
-        activeCollectionSlug = segments[segments.length - 1]
-      }
-    }
 
     if (activeCollectionSlug) {
-      const family = getCollectionFamily(activeCollectionSlug)
+      const family = getCollectionDescendants(activeCollectionSlug)
       products = products.filter((p) =>
-        p.collections?.some(c => family.includes(c))
+        p.collections?.some(c => family.includes((c as any).collection_slug || c))
       )
     }
 
     if (path.includes('/sale')) {
+
       products = products.filter((p) => p.items?.[0]?.sale_price != null)
     }
 
@@ -673,29 +699,40 @@ export function ProductList({ filter = 'all' }: ProductListProps) {
 
                     {filter === 'legacy' ? (
                       /* Legacy nav — same UI as Shop, URL-driven via ?sub= */
-                      <LegacyNavTree activeTab={legacyTab} />
-                    ) : isCategoryMode ? (
-                      /* Category chips for best/new pages */
-                      <div className='flex flex-wrap gap-2'>
-                        {CATEGORY_FILTERS.map((cat) => {
-                          const isActive = categoryFilters.includes(cat.value)
-                          return (
-                            <button
-                              key={cat.value}
-                              onClick={() => toggleCategory(cat.value)}
-                              className={`flex items-center justify-center font-oswald font-bold text-[11px] px-5 py-2 min-w-[120px] tracking-[0.15em] uppercase border transition-all duration-200 ${isActive
-                                ? 'bg-t1-red border-t1-red text-white'
-                                : 'border-white/10 text-gray-500 hover:border-white/30 hover:text-white'
-                                }`}
-                            >
-                              {t(`categories.${cat.value}`)}
-                            </button>
-                          )
-                        })}
-                      </div>
-                    ) : (
-                      /* Shop nav — full hierarchy, no auto-close */
+                      <LegacyNavTree activeTab={legacyTab} tabs={LEGACY_TABS} />
+                    ) : !isCategoryMode ? (
+                      /* Shop nav — only on regular Shop page */
                       <ShopNavTree items={SHOP_NAV} currentPath={path} />
+                    ) : null}
+
+                    {/* Category chips for all modes except legacy */}
+                    {categories.length > 0 && filter !== 'legacy' && (
+                      <div className={isCategoryMode ? 'mt-0' : 'mt-8'}>
+                        {!isCategoryMode && (
+                          <div className='flex items-center justify-between mb-4'>
+                            <h3 className='font-oswald text-[10px] tracking-[0.3em] text-gray-600 uppercase'>
+                              {t('shop.category')}
+                            </h3>
+                          </div>
+                        )}
+                        <div className='flex flex-wrap gap-2'>
+                          {categories.map((cat) => {
+                            const isActive = categoryFilters.includes(cat.category_name)
+                            return (
+                              <button
+                                key={cat.category_id}
+                                onClick={() => toggleCategory(cat.category_name)}
+                                className={`flex items-center justify-center font-oswald font-bold text-[11px] px-5 py-2 min-w-[120px] tracking-[0.15em] uppercase border transition-all duration-200 ${isActive
+                                  ? 'bg-t1-red border-t1-red text-white'
+                                  : 'border-white/10 text-gray-500 hover:border-white/30 hover:text-white'
+                                  }`}
+                              >
+                                {cat.category_name}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </div>
                     )}
                   </div>
 

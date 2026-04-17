@@ -1,7 +1,7 @@
 /* eslint-disable indent */
 import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { LayoutDashboard, ShoppingBag, PlusCircle, Users, Settings, LogOut, ChevronRight } from 'lucide-react'
+import { LayoutDashboard, ShoppingBag, PlusCircle, Users, Settings, LogOut, ChevronRight, Layers, Grid } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useAuth } from '~/hooks/useAuth'
 
@@ -16,7 +16,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const menuItems = [
     { icon: <LayoutDashboard size={20} />, label: 'Dashboard', path: '/admin' },
     { icon: <ShoppingBag size={20} />, label: 'Products', path: '/admin/products' },
-    { icon: <PlusCircle size={20} />, label: 'Add Product', path: '/admin/products/add' },
+    { icon: <Layers size={20} />, label: 'Categories', path: '/admin/categories' },
+    { icon: <Grid size={20} />, label: 'Collections', path: '/admin/collections' },
     { icon: <Users size={20} />, label: 'Users', path: '/admin/users' },
     { icon: <Settings size={20} />, label: 'Settings', path: '/admin/settings' }
   ]
@@ -40,8 +41,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 key={item.path}
                 to={item.path}
                 className={`flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 group ${isActive
-                    ? 'bg-t1-red text-white'
-                    : 'text-gray-500 hover:bg-white/5 hover:text-white'
+                  ? 'bg-t1-red text-white'
+                  : 'text-gray-500 hover:bg-white/5 hover:text-white'
                   }`}
               >
                 <div className="flex items-center gap-3">
