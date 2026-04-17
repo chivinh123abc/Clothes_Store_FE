@@ -1,14 +1,14 @@
 import { useEffect, useState, useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { 
-  Edit2, 
-  Trash2, 
-  Plus, 
-  ExternalLink, 
-  Search, 
-  ShoppingBag, 
-  Filter, 
-  X 
+import {
+  Edit2,
+  Trash2,
+  Plus,
+  ExternalLink,
+  Search,
+  ShoppingBag,
+  Filter,
+  X
 } from 'lucide-react'
 import productApi from '~/apis/productApi'
 import type { Product } from '~/types/product'
@@ -40,7 +40,7 @@ const AdminProductList = () => {
       setCategories(catRes.data)
       setCollections(colRes.data)
     } catch (error) {
-      console.error('Failed to fetch admin data', error)
+      // console.error('Failed to fetch admin data', error)
       alert('Failed to load products/filters')
     } finally {
       setLoading(false)
