@@ -25,7 +25,7 @@ const AdminProductForm = () => {
       try {
         const [catsRes, productRes] = await Promise.all([
           productApi.getCategories(),
-          isEdit ? productApi.getById(parseInt(id)) : Promise.resolve(null)
+          isEdit ? productApi.getById(Number(id)) : Promise.resolve(null)
         ])
 
         setCategories(catsRes.data)
@@ -33,7 +33,7 @@ const AdminProductForm = () => {
         if (productRes) {
           setFormData({
             product_name: productRes.data.product_name,
-            category_id: productRes.data.category_id,
+            category_id: productRes.data.category_id || 0,
             product_slug: productRes.data.product_slug
           })
         }
@@ -59,7 +59,7 @@ const AdminProductForm = () => {
     setSaving(true)
     try {
       if (isEdit) {
-        await productApi.update(parseInt(id), formData)
+        await productApi.update(Number(id), formData)
         alert('Product updated successfully')
       } else {
         await productApi.create(formData)

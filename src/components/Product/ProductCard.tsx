@@ -9,22 +9,22 @@ import LoginModal from '~/components/Modals/LoginModal/LoginModal'
 import { useLanguage } from '~/contexts/LanguageContext'
 
 interface ProductCardProps {
-  id: string;
-  name: string;
-  price: number;
-  image: string;
+  product_id: number;
+  product_name: string;
+  items?: {
+    product_item_price: number;
+    product_item_image: string;
+    sale_price?: number | null;
+  }[];
   badge?: 'NEW' | 'SALE';
-  salePrice?: number;
   soldOut?: boolean;
 }
 
 export function ProductCard({
-  id,
-  name,
-  price,
-  image,
+  product_id,
+  product_name,
+  items,
   badge,
-  salePrice,
   soldOut
 }: ProductCardProps) {
   const [isAdded, setIsAdded] = useState(false)
@@ -34,7 +34,11 @@ export function ProductCard({
   const { user } = useAuth()
   const { t } = useLanguage()
 
-  const favorited = isFavorite(id)
+  const price = items?.[0]?.product_item_price ?? 0
+  const image = items?.[0]?.product_item_image ?? ''
+  const salePrice = items?.[0]?.sale_price ?? undefined
+
+  const favorited = isFavorite(product_id)
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -43,7 +47,15 @@ export function ProductCard({
       setIsLoginOpen(true)
       return
     }
-    toggleFavorite({ id, name, price, image, salePrice, soldOut: soldOut ?? false, category: '', bestseller: false, createdAt: '' })
+    toggleFavorite({
+      product_id,
+      product_name,
+      product_slug: product_name.toLowerCase().replace(/ /g, '-'),
+      items: items as any,
+      soldOut: soldOut ?? false,
+      sold_count: 0,
+      created_at: new Date().toISOString()
+    })
   }
 
   useEffect(() => {
@@ -61,11 +73,11 @@ export function ProductCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <Link to={`/product/${id}`} className='block'>
+      <Link to={`/product/${product_id}`} className='block'>
         <div className='relative aspect-[3/4] bg-[#222222] overflow-hidden mb-4 border border-t1-gray/50 group-hover:border-t1-red/50 transition-colors duration-300'>
           <img
             src={image}
-            alt={name}
+            alt={product_name}
             className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 ${
               soldOut ? ' opacity-40 ' : ''
             }`}
@@ -115,8 +127,8 @@ export function ProductCard({
                 e.preventDefault()
                 setIsAdded(true)
                 addCartItem({
-                  id,
-                  name,
+                  id: product_id,
+                  name: product_name,
                   price: salePrice ?? price,
                   imageUrl: image,
                   size: 'M'
@@ -152,7 +164,7 @@ export function ProductCard({
 
         <div className='space-y-3 p-2 relative transition-all duration-300'>
           <h3 className='font-oswald font-bold text-lg uppercase tracking-wide group-hover:text-t1-red transition-colors duration-300 truncate'>
-            {name}
+            {product_name}
           </h3>
           <div className='flex items-center gap-3'>
             {salePrice ? (

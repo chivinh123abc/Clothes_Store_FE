@@ -71,80 +71,86 @@ function FavoritesDrawer({ open, onClose }: FavoritesDrawerProps) {
               ) : (
                 <div className='flex-1 overflow-y-auto px-6 py-6 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-t1-gray/50 hover:[&::-webkit-scrollbar-thumb]:bg-t1-red'>
                   <div className='flex flex-col gap-6'>
-                    {favorites.map((item) => (
-                      <motion.div
-                        key={item.id}
-                        layout
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 20 }}
-                        className='flex gap-4 border-b border-t1-gray/20 pb-6 group'
-                      >
-                        <Link
-                          to={`/product/${item.id}`}
-                          onClick={onClose}
-                          className='w-24 h-32 bg-[#222222] shrink-0 border border-t1-gray/20 group-hover:border-t1-red/50 transition-colors overflow-hidden'
+                    {favorites.map((item) => {
+                      const image = item.items?.[0]?.product_item_image ?? ''
+                      const price = item.items?.[0]?.product_item_price ?? 0
+                      const salePrice = item.items?.[0]?.sale_price ?? undefined
+
+                      return (
+                        <motion.div
+                          key={item.product_id}
+                          layout
+                          initial={{ opacity: 0, x: 20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: 20 }}
+                          className='flex gap-4 border-b border-t1-gray/20 pb-6 group'
                         >
-                          <img
-                            src={item.image}
-                            alt={item.name}
-                            className='w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500'
-                          />
-                        </Link>
+                          <Link
+                            to={`/product/${item.product_id}`}
+                            onClick={onClose}
+                            className='w-24 h-32 bg-[#222222] shrink-0 border border-t1-gray/20 group-hover:border-t1-red/50 transition-colors overflow-hidden'
+                          >
+                            <img
+                              src={image}
+                              alt={item.product_name}
+                              className='w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500'
+                            />
+                          </Link>
 
-                        <div className='flex-1 flex flex-col pt-1'>
-                          <div className='flex justify-between items-start'>
-                            <Link
-                              to={`/product/${item.id}`}
-                              onClick={onClose}
-                              className='font-oswald font-bold text-base tracking-wide text-white uppercase hover:text-t1-red transition-colors line-clamp-2 pr-2'
-                            >
-                              {item.name}
-                            </Link>
-                            <button
-                              onClick={() => toggleFavorite(item)}
-                              className='text-t1-red hover:text-gray-400 transition-colors flex-shrink-0 mt-1'
-                              title='Remove from favorites'
-                            >
-                              <Heart size={16} className='fill-current' />
-                            </button>
-                          </div>
+                          <div className='flex-1 flex flex-col pt-1'>
+                            <div className='flex justify-between items-start'>
+                              <Link
+                                to={`/product/${item.product_id}`}
+                                onClick={onClose}
+                                className='font-oswald font-bold text-base tracking-wide text-white uppercase hover:text-t1-red transition-colors line-clamp-2 pr-2'
+                              >
+                                {item.product_name}
+                              </Link>
+                              <button
+                                onClick={() => toggleFavorite(item)}
+                                className='text-t1-red hover:text-gray-400 transition-colors flex-shrink-0 mt-1'
+                                title='Remove from favorites'
+                              >
+                                <Heart size={16} className='fill-current' />
+                              </button>
+                            </div>
 
-                          <p className='font-oswald font-bold text-t1-red text-sm mt-1 mb-3'>
-                            ${(item.salePrice ?? item.price).toFixed(2)}
-                            {item.salePrice && (
-                              <span className='text-gray-600 line-through text-xs ml-2 font-normal'>
-                                ${item.price.toFixed(2)}
+                            <p className='font-oswald font-bold text-t1-red text-sm mt-1 mb-3'>
+                              ${(salePrice ?? price).toFixed(2)}
+                              {salePrice && (
+                                <span className='text-gray-600 line-through text-xs ml-2 font-normal'>
+                                  ${price.toFixed(2)}
+                                </span>
+                              )}
+                            </p>
+
+                            {/* Add to Cart */}
+                            {!item.soldOut && (
+                              <button
+                                onClick={() => {
+                                  addCartItem({
+                                    id: item.product_id,
+                                    name: item.product_name,
+                                    price: salePrice ?? price,
+                                    imageUrl: image,
+                                    size: 'M'
+                                  })
+                                }}
+                                className='mt-auto flex items-center gap-2 text-[10px] font-oswald font-bold tracking-widest uppercase text-gray-400 hover:text-white border border-white/10 hover:border-t1-red hover:bg-t1-red/10 px-3 py-2 transition-all w-fit'
+                              >
+                                <ShoppingCart size={12} />
+                                ADD TO CART
+                              </button>
+                            )}
+                            {item.soldOut && (
+                              <span className='mt-auto text-[10px] font-oswald font-bold tracking-widest uppercase text-gray-600 border border-white/5 px-3 py-2 w-fit'>
+                                SOLD OUT
                               </span>
                             )}
-                          </p>
-
-                          {/* Add to Cart */}
-                          {!item.soldOut && (
-                            <button
-                              onClick={() => {
-                                addCartItem({
-                                  id: item.id,
-                                  name: item.name,
-                                  price: item.salePrice ?? item.price,
-                                  imageUrl: item.image,
-                                  size: 'M'
-                                })
-                              }}
-                              className='mt-auto flex items-center gap-2 text-[10px] font-oswald font-bold tracking-widest uppercase text-gray-400 hover:text-white border border-white/10 hover:border-t1-red hover:bg-t1-red/10 px-3 py-2 transition-all w-fit'
-                            >
-                              <ShoppingCart size={12} />
-                              ADD TO CART
-                            </button>
-                          )}
-                          {item.soldOut && (
-                            <span className='mt-auto text-[10px] font-oswald font-bold tracking-widest uppercase text-gray-600 border border-white/5 px-3 py-2 w-fit'>
-                              SOLD OUT
-                            </span>
-                          )}
-                        </div>
-                      </motion.div>
-                    ))}
+                          </div>
+                        </motion.div>
+                      )
+                    })}
                   </div>
                 </div>
               )}
