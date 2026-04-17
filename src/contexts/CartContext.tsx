@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useMemo, type ReactNode } from 'react'
 
 export interface CartItem {
-  id: string;
+  id: number;
   name: string;
   price: number;
   imageUrl: string;
@@ -14,9 +14,9 @@ export interface CartItem {
 interface CartContextType {
   items: CartItem[];
   addCartItem: (item: Omit<CartItem, 'quantity'>, quantity?: number) => void;
-  removeCartItem: (id: string, size: string) => void;
-  incrementQuantity: (id: string, size: string) => void;
-  decrementQuantity: (id: string, size: string) => void;
+  removeCartItem: (id: number, size: string) => void;
+  incrementQuantity: (id: number, size: string) => void;
+  decrementQuantity: (id: number, size: string) => void;
   clearCart: () => void;
   totalItems: number;
   totalPrice: number;
@@ -43,13 +43,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
     })
   }
 
-  const removeCartItem = (id: string, size: string) => {
+  const removeCartItem = (id: number, size: string) => {
     setItems((prevItems) =>
       prevItems.filter((item) => !(item.id === id && item.size === size))
     )
   }
 
-  const incrementQuantity = (id: string, size: string) => {
+  const incrementQuantity = (id: number, size: string) => {
     setItems((prevItems) =>
       prevItems.map((item) =>
         item.id === id && item.size === size
@@ -59,7 +59,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     )
   }
 
-  const decrementQuantity = (id: string, size: string) => {
+  const decrementQuantity = (id: number, size: string) => {
     setItems((prevItems) =>
       prevItems.map((item) =>
         item.id === id && item.size === size

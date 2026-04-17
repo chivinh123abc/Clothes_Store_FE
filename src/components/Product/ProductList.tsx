@@ -1,13 +1,15 @@
 /* eslint-disable indent */
 import { useMemo, useState } from 'react'
-import { ProductCard } from '~/components/Product/ProductCard'
 import { motion, AnimatePresence } from 'framer-motion'
 import BGImage from '~/assets/Background/T1 Poster.jpg'
+import { ProductCard } from '~/components/Product/ProductCard'
+import type { Product } from '~/types/product'
 import { combinedProducts } from '~/data/products'
 import { ShopSearch } from './ShopSearch'
 import { ChevronDown, ChevronRight, SlidersHorizontal, Trash2, X } from 'lucide-react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useLanguage } from '~/contexts/LanguageContext'
+import { getCollectionFamily } from '~/data/collections'
 
 type FilterType = 'all' | 'best' | 'new' | 'sale' | 'collection' | 'legacy'
 
@@ -133,12 +135,7 @@ function ShopNavLevel({ items, currentPath, level = 0 }: { items: NavItem[]; cur
               }}
               className={`flex items-center justify-center font-oswald font-bold tracking-[0.15em] uppercase border transition-all duration-200
                 ${level === 0 ? 'text-[11px] px-5 py-2 min-w-[120px]' : 'text-[10px] px-4 py-1.5 min-w-[100px]'}
-                ${isExact
-                  ? 'bg-t1-red border-t1-red text-white'
-                  : isActive || isExpanded
-                    ? 'border-white/30 text-white'
-                    : 'border-white/10 text-gray-500 hover:border-white/30 hover:text-white'
-                }
+                ${isExact ? 'bg-t1-red border-t1-red text-white' : isActive || isExpanded ? 'border-white/30 text-white' : 'border-white/10 text-gray-500 hover:border-white/30 hover:text-white'}
               `}
             >
               {getLabelKey(item.label)}
@@ -181,8 +178,7 @@ function LegacyNavTree({ activeTab }: { activeTab: string | null }) {
         to='/legacy'
         className={`flex items-center justify-center font-oswald font-bold text-[11px] px-5 py-2 min-w-[100px] tracking-[0.15em] uppercase border transition-all duration-200 ${!currentSub
           ? 'bg-t1-red border-t1-red text-white'
-          : 'border-white/10 text-gray-500 hover:border-white/30 hover:text-white'
-          }`}
+          : 'border-white/10 text-gray-500 hover:border-white/30 hover:text-white'}`}
       >
         {t('nav.all')}
       </Link>
@@ -196,8 +192,7 @@ function LegacyNavTree({ activeTab }: { activeTab: string | null }) {
             to={`/legacy?sub=${tab.id}`}
             className={`flex items-center justify-center font-oswald font-bold text-[11px] px-5 py-2 min-w-[100px] tracking-[0.15em] uppercase border transition-all duration-200 ${isActive
               ? 'bg-t1-red border-t1-red text-white'
-              : 'border-white/10 text-gray-500 hover:border-white/30 hover:text-white'
-              }`}
+              : 'border-white/10 text-gray-500 hover:border-white/30 hover:text-white'}`}
           >
             {localizedLabel}
           </Link>
@@ -210,7 +205,8 @@ function LegacyNavTree({ activeTab }: { activeTab: string | null }) {
 export function ProductList({ filter = 'all' }: ProductListProps) {
   const { t } = useLanguage()
   const [sortBy, setSortBy] = useState('newest')
-  const [visibleCount, setVisibleCount] = useState(12)
+  const [visibleCount, setVisibleCount] = useState(15)
+
   const [searchQuery, setSearchQuery] = useState('')
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isFilterOpen, setIsFilterOpen] = useState(false)
@@ -227,12 +223,13 @@ export function ProductList({ filter = 'all' }: ProductListProps) {
   const NEW_PRODUCT_DAYS = 7
 
   const maxPrice = useMemo(() => {
-    return Math.ceil(Math.max(...combinedProducts.map((p) => p.salePrice ?? p.price)))
+    return Math.ceil(Math.max(...combinedProducts.map((p) => p.items?.[0]?.sale_price ?? p.items?.[0]?.product_item_price ?? 0)))
   }, [])
 
   const [priceRange, setPriceRange] = useState<[number, number]>([0, maxPrice])
 
   const isNewProduct = (createdAt: string) => {
+    if (!createdAt) return false
     const createdDate = new Date(createdAt)
     const now = new Date()
     const diffTime = now.getTime() - createdDate.getTime()
@@ -245,13 +242,13 @@ export function ProductList({ filter = 'all' }: ProductListProps) {
 
     switch (filter) {
       case 'new':
-        products = products.filter((p) => isNewProduct(p.createdAt))
+        products = products.filter((p) => isNewProduct(p.created_at))
         break
       case 'best':
-        products = products.filter((p) => p.bestseller)
+        products = products.filter((p) => p.is_bestseller)
         break
       case 'collection':
-        products = products.filter((p) => p.category === 'collection')
+        products = products.filter((p) => p.category_name === 'collection')
         break
       case 'legacy':
         // Apply legacy tab filter
@@ -260,86 +257,62 @@ export function ProductList({ filter = 'all' }: ProductListProps) {
             case 'worlds-2025':
             case 'worlds-2024':
             case 'worlds-2023':
-              products = products.filter((p) => ['collection', 'hoodie', 'jacket'].includes(p.category))
+              products = products.filter((p) => ['collection', 'hoodie', 'jacket'].includes(p.category_name || ''))
               break
             case 'apparel':
-              products = products.filter((p) => ['tshirt', 'shirt', 'hoodie', 'sweater', 'jacket', 'pants'].includes(p.category))
+              products = products.filter((p) => ['tshirt', 'shirt', 'hoodie', 'sweater', 'jacket', 'pants'].includes(p.category_name || ''))
               break
             case 'gifts':
-              products = products.filter((p) => ['accessories', 'hat', 'shoes'].includes(p.category))
+              products = products.filter((p) => ['accessories', 'hat', 'shoes'].includes(p.category_name || ''))
               break
           }
         }
         break
       case 'sale':
-        products = products.filter((p) => p.salePrice != null)
+        products = products.filter((p) => p.items?.[0]?.sale_price != null)
         break
     }
 
     if (isCategoryMode && categoryFilters.length > 0) {
-      products = products.filter((p) => categoryFilters.includes(p.category))
+      products = products.filter((p) => categoryFilters.includes(p.category_name || ''))
     }
 
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
       products = products.filter(
         (p) =>
-          p.name.toLowerCase().includes(query) ||
-          p.category.toLowerCase().includes(query) ||
-          p.description?.toLowerCase().includes(query)
+          p.product_name.toLowerCase().includes(query) ||
+          p.category_name?.toLowerCase().includes(query) ||
+          p.product_description?.toLowerCase().includes(query)
       )
     }
 
     const path = location.pathname.toLowerCase()
+    let activeCollectionSlug: string | null = null
 
-    if (path.includes('/sale')) {
-      products = products.filter((p) => p.salePrice != null)
-    } else if (path.includes('/team-kit')) {
-      products = products.filter((p) => p.category === 'tshirt' || p.category === 'jacket')
-    } else if (path.includes('/collection')) {
-      if (path.includes('/essential')) {
-        if (path.includes('/gift-and-accessory')) {
-          products = products.filter((p) => p.category === 'accessories' || p.category === 'hat')
-        } else if (path.includes('/apparel')) {
-          products = products.filter((p) => ['tshirt', 'hoodie', 'jacket', 'pants'].includes(p.category))
-        } else {
-          products = products.filter((p) => p.id.includes('1') || p.id.includes('2') || p.category === 'hoodie')
-        }
-      } else if (path.includes('/league-of-legends')) {
-        if (path.includes('/gift-and-accessory')) {
-          products = products.filter((p) => p.category === 'accessories' && p.name.toLowerCase().includes('t1'))
-        } else if (path.includes('/apparel')) {
-          products = products.filter((p) => p.category === 'tshirt' || p.category === 'jacket')
-        } else {
-          products = products.filter((p) => p.name.toLowerCase().includes('faker') || p.name.toLowerCase().includes('oner') || p.id.includes('3') || p.id.includes('4'))
-        }
-      } else if (path.includes('/valorant')) {
-        if (path.includes('/gift-and-accessory')) {
-          products = products.filter((p) => p.category === 'hat' || p.name.toLowerCase().includes('mouse'))
-        } else if (path.includes('/apparel')) {
-          products = products.filter((p) => p.category === 'pants' || p.category === 'shirt')
-        } else {
-          products = products.filter((p) => p.id.includes('5') || p.id.includes('6') || p.id.includes('7') || p.category === 'pants')
-        }
-      } else {
-        products = products.filter((p) => p.category === 'collection' || p.category === 'sweater')
-      }
-    } else if (path.includes('/collaboration')) {
-      if (path.includes('/disney')) {
-        products = products.filter((p) => p.id.includes('7') || p.name.toLowerCase().includes('white') || p.category === 'hoodie')
-      } else if (path.includes('/rinstore-x-goalstudio')) {
-        products = products.filter((p) => p.id.includes('8') || p.category === 'shoes' || p.category === 'pants')
-      } else if (path.includes('/rinstore-x-secretlab')) {
-        products = products.filter((p) => p.name.toLowerCase().includes('keyboard') || p.name.toLowerCase().includes('mouse') || p.id.includes('9'))
-      } else if (path.includes('/rinstore-x-razer')) {
-        products = products.filter((p) => p.name.toLowerCase().includes('mouse') || p.category === 'accessories')
-      } else {
-        products = products.filter((p) => p.category === 'accessories' || p.category === 'shoes' || p.category === 'hat')
+    if (filter === 'legacy') {
+      // When no ?sub= param, use the 'legacy' parent slug to show ALL legacy products
+      activeCollectionSlug = legacyTab ?? 'legacy'
+    } else if (path.startsWith('/shop')) {
+      const segments = path.replace('/shop', '').split('/').filter(Boolean)
+      if (segments.length > 0) {
+        activeCollectionSlug = segments[segments.length - 1]
       }
     }
 
+    if (activeCollectionSlug) {
+      const family = getCollectionFamily(activeCollectionSlug)
+      products = products.filter((p) =>
+        p.collections?.some(c => family.includes(c))
+      )
+    }
+
+    if (path.includes('/sale')) {
+      products = products.filter((p) => p.items?.[0]?.sale_price != null)
+    }
+
     products = products.filter((p) => {
-      const currentPrice = p.salePrice ?? p.price
+      const currentPrice = p.items?.[0]?.sale_price ?? p.items?.[0]?.product_item_price ?? 0
       return currentPrice >= priceRange[0] && currentPrice <= priceRange[1]
     })
 
@@ -368,7 +341,7 @@ export function ProductList({ filter = 'all' }: ProductListProps) {
     if (path.includes('/legacy') || filter === 'legacy') {
       return {
         title: t('shop.legacy'),
-        subtitle: 'Clothes Archive',
+        subtitle: 'Clothes Legacy',
         bannerImage: 'https://images.unsplash.com/photo-1547036967-23d11aacaee0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
         highlight: t('shop.champions')
       }
@@ -481,23 +454,23 @@ export function ProductList({ filter = 'all' }: ProductListProps) {
     const sorted = [...allFiltered]
     switch (sortBy) {
       case 'price-low':
-        sorted.sort((a, b) => (a.salePrice ?? a.price) - (b.salePrice ?? b.price))
+        sorted.sort((a, b) => (a.items?.[0]?.sale_price ?? a.items?.[0]?.product_item_price ?? 0) - (b.items?.[0]?.sale_price ?? b.items?.[0]?.product_item_price ?? 0))
         break
       case 'price-high':
-        sorted.sort((a, b) => (b.salePrice ?? b.price) - (a.salePrice ?? a.price))
+        sorted.sort((a, b) => (b.items?.[0]?.sale_price ?? b.items?.[0]?.product_item_price ?? 0) - (a.items?.[0]?.sale_price ?? a.items?.[0]?.product_item_price ?? 0))
         break
       case 'name-az':
-        sorted.sort((a, b) => a.name.localeCompare(b.name))
+        sorted.sort((a, b) => a.product_name.localeCompare(b.product_name))
         break
       case 'name-za':
-        sorted.sort((a, b) => b.name.localeCompare(a.name))
+        sorted.sort((a, b) => b.product_name.localeCompare(a.product_name))
         break
       case 'best':
-        sorted.sort((a, b) => Number(b.bestseller) - Number(a.bestseller))
+        sorted.sort((a, b) => Number(b.is_bestseller) - Number(a.is_bestseller))
         break
       case 'newest':
       default:
-        sorted.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        sorted.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
         break
     }
     return sorted
@@ -507,12 +480,13 @@ export function ProductList({ filter = 'all' }: ProductListProps) {
 
   const handleSortChange = (value: string) => {
     setSortBy(value)
-    setVisibleCount(12)
+    setVisibleCount(15)
   }
 
-  const getProductBadge = (product: { salePrice?: number; createdAt: string }) => {
-    if (product.salePrice) return 'SALE'
-    if (isNewProduct(product.createdAt)) return 'NEW'
+  const getProductBadge = (product: Product) => {
+
+    if (product.items?.[0]?.sale_price) return 'SALE'
+    if (isNewProduct(product.created_at)) return 'NEW'
     return undefined
   }
 
@@ -529,10 +503,11 @@ export function ProductList({ filter = 'all' }: ProductListProps) {
     setCategoryFilters(prev =>
       prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]
     )
-    setVisibleCount(12)
+    setVisibleCount(15)
   }
 
   // ── BREADCRUMB (Tracing) ──
+
   const path = location.pathname.toLowerCase()
   const breadcrumbs: { label: string; href?: string }[] = [{ label: t('footer.home').toUpperCase(), href: '/' }]
 
@@ -687,7 +662,8 @@ export function ProductList({ filter = 'all' }: ProductListProps) {
                       </h3>
                       {isCategoryMode && categoryFilters.length > 0 && (
                         <button
-                          onClick={() => { setCategoryFilters([]); setVisibleCount(12) }}
+                          onClick={() => { setCategoryFilters([]); setVisibleCount(15) }}
+
                           className='font-oswald text-[10px] tracking-widest uppercase text-t1-red hover:text-white transition-colors'
                         >
                           {t('shop.clearAll')}
@@ -843,7 +819,7 @@ export function ProductList({ filter = 'all' }: ProductListProps) {
           >
             {visibleProducts.map((product) => (
               <ProductCard
-                key={product.id}
+                key={product.product_id}
                 {...product}
                 badge={getProductBadge(product)}
               />
@@ -869,7 +845,8 @@ export function ProductList({ filter = 'all' }: ProductListProps) {
         {visibleCount < sortedProducts.length && (
           <div className='mt-16 flex justify-center'>
             <button
-              onClick={() => setVisibleCount((prev) => prev + 12)}
+              onClick={() => setVisibleCount((prev) => prev + 15)}
+
               className='px-12 py-4 border border-white/10 text-gray-500 font-oswald font-bold tracking-[0.2em] uppercase transition-all duration-300 hover:border-t1-red hover:text-t1-red'
             >
               SEE MORE +

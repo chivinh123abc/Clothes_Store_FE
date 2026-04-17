@@ -257,7 +257,7 @@ export const en = {
     browse: 'Browse',
     newArrivals: 'New Arrivals',
     bestSellers: 'Best Sellers',
-    legacy: 'Archive',
+    legacy: 'Legacy',
     sale: 'Sale',
     teamKit: 'Official Uniform',
     essential: 'Essential',

@@ -34,14 +34,14 @@ export default function ProductDetail() {
 
   // Find product
   const product = useMemo(() => {
-    return combinedProducts.find((p) => p.id === id)
+    return combinedProducts.find((p) => p.product_id === Number(id))
   }, [id])
 
   // Related products (same category, excluding current)
   const relatedProducts = useMemo(() => {
     if (!product) return []
     return combinedProducts
-      .filter((p) => p.category === product.category && p.id !== product.id)
+      .filter((p) => p.category_name === product.category_name && p.product_id !== product.product_id)
       .slice(0, 4)
   }, [product])
 
@@ -69,10 +69,10 @@ export default function ProductDetail() {
   const handleAddToCart = () => {
     setIsAdded(true)
     addCartItem({
-      id: product.id,
-      name: product.name,
-      price: product.salePrice ?? product.price,
-      imageUrl: product.image,
+      id: product.product_id,
+      name: product.product_name,
+      price: product.items?.[0]?.sale_price ?? product.items?.[0]?.product_item_price ?? 0,
+      imageUrl: product.items?.[0]?.product_item_image ?? '',
       size: selectedSize
     }, quantity)
     setTimeout(() => setIsAdded(false), 2000)
@@ -87,9 +87,9 @@ export default function ProductDetail() {
           <ChevronRight size={12} className="text-white/50" />
           <Link to="/shop" className="hover:text-white transition-colors">{t('nav.shop').toUpperCase()}</Link>
           <ChevronRight size={12} className="text-white/50" />
-          <span className="text-t1-red">{t(`categories.${product.category}`)}</span>
+          <span className="text-t1-red">{t(`categories.${product.category_name}`)}</span>
           <ChevronRight size={12} className="text-white/50" />
-          <span className="text-white truncate max-w-[150px]">{product.name}</span>
+          <span className="text-white truncate max-w-[150px]">{product.product_name}</span>
         </div>
       </div>
 
@@ -105,8 +105,8 @@ export default function ProductDetail() {
               className="relative aspect-square sm:aspect-[4/5] bg-t1-gray/10 border border-t1-gray/30 overflow-hidden group"
             >
               <img
-                src={product.image}
-                alt={product.name}
+                src={product.items?.[0]?.product_item_image}
+                alt={product.product_name}
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
               {product.soldOut && (
@@ -114,7 +114,7 @@ export default function ProductDetail() {
                   <span className="px-10 py-5 text-4xl font-oswald font-black text-white border-4 border-white italic uppercase tracking-[0.2em]">{t('productDetail.soldOut')}</span>
                 </div>
               )}
-              {product.salePrice && !product.soldOut && (
+              {product.items?.[0]?.sale_price && !product.soldOut && (
                 <div className="absolute top-6 left-6 z-20 bg-t1-red text-white font-oswald font-bold px-4 py-1 text-sm tracking-widest italic shadow-lg shadow-t1-red/20">
                   {t('shop.sale').toUpperCase()}
                 </div>
@@ -130,23 +130,23 @@ export default function ProductDetail() {
               transition={{ duration: 0.6, delay: 0.2 }}
             >
               <h1 className="text-4xl md:text-5xl font-oswald font-black text-white italic uppercase leading-none tracking-tighter mb-4">
-                {product.name}
+                {product.product_name}
               </h1>
 
               <div className="flex items-center gap-4 mb-8">
-                {product.salePrice ? (
+                {product.items?.[0]?.sale_price ? (
                   <>
-                    <span className="text-3xl font-oswald font-black text-t1-red italic tracking-wide">${product.salePrice.toFixed(2)}</span>
-                    <span className="text-lg text-gray-500 line-through font-light">${product.price.toFixed(2)}</span>
-                    <span className="bg-t1-red/10 text-t1-red text-[10px] font-bold px-2 py-0.5 rounded border border-t1-red/20">{t('productDetail.save')} {Math.round((1 - product.salePrice / product.price) * 100)}%</span>
+                    <span className="text-3xl font-oswald font-black text-t1-red italic tracking-wide">${product.items[0].sale_price.toFixed(2)}</span>
+                    <span className="text-lg text-gray-500 line-through font-light">${product.items[0].product_item_price.toFixed(2)}</span>
+                    <span className="bg-t1-red/10 text-t1-red text-[10px] font-bold px-2 py-0.5 rounded border border-t1-red/20">{t('productDetail.save')} {Math.round((1 - product.items[0].sale_price / product.items[0].product_item_price) * 100)}%</span>
                   </>
                 ) : (
-                  <span className="text-3xl font-oswald font-black text-white italic tracking-wide">${product.price.toFixed(2)}</span>
+                  <span className="text-3xl font-oswald font-black text-white italic tracking-wide">${(product.items?.[0]?.product_item_price ?? 0).toFixed(2)}</span>
                 )}
               </div>
 
               <p className="text-gray-400 font-light leading-relaxed mb-10 italic">
-                {product.description || 'Premium clothing merchandise designed for those who demand excellence. This high-quality piece combines athletic performance with street-ready style.'}
+                {product.product_description || 'Premium clothing merchandise designed for those who demand excellence. This high-quality piece combines athletic performance with street-ready style.'}
               </p>
 
               {/* Size Selector */}
@@ -277,7 +277,7 @@ export default function ProductDetail() {
             {activeTab === 'description' && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                 <p className="mb-6">
-                  {product.description || t('productDetail.descriptionPlaceholder') || 'Represent the world champions in style with this premium merchandise. Craftsmanship meets heritage in every stitch.'}
+                  {product.product_description || t('productDetail.descriptionPlaceholder') || 'Represent the world champions in style with this premium merchandise. Craftsmanship meets heritage in every stitch.'}
                 </p>
                 <p>
                   Built for the next generation of esports athletes and fans alike. This item features high-performance textile engineering while maintaining a refined aesthetic suitable for everyday wear. Whether you're grinding on the ladder or cheering from the stands, this is the ultimate way to show your T1 pride.
@@ -322,7 +322,7 @@ export default function ProductDetail() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {relatedProducts.map((p) => (
-                <ProductCard key={p.id} {...p} />
+                <ProductCard key={p.product_id} {...p} />
               ))}
             </div>
           </div>

@@ -1,14 +1,6 @@
 import axiosClient from './axiosClient'
 
-export interface Product {
-  product_id: number
-  product_name: string
-  product_slug: string
-  category_id: number
-  category_name?: string
-  created_at: string
-  updated_at?: string
-}
+import type { Product } from '~/types/product'
 
 export interface Category {
   category_id: number

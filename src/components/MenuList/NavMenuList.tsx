@@ -188,8 +188,8 @@ const ShopExpand = () => {
                           exit={{ height: 0, opacity: 0 }}
                           className='pl-4 flex flex-col gap-4 overflow-hidden border-l border-white/10'
                         >
-                          <li><Link to={`/shop/collection/${item.toLowerCase().replace(/ /g, '-')}/gift-and-accessory`} className="hover:text-white transition-colors uppercase">{t('categories.gifts')}</Link></li>
-                          <li><Link to={`/shop/collection/${item.toLowerCase().replace(/ /g, '-')}/apparel`} className="hover:text-white transition-colors uppercase">{t('categories.apparel')}</Link></li>
+                          <li><Link to={`/shop/collection/${item.toLowerCase().replace(/ /g, '-')}-gift-and-accessory`} className="hover:text-white transition-colors uppercase">{t('categories.gifts')}</Link></li>
+                          <li><Link to={`/shop/collection/${item.toLowerCase().replace(/ /g, '-')}-apparel`} className="hover:text-white transition-colors uppercase">{t('categories.apparel')}</Link></li>
                         </motion.ul>
                       )}
                     </AnimatePresence>
@@ -454,8 +454,8 @@ const ShopContent = () => {
                       exit={{ opacity: 0, x: -10 }}
                       className={`relative ml-0 flex flex-col gap-3 bg-[#111111]/95 backdrop-blur-md shadow-2xl border-t-[3px] border-t-t1-red p-5 min-w-[200px] z-10 ${getLevel3Top()}`}
                     >
-                      <Link to={`/shop/collection/${activeLevel3.toLowerCase().replace(/ /g, '-')}/gift-and-accessory`} className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white transition-all uppercase whitespace-nowrap'>{t('categories.gifts')}</Link>
-                      <Link to={`/shop/collection/${activeLevel3.toLowerCase().replace(/ /g, '-')}/apparel`} className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white transition-all uppercase whitespace-nowrap'>{t('categories.apparel')}</Link>
+                      <Link to={`/shop/collection/${activeLevel3.toLowerCase().replace(/ /g, '-')}-gift-and-accessory`} className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white transition-all uppercase whitespace-nowrap'>{t('categories.gifts')}</Link>
+                      <Link to={`/shop/collection/${activeLevel3.toLowerCase().replace(/ /g, '-')}-apparel`} className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white transition-all uppercase whitespace-nowrap'>{t('categories.apparel')}</Link>
                     </motion.div>
                   </div>
                 )}

@@ -2,7 +2,8 @@ import { Search, X } from 'lucide-react'
 
 interface ShopSearchProps {
   value: string;
-  onChange: (value: string) => void;
+  // eslint-disable-next-line no-unused-vars
+  onChange: (_value: string) => void;
 }
 
 export function ShopSearch({ value, onChange }: ShopSearchProps) {

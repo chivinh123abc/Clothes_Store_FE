@@ -6,7 +6,7 @@ import type { Product } from '~/types/product'
 
 interface FavoritesContextType {
   favorites: Product[]
-  isFavorite: (id: string) => boolean
+  isFavorite: (id: number) => boolean
   toggleFavorite: (product: Product) => void
   clearFavorites: () => void
   totalFavorites: number
@@ -50,12 +50,12 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [favorites])
 
-  const isFavorite = (id: string) => favorites.some((p) => p.id === id)
+  const isFavorite = (id: number) => favorites.some((p) => p.product_id === id)
 
   const toggleFavorite = (product: Product) => {
     setFavorites((prev) =>
-      prev.some((p) => p.id === product.id)
-        ? prev.filter((p) => p.id !== product.id)
+      prev.some((p) => p.product_id === product.product_id)
+        ? prev.filter((p) => p.product_id !== product.product_id)
         : [...prev, product]
     )
   }

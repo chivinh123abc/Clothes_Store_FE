@@ -31,11 +31,11 @@ function highlightMatch(text: string, query: string) {
 function scoreProduct(product: Product, query: string): number {
   const q = query.toLowerCase()
   let score = 0
-  if (product.name.toLowerCase().includes(q)) score += 10
-  if (product.name.toLowerCase().startsWith(q)) score += 5
-  if (product.category.toLowerCase().includes(q)) score += 4
-  if (product.description?.toLowerCase().includes(q)) score += 2
-  if (product.bestseller) score += 1
+  if (product.product_name.toLowerCase().includes(q)) score += 10
+  if (product.product_name.toLowerCase().startsWith(q)) score += 5
+  if (product.category_name?.toLowerCase().includes(q)) score += 4
+  if (product.product_description?.toLowerCase().includes(q)) score += 2
+  if (product.is_bestseller) score += 1
   return score
 }
 
@@ -95,27 +95,27 @@ export default function SearchPage() {
     if (query.trim()) {
       const q = query.toLowerCase()
       list = list.filter(p =>
-        p.name.toLowerCase().includes(q) ||
-        p.category.toLowerCase().includes(q) ||
-        p.description?.toLowerCase().includes(q)
+        p.product_name.toLowerCase().includes(q) ||
+        p.category_name?.toLowerCase().includes(q) ||
+        p.product_description?.toLowerCase().includes(q)
       )
     }
 
     // Category filter
     if (activeCategory !== 'All') {
-      list = list.filter(p => p.category === activeCategory)
+      list = list.filter(p => p.category_name === activeCategory)
     }
 
     // Sort
     switch (sortBy) {
     case 'price-asc':
-      return [...list].sort((a, b) => (a.salePrice ?? a.price) - (b.salePrice ?? b.price))
+      return [...list].sort((a, b) => (a.items?.[0]?.sale_price ?? a.items?.[0]?.product_item_price ?? 0) - (b.items?.[0]?.sale_price ?? b.items?.[0]?.product_item_price ?? 0))
     case 'price-desc':
-      return [...list].sort((a, b) => (b.salePrice ?? b.price) - (a.salePrice ?? a.price))
+      return [...list].sort((a, b) => (b.items?.[0]?.sale_price ?? b.items?.[0]?.product_item_price ?? 0) - (a.items?.[0]?.sale_price ?? a.items?.[0]?.product_item_price ?? 0))
     case 'newest':
-      return [...list].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      return [...list].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
     case 'bestseller':
-      return [...list].sort((a, b) => Number(b.bestseller) - Number(a.bestseller))
+      return [...list].sort((a, b) => Number(b.is_bestseller) - Number(a.is_bestseller))
     default:
       return query.trim() ? [...list].sort((a, b) => scoreProduct(b, query) - scoreProduct(a, query)) : list
     }
@@ -309,16 +309,16 @@ export default function SearchPage() {
                 <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3'>
                   {results.map((product, i) => (
                     <motion.div
-                      key={product.id}
+                      key={product.product_id}
                       initial={{ opacity: 0, y: 16 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: Math.min(i * 0.03, 0.5) }}
                       className='group bg-[#111] border border-white/5 hover:border-t1-red/30 transition-all duration-300 overflow-hidden'
                     >
-                      <Link to={`/product/${product.id}`} className='block relative overflow-hidden bg-[#0d0d0d] aspect-square'>
+                      <Link to={`/product/${product.product_id}`} className='block relative overflow-hidden bg-[#0d0d0d] aspect-square'>
                         <img
-                          src={product.image}
-                          alt={product.name}
+                          src={product.items?.[0]?.product_item_image}
+                          alt={product.product_name}
                           className='w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500'
                         />
                         {product.soldOut && (
@@ -326,26 +326,26 @@ export default function SearchPage() {
                             <span className='font-oswald font-black text-xs tracking-widest text-white/60 uppercase border border-white/20 px-3 py-1'>Sold Out</span>
                           </div>
                         )}
-                        {product.salePrice && !product.soldOut && (
+                        {product.items?.[0]?.sale_price && !product.soldOut && (
                           <div className='absolute top-2 left-2 bg-t1-red text-white text-[9px] font-oswald font-bold px-2 py-0.5 tracking-widest'>SALE</div>
                         )}
-                        {product.bestseller && !product.soldOut && (
+                        {product.is_bestseller && !product.soldOut && (
                           <div className='absolute top-2 right-2 bg-white/10 backdrop-blur-sm text-white text-[9px] font-oswald font-bold px-2 py-0.5 tracking-widest border border-white/10'>BEST</div>
                         )}
                       </Link>
                       <div className='p-3'>
                         <p className='font-inter text-xs text-white leading-snug mb-1 line-clamp-2 group-hover:text-gray-100'>
-                          {query ? highlightMatch(product.name, query) : product.name}
+                          {query ? highlightMatch(product.product_name, query) : product.product_name}
                         </p>
-                        <p className='text-[10px] text-gray-600 uppercase tracking-widest mb-2'>{product.category}</p>
+                        <p className='text-[10px] text-gray-600 uppercase tracking-widest mb-2'>{product.category_name}</p>
                         <div className='flex items-center gap-2'>
-                          {product.salePrice ? (
+                          {product.items?.[0]?.sale_price ? (
                             <>
-                              <span className='font-oswald font-bold text-sm text-t1-red'>${product.salePrice.toFixed(2)}</span>
-                              <span className='font-oswald text-xs text-gray-600 line-through'>${product.price.toFixed(2)}</span>
+                              <span className='font-oswald font-bold text-sm text-t1-red'>${product.items[0].sale_price.toFixed(2)}</span>
+                              <span className='font-oswald text-xs text-gray-600 line-through'>${product.items[0].product_item_price.toFixed(2)}</span>
                             </>
                           ) : (
-                            <span className='font-oswald font-bold text-sm text-white'>${product.price.toFixed(2)}</span>
+                            <span className='font-oswald font-bold text-sm text-white'>${(product.items?.[0]?.product_item_price ?? 0).toFixed(2)}</span>
                           )}
                         </div>
                       </div>

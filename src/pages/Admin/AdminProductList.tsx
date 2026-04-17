@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Edit2, Trash2, Plus, ExternalLink, Search, ShoppingBag } from 'lucide-react'
 import productApi from '~/apis/productApi'
-import type { Product } from '~/apis/productApi'
+import type { Product } from '~/types/product'
 import { motion, AnimatePresence } from 'framer-motion'
 
 const AdminProductList = () => {
