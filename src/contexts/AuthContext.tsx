@@ -2,6 +2,7 @@
 import { createContext, useState, useEffect } from 'react'
 import type { ReactNode } from 'react'
 import type { AuthResponseDto } from '../types/user'
+import { userApi } from '../apis/userApi'
 
 export interface AuthContextType {
   user: AuthResponseDto | null
@@ -35,7 +36,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const setUser = (u: AuthResponseDto | null) => {
     if (u) {
       localStorage.setItem('auth_user', JSON.stringify(u))
-      localStorage.setItem('access_token', u.accessToken)
+      localStorage.setItem('access_token', u.access_token)
       setUserState(u)
     } else {
       localStorage.removeItem('auth_user')
@@ -44,10 +45,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
-  const logout = () => {
-    localStorage.removeItem('access_token')
-    localStorage.removeItem('auth_user')
-    setUserState(null)
+  const logout = async () => {
+    try {
+      await userApi.logout()
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Logout API failed', error)
+    } finally {
+      localStorage.removeItem('access_token')
+      localStorage.removeItem('auth_user')
+      setUserState(null)
+    }
   }
 
   return (

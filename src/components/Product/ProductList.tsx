@@ -293,13 +293,13 @@ export function ProductList({ filter = 'all' }: ProductListProps) {
             case 'worlds-2025':
             case 'worlds-2024':
             case 'worlds-2023':
-              products = products.filter((p) => ['hoodie', 'jacket'].includes(p.category_name || ''))
+              products = products.filter((p) => ['hoodie', 'jacket'].includes((p.category_name || '').toLowerCase()))
               break
             case 'apparel':
-              products = products.filter((p) => ['tshirt', 'shirt', 'hoodie', 'sweater', 'jacket', 'pants'].includes(p.category_name || ''))
+              products = products.filter((p) => ['tshirt', 'shirt', 'hoodie', 'sweater', 'jacket', 'pants'].includes((p.category_name || '').toLowerCase()))
               break
             case 'gifts':
-              products = products.filter((p) => ['accessories', 'hat', 'shoes'].includes(p.category_name || ''))
+              products = products.filter((p) => ['accessories', 'hat', 'shoes'].includes((p.category_name || '').toLowerCase()))
               break
           }
         }
@@ -310,7 +310,7 @@ export function ProductList({ filter = 'all' }: ProductListProps) {
     }
 
     if (categoryFilters.length > 0) {
-      products = products.filter((p) => categoryFilters.includes(p.category_name || ''))
+      products = products.filter((p) => categoryFilters.includes((p.category_name || '').toLowerCase()))
     }
 
     if (searchQuery) {

@@ -20,6 +20,6 @@ export interface UserResponseDto {
 }
 
 export interface AuthResponseDto extends UserResponseDto {
-  accessToken: string
-  refreshToken: string
+  access_token: string
+  refresh_token: string
 }

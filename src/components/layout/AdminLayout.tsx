@@ -1,7 +1,7 @@
 /* eslint-disable indent */
 import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { LayoutDashboard, ShoppingBag, PlusCircle, Users, Settings, LogOut, ChevronRight, Layers, Grid } from 'lucide-react'
+import { LayoutDashboard, ShoppingBag, Users, Settings, LogOut, ChevronRight, Layers, Grid } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useAuth } from '~/hooks/useAuth'
 
