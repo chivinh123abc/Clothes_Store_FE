@@ -39,9 +39,11 @@ const AdminProductList = () => {
       setProducts(prodRes.data)
       setCategories(catRes.data)
       setCollections(colRes.data)
-    } catch (error) {
-      // console.error('Failed to fetch admin data', error)
-      alert('Failed to load products/filters')
+    } catch (error: any) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to fetch admin data', error)
+      const errorMsg = error.response?.data?.message || error.message
+      alert(`Failed to load products/filters: ${errorMsg}`)
     } finally {
       setLoading(false)
     }
@@ -131,7 +133,7 @@ const AdminProductList = () => {
               <option value="">All Categories</option>
               {categories.map(cat => (
                 <option key={cat.category_id} value={cat.category_id}>
-                  {cat.category_name.toUpperCase()}
+                  {(cat.category_name || 'Unknown').toUpperCase()}
                 </option>
               ))}
             </select>
@@ -145,7 +147,7 @@ const AdminProductList = () => {
               <option value="">All Collections</option>
               {collections.map(col => (
                 <option key={col.collection_id} value={col.collection_id}>
-                  {col.collection_name.toUpperCase()}
+                  {(col.collection_name || 'Unknown').toUpperCase()}
                 </option>
               ))}
             </select>
@@ -198,7 +200,7 @@ const AdminProductList = () => {
                   </td>
                   <td className="px-6 py-4">
                     <span className="text-xs bg-white/5 px-2 py-1 rounded text-gray-400 font-oswald uppercase tracking-widest">
-                      {product.category_name}
+                      {product.category_name || 'N/A'}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-xs text-gray-500">

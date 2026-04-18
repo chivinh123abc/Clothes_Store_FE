@@ -20,6 +20,7 @@ const AdminCategoryList = () => {
       const res = await categoryApi.getCategories()
       setCategories(res.data)
     } catch (error) {
+      console.log('Errorrrrrr', error)
       // Failed to fetch categories
     } finally {
       setLoading(false)
