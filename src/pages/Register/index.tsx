@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { userApi } from '../../apis/userApi'
-import { useAuth } from '../../hooks/useAuth'
+import { useToast } from '../../contexts/ToastContext'
 import type { RegisterRequestDto } from '../../types/user'
 import Layout from '../../components/layout/Layout'
 import Footer from '../../components/layout/Footer'
@@ -60,7 +60,7 @@ const RegisterPage: React.FC = () => {
     return errors
   }
   const navigate = useNavigate()
-  const { setUser } = useAuth()
+  const { showToast } = useToast()
 
   const [form, setForm] = useState<RegisterForm>(initialForm)
   const [errors, setErrors] = useState<FormErrors>({})
@@ -89,9 +89,10 @@ const RegisterPage: React.FC = () => {
     try {
       const { confirmPassword, ...payload } = form
       void confirmPassword
-      const res = await userApi.register(payload)
-      setUser(res)
-      navigate('/')
+      const res = await userApi.register(payload) as any
+      const successMsg = res.message || t('auth.registerSuccess') || 'Registration successful! Please login.'
+      showToast(successMsg, 'success')
+      navigate('/?login=true')
     } catch (err: unknown) {
       const message =
                 (err as { response?: { data?: { message?: string } } })

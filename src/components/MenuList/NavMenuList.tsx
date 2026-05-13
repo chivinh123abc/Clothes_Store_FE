@@ -329,18 +329,11 @@ const ShopContent = () => {
     return collections.filter(c => c.collection_slug !== 'legacy')
   }, [collections])
 
-  const activeSub = useMemo(() =>
-    shopRoots.find(c => c.collection_id === activeSubId),
-    [shopRoots, activeSubId])
-
-  const activeLevel3 = useMemo(() =>
-    activeSub?.children?.find(c => c.collection_id === activeLevel3Id),
-    [activeSub, activeLevel3Id])
-
   if (loading) return null
 
   return (
     <div className='relative flex items-start bg-transparent'>
+      {/* Invisible bridge to keep menu open while moving to columns */}
       <div className='absolute -top-12 left-0 w-full h-12 bg-transparent z-[-1]' />
 
       {/* Column 1: Main Shop Roots */}
@@ -356,18 +349,79 @@ const ShopContent = () => {
           {t('nav.all')}
         </Link>
 
-        {shopRoots.map(root => (
-          <Link
+        {shopRoots.map((root) => (
+          <div
             key={root.collection_id}
-            to={root.children && root.children.length > 0 ? `/shop/${root.collection_slug}` : `/shop/collection/${root.collection_slug}`}
+            className="relative"
             onMouseEnter={() => {
               setActiveSubId(root.collection_id)
               setActiveLevel3Id(null)
             }}
-            className={`block text-xs font-inter tracking-widest hover:text-white transition-all uppercase whitespace-nowrap ${activeSubId === root.collection_id ? 'text-white' : 'text-[#cccccc]'}`}
           >
-            {root.collection_name}
-          </Link>
+            <Link
+              to={root.children && root.children.length > 0 ? `/shop/${root.collection_slug}` : `/shop/collection/${root.collection_slug}`}
+              className={`block text-xs font-inter tracking-widest hover:text-white transition-all uppercase whitespace-nowrap ${activeSubId === root.collection_id ? 'text-white' : 'text-[#cccccc]'}`}
+            >
+              {root.collection_name}
+            </Link>
+
+            {/* Column 2: Level 2 Children (Nested) */}
+            <AnimatePresence>
+              {activeSubId === root.collection_id && root.children && root.children.length > 0 && (
+                <div className="absolute left-[calc(100%+20px)] top-[-20px] h-fit">
+                  {/* Bridge between Col 1 and Col 2 */}
+                  <div className="absolute -left-5 top-0 w-5 h-full bg-transparent" />
+                  <motion.div
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    className="flex flex-col gap-3 bg-[#111111]/95 backdrop-blur-md shadow-2xl border-t-[3px] border-t-t1-red p-5 min-w-[200px]"
+                  >
+                    {root.children.map((child) => (
+                      <div
+                        key={child.collection_id}
+                        className="relative"
+                        onMouseEnter={() => setActiveLevel3Id(child.collection_id)}
+                      >
+                        <Link
+                          to={`/shop/collection/${child.collection_slug}`}
+                          className={`block text-xs font-inter tracking-widest transition-all uppercase whitespace-nowrap ${activeLevel3Id === child.collection_id ? 'text-white' : 'text-[#cccccc] hover:text-white'}`}
+                        >
+                          {child.collection_name}
+                        </Link>
+
+                        {/* Column 3: Level 3 Children (Nested) */}
+                        <AnimatePresence>
+                          {activeLevel3Id === child.collection_id && child.children && child.children.length > 0 && (
+                            <div className="absolute left-[calc(100%+20px)] top-[-20px] h-fit">
+                              {/* Bridge between Col 2 and Col 3 */}
+                              <div className="absolute -left-5 top-0 w-5 h-full bg-transparent" />
+                              <motion.div
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -10 }}
+                                className="flex flex-col gap-3 bg-[#111111]/95 backdrop-blur-md shadow-2xl border-t-[3px] border-t-t1-red p-5 min-w-[200px]"
+                              >
+                                {child.children.map((gChild) => (
+                                  <Link
+                                    key={gChild.collection_id}
+                                    to={`/shop/collection/${gChild.collection_slug}`}
+                                    className="block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white transition-all uppercase whitespace-nowrap"
+                                  >
+                                    {gChild.collection_name}
+                                  </Link>
+                                ))}
+                              </motion.div>
+                            </div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    ))}
+                  </motion.div>
+                </div>
+              )}
+            </AnimatePresence>
+          </div>
         ))}
 
         <Link
@@ -381,59 +435,6 @@ const ShopContent = () => {
           {t('nav.sale')}
         </Link>
       </div>
-
-      {/* Column 2: Level 2 Children */}
-      <AnimatePresence mode='wait'>
-        {activeSub && activeSub.children && activeSub.children.length > 0 && (
-          <div className='absolute left-full top-0 h-full'>
-            <div className='absolute -left-2 top-0 w-2 h-[800px] bg-transparent z-0' />
-            <motion.div
-              key={activeSub.collection_id}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-              className="relative ml-0 flex flex-col gap-3 bg-[#111111]/95 backdrop-blur-md shadow-2xl border-t-[3px] border-t-t1-red p-5 min-w-[200px] z-10"
-            >
-              {activeSub.children.map(child => (
-                <Link
-                  key={child.collection_id}
-                  to={`/shop/collection/${child.collection_slug}`}
-                  onMouseEnter={() => setActiveLevel3Id(child.collection_id)}
-                  className={`block text-xs font-inter tracking-widest transition-all uppercase whitespace-nowrap ${activeLevel3Id === child.collection_id ? 'text-white' : 'text-[#cccccc] hover:text-white'}`}
-                >
-                  {child.collection_name}
-                </Link>
-              ))}
-
-              {/* Column 3: Level 3 Children */}
-              <AnimatePresence mode='wait'>
-                {activeLevel3 && activeLevel3.children && activeLevel3.children.length > 0 && (
-                  <div className='absolute left-full top-0 h-full'>
-                    <div className='absolute -left-2 top-0 w-2 h-[800px] bg-transparent z-0' />
-                    <motion.div
-                      key={activeLevel3.collection_id}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -10 }}
-                      className="relative ml-0 flex flex-col gap-3 bg-[#111111]/95 backdrop-blur-md shadow-2xl border-t-[3px] border-t-t1-red p-5 min-w-[200px] z-10"
-                    >
-                      {activeLevel3.children.map(gChild => (
-                        <Link
-                          key={gChild.collection_id}
-                          to={`/shop/collection/${gChild.collection_slug}`}
-                          className='block text-xs font-inter tracking-widest text-[#cccccc] hover:text-white transition-all uppercase whitespace-nowrap'
-                        >
-                          {gChild.collection_name}
-                        </Link>
-                      ))}
-                    </motion.div>
-                  </div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
   )
 }

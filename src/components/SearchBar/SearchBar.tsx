@@ -98,14 +98,20 @@ export default function SearchBar() {
                   key={idx}
                   type="button"
                   onMouseDown={(e) => {
-                    e.preventDefault() // Prevent onBlur from firing before this interaction
+                    e.preventDefault()
                     setValue(item.text)
                     navigate(`/search?q=${encodeURIComponent(item.text)}`)
                   }}
-                  className="flex gap-2 h-9 min-h-[36px] items-center font-inter text-[11px] w-full text-left"
+                  className="w-full h-9 min-h-[36px]"
                 >
-                  <span className="text-t1-red font-bold text-[10px] sm:text-xs">{item.num}</span>
-                  <span className="text-gray-400 whitespace-nowrap overflow-hidden text-ellipsis">{item.text}</span>
+                  <div className="flex items-center gap-2 w-full h-full text-left">
+                    <span className="text-t1-red font-bold text-[10px] sm:text-xs leading-none flex items-center justify-center min-w-[14px]">
+                      {item.num}
+                    </span>
+                    <span className="text-gray-400 font-inter text-[11px] whitespace-nowrap overflow-hidden text-ellipsis leading-none">
+                      {item.text}
+                    </span>
+                  </div>
                 </button>
               ))}
             </div>

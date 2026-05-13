@@ -317,7 +317,7 @@ export default function SearchPage() {
                     >
                       <Link to={`/product/${product.product_id}`} className='block relative overflow-hidden bg-[#0d0d0d] aspect-square'>
                         <img
-                          src={product.items?.[0]?.product_item_image}
+                          src={product.items?.[0]?.product_item_image ?? undefined}
                           alt={product.product_name}
                           className='w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500'
                         />
@@ -339,13 +339,13 @@ export default function SearchPage() {
                         </p>
                         <p className='text-[10px] text-gray-600 uppercase tracking-widest mb-2'>{product.category_name}</p>
                         <div className='flex items-center gap-2'>
-                          {product.items?.[0]?.sale_price ? (
+                          {product.items?.[0]?.sale_price && product.items[0].sale_price < product.items[0].product_item_price ? (
                             <>
                               <span className='font-oswald font-bold text-sm text-t1-red'>${product.items[0].sale_price.toFixed(2)}</span>
                               <span className='font-oswald text-xs text-gray-600 line-through'>${product.items[0].product_item_price.toFixed(2)}</span>
                             </>
                           ) : (
-                            <span className='font-oswald font-bold text-sm text-white'>${(product.items?.[0]?.product_item_price ?? 0).toFixed(2)}</span>
+                            <span className='font-oswald font-bold text-sm text-t1-red'>${(product.items?.[0]?.product_item_price ?? 0).toFixed(2)}</span>
                           )}
                         </div>
                       </div>

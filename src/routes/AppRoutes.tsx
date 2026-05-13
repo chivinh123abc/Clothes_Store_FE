@@ -17,9 +17,11 @@ import SearchPage from '../pages/Search/SearchPage'
 import AdminLayout from '../components/layout/AdminLayout'
 import AdminDashboard from '../pages/Admin/AdminDashboard'
 import AdminProductList from '../pages/Admin/AdminProductList'
+import AdminUserList from '../pages/Admin/AdminUserList'
 import AdminProductForm from '../pages/Admin/AdminProductForm'
 import AdminCategoryList from '../pages/Admin/AdminCategoryList'
 import AdminCollectionList from '../pages/Admin/AdminCollectionList'
+import VerifyAccount from '../pages/VerifyAccount/VerifyAccount'
 
 const Private = ({ children }: { children: React.ReactElement }) => {
   const { user, isLoading } = useAuth()
@@ -30,7 +32,7 @@ const Private = ({ children }: { children: React.ReactElement }) => {
 const AdminProtected = ({ children }: { children: React.ReactElement }) => {
   const { user, isLoading } = useAuth()
   if (isLoading) return null
-  if (!user || user.role !== 1) return <Navigate to='/' />
+  if (!user || Number(user.role) !== 1) return <Navigate to='/' />
   return <AdminLayout>{children}</AdminLayout>
 }
 
@@ -39,6 +41,7 @@ export default function AppRoutes() {
     <Routes>
       <Route path='/' element={<Home />} />
       <Route path='/register' element={<Register />} />
+      <Route path='/verify-account' element={<VerifyAccount />} />
       <Route path='/new' element={<New />} />
       <Route path='/shop' element={<Shop />} />
       <Route path='/shop/*' element={<Shop />} />
@@ -67,8 +70,7 @@ export default function AppRoutes() {
       <Route path='/admin/products/edit/:id' element={<AdminProtected><AdminProductForm /></AdminProtected>} />
       <Route path='/admin/categories' element={<AdminProtected><AdminCategoryList /></AdminProtected>} />
       <Route path='/admin/collections' element={<AdminProtected><AdminCollectionList /></AdminProtected>} />
-      <Route path='/admin/users' element={<AdminProtected><div className='text-gray-500 font-oswald uppercase tracking-widest'>User Management Coming Soon</div></AdminProtected>} />
-      <Route path='/admin/settings' element={<AdminProtected><div className='text-gray-500 font-oswald uppercase tracking-widest'>Site Settings Coming Soon</div></AdminProtected>} />
+      <Route path='/admin/users' element={<AdminProtected><AdminUserList /></AdminProtected>} />
     </Routes>
   )
 }

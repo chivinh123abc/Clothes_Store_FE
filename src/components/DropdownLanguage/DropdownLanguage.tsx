@@ -72,17 +72,15 @@ const LanguageContent = () => {
     <div className='w-20 bg-[#111] border border-white/10 shadow-2xl py-2 flex flex-col'>
       <button
         onClick={() => setLanguage('en')}
-        className={`block text-[11px] py-2 font-oswald font-bold transition-colors cursor-pointer ${
-          language === 'en' ? 'text-t1-red bg-white/5' : 'text-gray-400 hover:text-white hover:bg-white/5'
-        }`}
+        className={`block text-[11px] py-2 font-oswald font-bold transition-colors cursor-pointer ${language === 'en' ? 'text-t1-red bg-white/5' : 'text-gray-400 hover:text-white hover:bg-white/5'
+          }`}
       >
         ENGLISH
       </button>
       <button
         onClick={() => setLanguage('vi')}
-        className={`block text-[11px] py-2 font-oswald font-bold transition-colors cursor-pointer ${
-          language === 'vi' ? 'text-t1-red bg-white/5' : 'text-gray-400 hover:text-white hover:bg-white/5'
-        }`}
+        className={`block text-[11px] py-2 font-oswald font-bold transition-colors cursor-pointer ${language === 'vi' ? 'text-t1-red bg-white/5' : 'text-gray-400 hover:text-white hover:bg-white/5'
+          }`}
       >
         TIẾNG VIỆT
       </button>

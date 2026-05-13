@@ -1,5 +1,5 @@
 import SearchBar from '~/components/SearchBar/SearchBar'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import CartIcon from '../Cart/CartIcon'
 import CartDrawer from '../Cart/CartDrawer'
 import FavoritesDrawer from '../Favorites/FavoritesDrawer'
@@ -22,7 +22,19 @@ function Navbar({ setOpenNav }: NavbarProps) {
   const [isFavOpen, setIsFavOpen] = useState(false)
   const [isLoginOpen, setIsLoginOpen] = useState(false)
   const { user } = useAuth()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { totalFavorites } = useFavorites()
+
+  useEffect(() => {
+    if (searchParams.get('login') === 'true') {
+      setTimeout(() => {
+        setIsLoginOpen(true)
+        // Clean up the URL
+        searchParams.delete('login')
+        setSearchParams(searchParams, { replace: true })
+      }, 0)
+    }
+  }, [searchParams, setSearchParams])
 
   useEffect(() => {
     const handleScroll = () => {

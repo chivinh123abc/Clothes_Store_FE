@@ -21,5 +21,30 @@ export const userApi = {
   refreshToken: async (): Promise<AuthResponseDto> => {
     const response = await axiosClient.get<AuthResponseDto>('/user/refresh_token')
     return response.data
+  },
+  // Admin functions
+  getUsers: async (): Promise<UserResponseDto[]> => {
+    const response = await axiosClient.get<UserResponseDto[]>('/admin/users')
+    return response.data
+  },
+  adminUpdate: async (id: number, data: any): Promise<UserResponseDto> => {
+    const response = await axiosClient.put<UserResponseDto>(`/admin/users/${id}`, data)
+    return response.data
+  },
+  adminCreate: async (data: any): Promise<UserResponseDto> => {
+    const response = await axiosClient.post<UserResponseDto>('/admin/users', data)
+    return response.data
+  },
+  adminDelete: async (id: number): Promise<{ success: boolean }> => {
+    const response = await axiosClient.delete<{ success: boolean }>(`/admin/users/${id}`)
+    return response.data
+  },
+  verifyAccount: async (data: { email: string, verify_token: string }): Promise<any> => {
+    const response = await axiosClient.post('/user/verify-account', data)
+    return response.data
+  },
+  resendVerification: async (email: string): Promise<any> => {
+    const response = await axiosClient.post('/user/resend-verification', { email })
+    return response.data
   }
 }

@@ -233,7 +233,8 @@ export const en = {
     minChars: 'Minimum {count} characters',
     mismatch: 'Passwords do not match',
     invalidEmail: 'Invalid email',
-    invalidPhone: 'Invalid phone number'
+    invalidPhone: 'Invalid phone number',
+    registerSuccess: 'Registration successful! Please login.'
   },
   sort: {
     relevant: 'Most Relevant',

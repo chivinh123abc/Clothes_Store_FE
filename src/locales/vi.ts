@@ -235,7 +235,8 @@ export const vi: TranslationKeys = {
     minChars: 'Tối thiểu {count} ký tự',
     mismatch: 'Mật khẩu xác nhận không khớp',
     invalidEmail: 'Email không hợp lệ',
-    invalidPhone: 'Số điện thoại không hợp lệ'
+    invalidPhone: 'Số điện thoại không hợp lệ',
+    registerSuccess: 'Đăng ký thành công! Vui lòng đăng nhập.'
   },
   sort: {
     relevant: 'Mặc định',
