@@ -16,6 +16,8 @@ export interface UserResponseDto {
   email: string
   role: number
   is_active: boolean
+  avatar?: string | null
+  phone_number?: string | null
   created_at: string
 }
 

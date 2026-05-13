@@ -169,7 +169,7 @@ export function ProductCard({
             {product_name}
           </h3>
           <div className='flex items-center gap-3'>
-            {salePrice ? (
+            {salePrice && salePrice < price ? (
               <div className='flex items-baseline gap-2'>
                 <span className='font-oswald font-bold text-xl text-t1-red'>
                   ${salePrice.toFixed(2)}
@@ -179,7 +179,7 @@ export function ProductCard({
                 </span>
               </div>
             ) : (
-              <span className='font-oswald font-bold text-xl text-t1-text tracking-wide'>${price.toFixed(2)}</span>
+              <span className='font-oswald font-bold text-xl text-t1-red tracking-wide'>${price.toFixed(2)}</span>
             )}
           </div>
         </div>

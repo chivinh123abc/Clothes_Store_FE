@@ -6,6 +6,7 @@ import { CartProvider } from '~/contexts/CartContext'
 import { FavoritesProvider } from '~/contexts/FavoritesContext'
 import { LanguageProvider } from '~/contexts/LanguageContext'
 import { CollectionProvider } from '~/contexts/CollectionContext'
+import { ToastProvider } from '~/contexts/ToastContext'
 import App from '~/pages/App'
 
 createRoot(document.getElementById('root')!).render(
@@ -14,11 +15,13 @@ createRoot(document.getElementById('root')!).render(
       <LanguageProvider>
         <CollectionProvider>
           <AuthProvider>
-            <FavoritesProvider>
-              <CartProvider>
-                <App />
-              </CartProvider>
-            </FavoritesProvider>
+            <ToastProvider>
+              <FavoritesProvider>
+                <CartProvider>
+                  <App />
+                </CartProvider>
+              </FavoritesProvider>
+            </ToastProvider>
           </AuthProvider>
         </CollectionProvider>
       </LanguageProvider>

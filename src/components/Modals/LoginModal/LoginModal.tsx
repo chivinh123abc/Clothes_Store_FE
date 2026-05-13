@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, User, Lock, Loader2 } from 'lucide-react'
+import { X, User, Lock, Loader2, Eye, EyeOff } from 'lucide-react'
 import axios from 'axios'
 import { userApi } from '../../../apis/userApi'
 import { useAuth } from '../../../hooks/useAuth'
@@ -16,6 +16,7 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const { setUser } = useAuth()
   const navigate = useNavigate()
@@ -25,6 +26,7 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
     if (!open) {
       setError('')
       setIsLoading(false)
+      setShowPassword(false)
     }
   }, [open])
 
@@ -122,13 +124,20 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
                       <Lock size={16} />
                     </div>
                     <input
-                      type="password"
+                      type={showPassword ? 'text' : 'password'}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full bg-black border border-white/10 rounded-none pl-12 pr-4 py-4 outline-none focus:border-t1-red/50 text-white transition-all duration-300 font-inter text-sm placeholder:text-gray-700"
+                      className="w-full bg-black border border-white/10 rounded-none pl-12 pr-12 py-4 outline-none focus:border-t1-red/50 text-white transition-all duration-300 font-inter text-sm placeholder:text-gray-700"
                       placeholder="••••••••"
                       required
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-600 hover:text-white transition-colors duration-300"
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
                   </div>
                 </div>
 

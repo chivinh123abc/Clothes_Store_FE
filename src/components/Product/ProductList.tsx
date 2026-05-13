@@ -207,7 +207,10 @@ export function ProductList({ filter = 'all' }: ProductListProps) {
     if (filter === 'legacy') return legacyTab ?? 'legacy'
     if (path.startsWith('/shop')) {
       const segments = path.replace('/shop', '').split('/').filter(Boolean)
-      return segments.length > 0 ? segments[segments.length - 1] : null
+      const lastSegment = segments.length > 0 ? segments[segments.length - 1] : null
+      // Exclude virtual filters like 'sale' from being treated as collections
+      if (lastSegment === 'sale' || lastSegment === 'new' || lastSegment === 'best') return null
+      return lastSegment
     }
     return null
   }, [location.pathname, filter, legacyTab])
@@ -236,7 +239,7 @@ export function ProductList({ filter = 'all' }: ProductListProps) {
       }
     }
     fetchCProducts()
-  }, [activeCollectionSlug, collectionsLoading])
+  }, [activeCollectionSlug, collectionsLoading, filter])
 
   // Fetch categories from Backend
   useEffect(() => {
@@ -474,7 +477,7 @@ export function ProductList({ filter = 'all' }: ProductListProps) {
   const allFiltered = useMemo(() => {
     return getFilteredProducts()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter, searchQuery, location.pathname, priceRange, categoryFilters, isCategoryMode, legacyTab])
+  }, [cProducts, filter, searchQuery, location.pathname, priceRange, categoryFilters, isCategoryMode, legacyTab, activeCollectionSlug])
 
   const sortedProducts = useMemo(() => {
     const sorted = [...allFiltered]
@@ -618,7 +621,7 @@ export function ProductList({ filter = 'all' }: ProductListProps) {
                 onChange={(e) => handleSortChange(e.target.value)}
                 className='bg-transparent text-[11px] font-oswald font-bold tracking-widest text-white focus:outline-none cursor-pointer uppercase border-0 py-4'
               >
-                <option value='best' className='bg-[#0d0d0d]'>{t('sort.best')}</option>
+                <option value='best' className='bg-[#0d0d0d]'>{t('sort.bestseller')}</option>
                 <option value='newest' className='bg-[#0d0d0d]'>{t('sort.newest')}</option>
                 <option value='price-low' className='bg-[#0d0d0d]'>{t('sort.priceLow')}</option>
                 <option value='price-high' className='bg-[#0d0d0d]'>{t('sort.priceHigh')}</option>

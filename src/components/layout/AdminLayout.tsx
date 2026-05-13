@@ -1,7 +1,7 @@
 /* eslint-disable indent */
 import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { LayoutDashboard, ShoppingBag, Users, Settings, LogOut, ChevronRight, Layers, Grid } from 'lucide-react'
+import { LayoutDashboard, ShoppingBag, Users, LogOut, ChevronRight, Layers, Grid } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useAuth } from '~/hooks/useAuth'
 
@@ -18,8 +18,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     { icon: <ShoppingBag size={20} />, label: 'Products', path: '/admin/products' },
     { icon: <Layers size={20} />, label: 'Categories', path: '/admin/categories' },
     { icon: <Grid size={20} />, label: 'Collections', path: '/admin/collections' },
-    { icon: <Users size={20} />, label: 'Users', path: '/admin/users' },
-    { icon: <Settings size={20} />, label: 'Settings', path: '/admin/settings' }
+    { icon: <Users size={20} />, label: 'Users', path: '/admin/users' }
   ]
 
   return (

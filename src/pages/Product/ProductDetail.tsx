@@ -125,14 +125,14 @@ function ProductDetailContent({ product }: { product: Product }) {
               </h1>
 
               <div className="flex items-center gap-4 mb-8">
-                {product.items?.[0]?.sale_price ? (
+                {product.items?.[0]?.sale_price && product.items[0].sale_price < product.items[0].product_item_price ? (
                   <>
                     <span className="text-3xl font-oswald font-black text-t1-red italic tracking-wide">${product.items[0].sale_price.toFixed(2)}</span>
                     <span className="text-lg text-gray-500 line-through font-light">${product.items[0].product_item_price.toFixed(2)}</span>
                     <span className="bg-t1-red/10 text-t1-red text-[10px] font-bold px-2 py-0.5 rounded border border-t1-red/20">{t('productDetail.save')} {Math.round((1 - product.items[0].sale_price / product.items[0].product_item_price) * 100)}%</span>
                   </>
                 ) : (
-                  <span className="text-3xl font-oswald font-black text-white italic tracking-wide">${(product.items?.[0]?.product_item_price ?? 0).toFixed(2)}</span>
+                  <span className="text-3xl font-oswald font-black text-t1-red italic tracking-wide">${(product.items?.[0]?.product_item_price ?? 0).toFixed(2)}</span>
                 )}
               </div>
 

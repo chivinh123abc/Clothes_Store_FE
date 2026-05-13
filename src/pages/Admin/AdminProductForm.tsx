@@ -28,6 +28,8 @@ const AdminProductForm = () => {
     category_id: 0,
     product_slug: '',
     product_description: '',
+    is_featured: false,
+    is_bestseller: false,
     collection_ids: [] as number[],
     items: [] as any[] // For variants
   })
@@ -53,6 +55,8 @@ const AdminProductForm = () => {
             category_id: product.category_id || 0,
             product_slug: product.product_slug,
             product_description: product.product_description || '',
+            is_featured: !!product.is_featured,
+            is_bestseller: !!product.is_bestseller,
             collection_ids: product.collections?.map((c: any) => c.collection_id) || [],
             items: product.items || []
           })
@@ -200,6 +204,35 @@ const AdminProductForm = () => {
                       ))}
                     </select>
                   </div>
+                </div>
+
+                {/* Status Flags */}
+                <div className="flex flex-wrap gap-10">
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <div className={`w-6 h-6 rounded-lg border flex items-center justify-center transition-all ${formData.is_bestseller ? 'bg-t1-red border-t1-red' : 'border-white/10 group-hover:border-white/30'}`}>
+                      {formData.is_bestseller && <Save size={14} className="text-white" />}
+                    </div>
+                    <input
+                      type="checkbox"
+                      className="hidden"
+                      checked={formData.is_bestseller}
+                      onChange={(e) => setFormData({ ...formData, is_bestseller: e.target.checked })}
+                    />
+                    <span className="font-oswald text-[10px] uppercase tracking-[0.3em] text-gray-400 group-hover:text-white transition-colors">Mark as Best Seller</span>
+                  </label>
+
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <div className={`w-6 h-6 rounded-lg border flex items-center justify-center transition-all ${formData.is_featured ? 'bg-blue-500 border-blue-500' : 'border-white/10 group-hover:border-white/30'}`}>
+                      {formData.is_featured && <Package size={14} className="text-white" />}
+                    </div>
+                    <input
+                      type="checkbox"
+                      className="hidden"
+                      checked={formData.is_featured}
+                      onChange={(e) => setFormData({ ...formData, is_featured: e.target.checked })}
+                    />
+                    <span className="font-oswald text-[10px] uppercase tracking-[0.3em] text-gray-400 group-hover:text-white transition-colors">Mark as Featured</span>
+                  </label>
                 </div>
 
                 {/* Slug */}

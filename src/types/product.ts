@@ -16,6 +16,7 @@ export type Product = {
   category_id?: number;
   category_name?: string;
   product_description?: string;
+  is_featured?: boolean;
   is_bestseller?: boolean;
   sold_count: number;
   created_at: string;
