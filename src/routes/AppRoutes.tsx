@@ -21,12 +21,13 @@ import AdminUserList from '../pages/Admin/AdminUserList'
 import AdminProductForm from '../pages/Admin/AdminProductForm'
 import AdminCategoryList from '../pages/Admin/AdminCategoryList'
 import AdminCollectionList from '../pages/Admin/AdminCollectionList'
+import AdminOrderList from '../pages/Admin/AdminOrderList'
 import VerifyAccount from '../pages/VerifyAccount/VerifyAccount'
 
 const Private = ({ children }: { children: React.ReactElement }) => {
   const { user, isLoading } = useAuth()
   if (isLoading) return null
-  return user ? children : <Navigate to='/' />
+  return user ? children : <Navigate to='/?login=true' />
 }
 
 const AdminProtected = ({ children }: { children: React.ReactElement }) => {
@@ -71,6 +72,7 @@ export default function AppRoutes() {
       <Route path='/admin/categories' element={<AdminProtected><AdminCategoryList /></AdminProtected>} />
       <Route path='/admin/collections' element={<AdminProtected><AdminCollectionList /></AdminProtected>} />
       <Route path='/admin/users' element={<AdminProtected><AdminUserList /></AdminProtected>} />
+      <Route path='/admin/orders' element={<AdminProtected><AdminOrderList /></AdminProtected>} />
     </Routes>
   )
 }

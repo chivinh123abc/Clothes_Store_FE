@@ -80,7 +80,7 @@ axiosClient.interceptors.response.use(
         refreshSubscribers = []
         localStorage.removeItem('auth_user')
         localStorage.removeItem('access_token')
-        window.location.href = '/login'
+        window.location.href = '/?login=true'
         return Promise.reject(refreshError)
       }
     }
@@ -88,7 +88,7 @@ axiosClient.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem('auth_user')
       localStorage.removeItem('access_token')
-      window.location.href = '/login'
+      window.location.href = '/?login=true'
     }
 
     return Promise.reject(error)

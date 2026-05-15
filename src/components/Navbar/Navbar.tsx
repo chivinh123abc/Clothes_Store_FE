@@ -14,9 +14,10 @@ import { useFavorites } from '~/contexts/FavoritesContext'
 
 interface NavbarProps {
   setOpenNav: Dispatch<SetStateAction<boolean>>;
+  forceOpaque?: boolean;
 }
 
-function Navbar({ setOpenNav }: NavbarProps) {
+function Navbar({ setOpenNav, forceOpaque = false }: NavbarProps) {
   const [isTop, setIsTop] = useState(true)
   const [isCartOpen, setIsCartOpen] = useState(false)
   const [isFavOpen, setIsFavOpen] = useState(false)
@@ -57,7 +58,7 @@ function Navbar({ setOpenNav }: NavbarProps) {
       className="text-t1-text fixed top-[32px] left-0 right-0 z-50 font-oswald text-lg tracking-wider w-full"
     >
       <div
-        className={`flex justify-between items-center w-full min-h-[70px] border-b border-transparent transition-all duration-500 ease-in-out px-6 ${isTop ? 'bg-transparent backdrop-blur-0' : 'bg-[#111111]/95 backdrop-blur-[70px]'}`}
+        className={`flex justify-between items-center w-full min-h-[70px] border-b border-transparent transition-all duration-500 ease-in-out px-6 ${(isTop && !forceOpaque) ? 'bg-transparent backdrop-blur-0' : 'bg-[#111111]/95 backdrop-blur-[70px]'}`}
       >
 
         <div className='lg:hidden'>

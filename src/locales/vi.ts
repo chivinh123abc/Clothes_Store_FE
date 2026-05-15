@@ -28,7 +28,9 @@ export const vi: TranslationKeys = {
     secureCheckout: 'Thanh toán bảo mật',
     item: 'sản phẩm',
     items: 'Sản phẩm',
-    join: 'THAM GIA'
+    join: 'THAM GIA',
+    save: 'LƯU',
+    cancel: 'HỦY'
   },
   nav: {
     shop: 'CỬA HÀNG',
@@ -84,6 +86,8 @@ export const vi: TranslationKeys = {
     fan: 'THÀNH VIÊN THÂN THIẾT',
     info: 'Thông tin tài khoản',
     username: 'Tên người dùng',
+    displayName: 'Biệt danh',
+    fullName: 'Họ và tên',
     email: 'Email',
     phone: 'Số điện thoại',
     location: 'Địa chỉ',
@@ -113,7 +117,10 @@ export const vi: TranslationKeys = {
     summaryTotalOrders: 'Tổng đơn hàng',
     summaryTotalSpent: 'Tổng chi tiêu',
     summaryWishlist: 'Sản phẩm yêu thích',
-    summaryCart: 'Trong giỏ hàng'
+    summaryCart: 'Trong giỏ hàng',
+    currentPwRequired: 'Vui lòng nhập mật khẩu hiện tại.',
+    newPwLength: 'Mật khẩu mới phải có ít nhất 8 ký tự.',
+    pwMismatch: 'Mật khẩu xác nhận không khớp.'
   },
   status: {
     pending: 'Đang xử lý',
@@ -236,7 +243,9 @@ export const vi: TranslationKeys = {
     mismatch: 'Mật khẩu xác nhận không khớp',
     invalidEmail: 'Email không hợp lệ',
     invalidPhone: 'Số điện thoại không hợp lệ',
-    registerSuccess: 'Đăng ký thành công! Vui lòng đăng nhập.'
+    registerSuccess: 'Đăng ký thành công! Vui lòng đăng nhập.',
+    resendEmail: 'Gửi lại email xác thực',
+    verificationSent: 'Đã gửi email xác thực!'
   },
   sort: {
     relevant: 'Mặc định',
@@ -336,5 +345,9 @@ export const vi: TranslationKeys = {
     subtotal: 'Tạm tính',
     shippingAtCheckout: 'Phí vận chuyển và thuế được tính khi thanh toán.',
     checkout: 'THANH TOÁN'
+  },
+  errors: {
+    updateProfile: 'Cập nhật thông tin thất bại',
+    changePassword: 'Đổi mật khẩu thất bại'
   }
 }

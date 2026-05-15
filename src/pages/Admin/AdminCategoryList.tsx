@@ -1,11 +1,12 @@
-/* eslint-disable no-unused-vars */
 /* eslint-disable no-console */
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import { Plus, Pencil, Trash2, ArrowLeft, Layers, Save, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import categoryApi from '~/apis/categoriesApi'
 import type { Category } from '~/apis/categoriesApi'
+import { useToast } from '~/contexts/ToastContext'
+import ConfirmModal from '~/components/ui/ConfirmModal'
 
 const AdminCategoryList = () => {
   const navigate = useNavigate()
@@ -14,22 +15,24 @@ const AdminCategoryList = () => {
   const [showModal, setShowModal] = useState(false)
   const [currentCategory, setCurrentCategory] = useState<Partial<Category> | null>(null)
   const [saving, setSaving] = useState(false)
+  const { showToast } = useToast()
+  const [categoryToDelete, setCategoryToDelete] = useState<number | null>(null)
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const res = await categoryApi.getCategories()
       setCategories(res.data)
     } catch (error) {
       console.log('Errorrrrrr', error)
-      // Failed to fetch categories
+      showToast('Failed to fetch categories', 'error')
     } finally {
       setLoading(false)
     }
-  }
+  }, [showToast])
 
   useEffect(() => {
     fetchCategories()
-  }, [])
+  }, [fetchCategories])
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -39,27 +42,32 @@ const AdminCategoryList = () => {
     try {
       if (currentCategory.category_id) {
         await categoryApi.update(currentCategory.category_id, currentCategory)
+        showToast('Category updated successfully', 'success')
       } else {
         await categoryApi.create(currentCategory)
+        showToast('Category created successfully', 'success')
       }
       setShowModal(false)
       fetchCategories()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to save category', error)
-      alert('Failed to save category')
+      const errorMsg = error.response?.data?.message || error.message
+      showToast(`Failed to save category: ${errorMsg}`, 'error')
     } finally {
       setSaving(false)
     }
   }
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm('Are you sure you want to delete this category? This might affect products linked to it.')) return
+  const handleDelete = async () => {
+    if (!categoryToDelete) return
     try {
-      await categoryApi.delete(id)
+      await categoryApi.delete(categoryToDelete)
+      showToast('Category deleted successfully', 'success')
+      setCategoryToDelete(null)
       fetchCategories()
     } catch (error) {
       console.error('Failed to delete category', error)
-      alert('Failed to delete category. It might be in use.')
+      showToast('Failed to delete category. It might be in use.', 'error')
     }
   }
 
@@ -73,6 +81,16 @@ const AdminCategoryList = () => {
 
   return (
     <div className="space-y-8">
+      <ConfirmModal
+        isOpen={categoryToDelete !== null}
+        title="Delete Category"
+        message="Are you sure you want to delete this category? This might affect products linked to it."
+        confirmText="Delete Category"
+        onConfirm={handleDelete}
+        onClose={() => setCategoryToDelete(null)}
+        type="danger"
+      />
+
       <div className="flex items-center justify-between">
         <button
           onClick={() => navigate('/admin')}
@@ -140,7 +158,7 @@ const AdminCategoryList = () => {
                         <Pencil size={14} />
                       </button>
                       <button
-                        onClick={() => handleDelete(cat.category_id)}
+                        onClick={() => setCategoryToDelete(cat.category_id)}
                         className="p-2 text-gray-500 hover:text-t1-red hover:bg-t1-red/10 rounded-lg transition-all"
                       >
                         <Trash2 size={14} />

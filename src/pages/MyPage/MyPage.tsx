@@ -1,28 +1,32 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   User, Heart, ShoppingBag, Package, LogOut,
   ChevronRight, Trash2, Plus, Minus, X,
   MapPin, Mail, Phone, Edit3, Shield,
-  Star, CheckCircle, Lock, Eye, EyeOff
+  Star, CheckCircle, Lock, Eye, EyeOff, Loader2, Check
 } from 'lucide-react'
 import Layout from '~/components/layout/Layout'
 import Footer from '~/components/layout/Footer'
+import AddressModal from '~/components/Modals/AddressModal/AddressModal'
 import { useAuth } from '~/hooks/useAuth'
 import { useCart } from '~/contexts/CartContext'
 import { useFavorites } from '~/contexts/FavoritesContext'
 import { mockOrders, STATUS_CONFIG } from '~/data/myPageData'
 import { useLanguage } from '~/contexts/LanguageContext'
+import { userApi } from '~/apis/userApi'
+import { useToast } from '~/contexts/ToastContext'
 
 type Tab = 'profile' | 'favorites' | 'cart' | 'orders'
 
 export default function MyPage() {
   const { t, language } = useLanguage()
-  const { user, logout } = useAuth()
+  const { user, logout, setUser } = useAuth()
   const { items, removeCartItem, incrementQuantity, decrementQuantity, totalPrice, totalItems } = useCart()
   const { favorites, toggleFavorite, totalFavorites } = useFavorites()
   const navigate = useNavigate()
+  const { showToast } = useToast()
   const [activeTab, setActiveTab] = useState<Tab>('profile')
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null)
 
@@ -34,19 +38,108 @@ export default function MyPage() {
   const [pwShow, setPwShow] = useState({ current: false, next: false, confirm: false })
   const [pwError, setPwError] = useState('')
   const [pwSuccess, setPwSuccess] = useState(false)
+  const [editForm, setEditForm] = useState({
+    username: '',
+    phone_number: '',
+    address: '',
+    display_name: '',
+    full_name: ''
+  })
+  const [saveLoading, setSaveLoading] = useState(false)
+  const [isEditingHeroName, setIsEditingHeroName] = useState(false)
+  const [heroNameDraft, setHeroNameDraft] = useState('')
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
+  const [editingField, setEditingField] = useState<string | null>(null)
+  const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean, field: string, value: string } | null>(null)
 
-  const handleChangePw = () => {
+  // Sync editForm when user changes
+  useEffect(() => {
+    if (user) {
+      setEditForm({
+        username: user.username || '',
+        phone_number: user.phone_number || '',
+        address: user.address || '',
+        display_name: user.display_name || '',
+        full_name: user.full_name || ''
+      })
+    }
+  }, [user])
+
+  const handleRequestUpdate = (field: string, value: string) => {
+    // Only request update if the value actually changed
+    if ((user as any)?.[field] === value) {
+      setEditingField(null)
+      return
+    }
+
+    setConfirmModal({
+      isOpen: true,
+      field,
+      value
+    })
+  }
+
+  const handleConfirmUpdate = async () => {
+    if (!confirmModal) return
+
+    const { field, value } = confirmModal
+    setSaveLoading(true)
+    try {
+      const updated = await userApi.updateProfile({ [field]: value })
+      setUser(updated as any)
+      setConfirmModal(null)
+      setEditingField(null)
+      showToast('Profile updated successfully', 'success')
+    } catch (err: any) {
+      const errorMsg = err.response?.data?.message || t('errors.updateProfile') || 'Failed to update field'
+      showToast(errorMsg, 'error')
+      if (user) {
+        setEditForm(prev => ({ ...prev, [field]: (user as any)[field] || '' }))
+      }
+    } finally {
+      setSaveLoading(false)
+    }
+  }
+
+  const handleSaveHeroName = async () => {
+    if (!heroNameDraft.trim()) return
+    setSaveLoading(true)
+    try {
+      const updated = await userApi.updateProfile({ display_name: heroNameDraft })
+      setUser(updated as any)
+      setIsEditingHeroName(false)
+      showToast('Name updated successfully', 'success')
+    } catch (err: any) {
+      const errorMsg = err.response?.data?.message || t('errors.updateProfile') || 'Failed to update name'
+      showToast(errorMsg, 'error')
+    } finally {
+      setSaveLoading(false)
+    }
+  }
+
+  const handleChangePw = async () => {
     setPwError('')
     if (!pwForm.current) { setPwError(t('profile.currentPwRequired') || 'Please enter your current password.'); return }
     if (pwForm.next.length < 8) { setPwError(t('profile.newPwLength') || 'New password must be at least 8 characters.'); return }
     if (pwForm.next !== pwForm.confirm) { setPwError(t('profile.pwMismatch') || 'Passwords do not match.'); return }
-    // Simulate success
-    setPwSuccess(true)
-    setTimeout(() => {
-      setChangePwOpen(false)
-      setPwForm({ current: '', next: '', confirm: '' })
-      setPwSuccess(false)
-    }, 1500)
+
+    setSaveLoading(true)
+    try {
+      await userApi.changePassword(pwForm.next)
+      setPwSuccess(true)
+      showToast('Password changed successfully', 'success')
+      setTimeout(() => {
+        setChangePwOpen(false)
+        setPwForm({ current: '', next: '', confirm: '' })
+        setPwSuccess(false)
+      }, 1500)
+    } catch (err: any) {
+      const errorMsg = err.response?.data?.message || t('errors.changePassword') || 'Failed to change password'
+      setPwError(errorMsg)
+      showToast(errorMsg, 'error')
+    } finally {
+      setSaveLoading(false)
+    }
   }
 
   const handleLogout = () => {
@@ -68,7 +161,7 @@ export default function MyPage() {
   const totalSpent = mockOrders.reduce((s, o) => s + o.total, 0)
 
   return (
-    <Layout footer={<Footer />}>
+    <Layout footer={<Footer />} forceNavbarOpaque={true}>
       <div className='min-h-screen bg-[#0a0a0a] text-white font-inter'>
 
         {/* Hero */}
@@ -88,12 +181,52 @@ export default function MyPage() {
               {/* User Info */}
               <div className='flex-1'>
                 <div className='flex items-center gap-3 mb-1'>
-                  <h1 className='font-oswald font-black text-3xl md:text-4xl uppercase tracking-tight'>
-                    {user?.username || 'T1 Member'}
-                  </h1>
-                  <span className='bg-t1-red/10 border border-t1-red/30 text-t1-red text-[10px] font-oswald font-bold tracking-widest px-3 py-0.5 uppercase'>
-                    {t('profile.fan')}
-                  </span>
+                  {isEditingHeroName ? (
+                    <div className='flex items-center gap-2 w-full max-w-md'>
+                      <input
+                        type='text'
+                        value={heroNameDraft}
+                        onChange={(e) => setHeroNameDraft(e.target.value)}
+                        autoFocus
+                        className='bg-black border-b-2 border-t1-red text-3xl md:text-4xl font-oswald font-black uppercase tracking-tight text-white outline-none w-full py-1'
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleSaveHeroName()
+                          if (e.key === 'Escape') setIsEditingHeroName(false)
+                        }}
+                      />
+                      <div className='flex items-center gap-2'>
+                        <button
+                          onClick={handleSaveHeroName}
+                          disabled={saveLoading}
+                          className='p-2 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all rounded'
+                        >
+                          <Check size={18} />
+                        </button>
+                        <button
+                          onClick={() => setIsEditingHeroName(false)}
+                          className='p-2 bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white transition-all rounded'
+                        >
+                          <X size={18} />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <h1
+                      className='font-oswald font-black text-3xl md:text-4xl uppercase tracking-tight flex items-center gap-3 group cursor-pointer'
+                      onClick={() => {
+                        setHeroNameDraft(user?.display_name || user?.username || '')
+                        setIsEditingHeroName(true)
+                      }}
+                    >
+                      {user?.display_name || user?.username || 'T1 Member'}
+                      <Edit3 size={16} className="text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </h1>
+                  )}
+                  {!isEditingHeroName && (
+                    <span className='bg-t1-red/10 border border-t1-red/30 text-t1-red text-[10px] font-oswald font-bold tracking-widest px-3 py-0.5 uppercase'>
+                      {t('profile.fan')}
+                    </span>
+                  )}
                 </div>
                 <p className='text-gray-500 text-sm flex items-center gap-2'>
                   <Mail size={12} />
@@ -125,7 +258,10 @@ export default function MyPage() {
               {tabs.map(tab => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => {
+                    setActiveTab(tab.id)
+                    window.scrollTo({ top: 0, behavior: 'smooth' })
+                  }}
                   className={`relative flex items-center gap-2 py-4 pr-6 font-oswald font-bold text-[11px] tracking-widest uppercase transition-colors duration-200 ${
                     activeTab === tab.id ? 'text-white' : 'text-gray-600 hover:text-gray-400'
                   }`}
@@ -171,23 +307,129 @@ export default function MyPage() {
                         <User size={16} className='text-t1-red' />
                         {t('profile.info')}
                       </h2>
-                      <button className='text-gray-600 hover:text-white text-[10px] font-oswald tracking-widest uppercase flex items-center gap-1 transition-colors'>
-                        <Edit3 size={12} /> {t('profile.edit')}
-                      </button>
+                      {saveLoading && (
+                        <div className="flex items-center gap-2 text-[10px] font-oswald text-t1-red animate-pulse">
+                          <Loader2 size={12} className="animate-spin" />
+                          SAVING...
+                        </div>
+                      )}
                     </div>
                     <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                       {[
-                        { label: t('profile.username'), value: user?.username || '—', icon: User },
-                        { label: t('profile.email'), value: user?.email || '—', icon: Mail },
-                        { label: t('profile.phone'), value: '+82 10-****-1234', icon: Phone },
-                        { label: t('profile.location'), value: 'Seoul, South Korea', icon: MapPin }
+                        {
+                          label: t('profile.fullName') || 'Full Name',
+                          value: user?.full_name || '—',
+                          icon: User,
+                          editable: true,
+                          field: 'full_name'
+                        },
+                        {
+                          label: t('profile.username'),
+                          value: user?.username || '—',
+                          icon: Shield,
+                          editable: true,
+                          field: 'username'
+                        },
+                        {
+                          label: t('profile.email'),
+                          value: user?.email || '—',
+                          icon: Mail,
+                          editable: false
+                        },
+                        {
+                          label: t('profile.phone'),
+                          value: user?.phone_number || '—',
+                          icon: Phone,
+                          editable: true,
+                          field: 'phone_number'
+                        },
+                        {
+                          label: t('profile.location'),
+                          value: user?.address || '—',
+                          icon: MapPin,
+                          editable: true,
+                          field: 'address',
+                          fullWidth: true
+                        }
                       ].map(field => (
-                        <div key={field.label} className='bg-[#0d0d0d] border border-white/5 px-4 py-4'>
+                        <div key={field.label} className={`bg-[#0d0d0d] border border-white/5 px-4 py-4 ${field.fullWidth ? 'md:col-span-2' : ''}`}>
                           <div className='flex items-center gap-2 mb-1'>
                             <field.icon size={12} className='text-gray-600' />
                             <span className='text-[10px] text-gray-600 font-oswald tracking-widest uppercase'>{field.label}</span>
                           </div>
-                          <p className='font-inter text-sm text-white'>{field.value}</p>
+                          {editingField === field.field ? (
+                            field.field === 'address' ? (
+                              <div className="flex items-center gap-2 w-full">
+                                <button
+                                  onClick={() => setIsAddressModalOpen(true)}
+                                  className="flex-1 min-w-0 bg-black border border-t1-red/50 py-3 px-4 text-left text-sm text-white transition-all flex items-center justify-between group overflow-hidden"
+                                >
+                                  <span className="truncate flex-1">{(editForm as any).address || 'Chọn địa chỉ giao hàng...'}</span>
+                                  <ChevronRight size={14} className="text-t1-red flex-shrink-0 ml-2" />
+                                </button>
+                                <div className="flex flex-col gap-1">
+                                  <button
+                                    onClick={() => handleRequestUpdate(field.field!, (editForm as any)[field.field!])}
+                                    className="p-2 text-emerald-400 hover:bg-emerald-400/10 rounded transition-colors"
+                                    title="Confirm"
+                                  >
+                                    <Check size={14} />
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setEditingField(null)
+                                      if (user) setEditForm(prev => ({ ...prev, [field.field!]: (user as any)[field.field!] || '' }))
+                                    }}
+                                    className="p-2 text-gray-500 hover:bg-white/5 rounded transition-colors"
+                                    title="Cancel"
+                                  >
+                                    <X size={14} />
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="relative group">
+                                <input
+                                  autoFocus
+                                  type="text"
+                                  value={(editForm as any)[field.field!]}
+                                  onChange={(e) => setEditForm({ ...editForm, [field.field!]: e.target.value })}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleRequestUpdate(field.field!, (editForm as any)[field.field!])
+                                    if (e.key === 'Escape') {
+                                      setEditingField(null)
+                                      if (user) setEditForm(prev => ({ ...prev, [field.field!]: (user as any)[field.field!] || '' }))
+                                    }
+                                  }}
+                                  className="w-full bg-transparent border-b border-t1-red py-1 text-sm text-white outline-none transition-all pr-12"
+                                />
+                                <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                                  <button
+                                    onClick={() => handleRequestUpdate(field.field!, (editForm as any)[field.field!])}
+                                    className="text-emerald-400 hover:text-emerald-300"
+                                  >
+                                    <Check size={14} />
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setEditingField(null)
+                                      if (user) setEditForm(prev => ({ ...prev, [field.field!]: (user as any)[field.field!] || '' }))
+                                    }}
+                                    className="text-gray-500 hover:text-white"
+                                  >
+                                    <X size={14} />
+                                  </button>
+                                </div>
+                              </div>
+                            )
+                          ) : (
+                            <div className="flex items-center justify-between group cursor-pointer" onClick={() => field.editable && setEditingField(field.field || null)}>
+                              <p className='font-inter text-sm text-white'>{field.value}</p>
+                              {field.editable && (
+                                <Edit3 size={12} className="text-gray-600 opacity-0 group-hover:opacity-100 group-hover:text-t1-red transition-all" />
+                              )}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -218,8 +460,8 @@ export default function MyPage() {
                       {/* 2FA */}
                       <div className='flex items-center justify-between py-4 border-b border-white/5'>
                         <div>
-                          <p className='text-sm font-inter text-white'>Two-Factor Authentication</p>
-                          <p className='text-[11px] text-gray-600'>{twoFaEnabled ? 'Enabled — your account is protected' : 'Not enabled'}</p>
+                          <p className='text-sm font-inter text-white'>{t('profile.twoFactor') || 'Two-Factor Authentication'}</p>
+                          <p className='text-[11px] text-gray-600'>{twoFaEnabled ? t('profile.twoFactorDesc') : t('profile.twoFactorOff')}</p>
                         </div>
                         <button
                           onClick={() => setTwoFaEnabled(v => !v)}
@@ -361,24 +603,24 @@ export default function MyPage() {
                     <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4'>
                       {favorites.map((product, i) => (
                         <motion.div
-                          key={product.id}
+                          key={product.product_id}
                           initial={{ opacity: 0, scale: 0.95 }}
                           animate={{ opacity: 1, scale: 1 }}
                           transition={{ delay: i * 0.05 }}
                           className='group bg-[#111] border border-white/5 hover:border-t1-red/30 transition-all duration-300 relative overflow-hidden'
                         >
-                          <Link to={`/product/${product.id}`} className='block relative aspect-square overflow-hidden bg-[#0d0d0d]'>
+                          <Link to={`/product/${product.product_id}`} className='block relative aspect-square overflow-hidden bg-[#0d0d0d]'>
                             <img
-                              src={product.image}
-                              alt={product.name}
+                              src={product.items?.[0]?.product_item_image || ''}
+                              alt={product.product_name}
                               className='w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-80 group-hover:opacity-100'
                             />
                           </Link>
                           <div className='p-3'>
-                            <p className='font-inter text-xs text-white truncate mb-1'>{product.name}</p>
+                            <p className='font-inter text-xs text-white truncate mb-1'>{product.product_name}</p>
                             <div className='flex items-center justify-between'>
                               <span className='font-oswald font-bold text-sm text-t1-red'>
-                                ${(product.salePrice ?? product.price).toFixed(2)}
+                                ${((product.items?.[0]?.sale_price || product.items?.[0]?.product_item_price) || 0).toFixed(2)}
                               </span>
                               <button
                                 onClick={() => toggleFavorite(product)}
@@ -428,7 +670,7 @@ export default function MyPage() {
                           className='flex gap-4 bg-[#111] border border-white/5 p-4 hover:border-white/10 transition-colors'
                         >
                           <Link to={`/product/${item.id}`} className='shrink-0 w-20 h-20 bg-[#0d0d0d] overflow-hidden'>
-                            <img src={item.imageUrl} alt={item.name} className='w-full h-full object-cover' />
+                            <img src={item.imageUrl || ''} alt={item.name} className='w-full h-full object-cover' />
                           </Link>
                           <div className='flex-1 min-w-0'>
                             <p className='font-inter text-sm text-white truncate mb-1'>{item.name}</p>
@@ -680,6 +922,65 @@ export default function MyPage() {
                 </div>
               </motion.div>
             </motion.div>
+          )}
+        </AnimatePresence>
+        <AddressModal
+          isOpen={isAddressModalOpen}
+          onClose={() => setIsAddressModalOpen(false)}
+          onSave={(newAddress) => {
+            setEditForm({ ...editForm, address: newAddress })
+            handleRequestUpdate('address', newAddress)
+          }}
+        />
+
+        {/* Confirmation Modal */}
+        <AnimatePresence>
+          {confirmModal?.isOpen && (
+            <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setConfirmModal(null)}
+                className="absolute inset-0 bg-black/90 backdrop-blur-md"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                className="relative w-full max-w-sm bg-[#111] border border-white/10 p-8 shadow-2xl text-center"
+              >
+                <div className="w-16 h-16 bg-t1-red/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Shield className="text-t1-red" size={32} />
+                </div>
+                <h3 className="font-oswald font-black text-2xl uppercase tracking-tight mb-2">Xác nhận thay đổi?</h3>
+                <p className="text-gray-400 text-sm font-inter mb-8">
+                  Bạn có chắc chắn muốn thay đổi
+                  <span className="text-white font-bold mx-1">
+                    {t(`profile.${confirmModal.field}`) || confirmModal.field}
+                  </span>
+                  thành
+                  <span className="text-t1-red font-bold mx-1">
+                    {confirmModal.value}
+                  </span>?
+                </p>
+                <div className="flex gap-4">
+                  <button
+                    onClick={() => setConfirmModal(null)}
+                    className="flex-1 py-4 border border-white/10 font-oswald font-bold text-xs tracking-widest uppercase hover:text-white hover:border-white transition-all"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    onClick={handleConfirmUpdate}
+                    className="flex-1 py-4 bg-t1-red text-white font-oswald font-black text-xs tracking-widest uppercase hover:bg-white hover:text-black transition-all flex items-center justify-center gap-2"
+                  >
+                    {saveLoading ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                    Xác nhận
+                  </button>
+                </div>
+              </motion.div>
+            </div>
           )}
         </AnimatePresence>
       </div>

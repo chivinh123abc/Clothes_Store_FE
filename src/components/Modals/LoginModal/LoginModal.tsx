@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, User, Lock, Loader2, Eye, EyeOff } from 'lucide-react'
-import axios from 'axios'
+import { X, User, Lock, Loader2, Eye, EyeOff, Mail } from 'lucide-react'
 import { userApi } from '../../../apis/userApi'
 import { useAuth } from '../../../hooks/useAuth'
 import { useLanguage } from '~/contexts/LanguageContext'
@@ -18,6 +17,8 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
+  const [showResend, setShowResend] = useState(false)
+  const [resending, setResending] = useState(false)
   const { setUser } = useAuth()
   const navigate = useNavigate()
   const { t } = useLanguage()
@@ -27,6 +28,7 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
       setError('')
       setIsLoading(false)
       setShowPassword(false)
+      setShowResend(false)
     }
   }, [open])
 
@@ -38,14 +40,28 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
       const res = await userApi.login({ identifier, password })
       setUser(res)
       onClose()
-    } catch (err: unknown) {
-      if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || t('auth.invalidLogin'))
-      } else {
-        setError(t('auth.loginFailed'))
+    } catch (err: any) {
+      const msg = err.response?.data?.message || t('auth.loginFailed')
+      setError(msg)
+      if (msg.toLowerCase().includes('not active') || msg.toLowerCase().includes('chưa kích hoạt')) {
+        setShowResend(true)
       }
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleResendEmail = async () => {
+    if (!identifier) return
+    setResending(true)
+    try {
+      await userApi.resendVerification(identifier)
+      setError(t('auth.verificationSent') || 'Verification email sent!')
+      setShowResend(false)
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to resend email')
+    } finally {
+      setResending(false)
     }
   }
 
@@ -142,13 +158,27 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
                 </div>
 
                 {error && (
-                  <motion.p
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="text-t1-red text-[10px] font-bold uppercase tracking-widest text-center"
-                  >
-                    {error}
-                  </motion.p>
+                  <div className="space-y-4">
+                    <motion.p
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="text-t1-red text-[10px] font-bold uppercase tracking-widest text-center"
+                    >
+                      {error}
+                    </motion.p>
+                    
+                    {showResend && (
+                      <button
+                        type="button"
+                        onClick={handleResendEmail}
+                        disabled={resending}
+                        className="w-full text-[9px] font-oswald font-black text-white uppercase tracking-[0.3em] py-2 border border-white/10 hover:border-t1-red hover:text-t1-red transition-all duration-300 flex items-center justify-center gap-2"
+                      >
+                        {resending ? <Loader2 size={12} className="animate-spin" /> : <Mail size={12} />}
+                        {t('auth.resendEmail') || 'Resend Verification Email'}
+                      </button>
+                    )}
+                  </div>
                 )}
 
                 <button

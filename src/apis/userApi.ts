@@ -14,6 +14,14 @@ export const userApi = {
     const response = await axiosClient.get<UserResponseDto>('/user/info')
     return response.data
   },
+  updateProfile: async (data: any): Promise<UserResponseDto> => {
+    const response = await axiosClient.put<UserResponseDto>('/user/update', data)
+    return response.data
+  },
+  changePassword: async (password: string): Promise<UserResponseDto> => {
+    const response = await axiosClient.put<UserResponseDto>('/user/update', { password })
+    return response.data
+  },
   logout: async (): Promise<void> => {
     const response = await axiosClient.delete<void>('/user/logout')
     return response.data

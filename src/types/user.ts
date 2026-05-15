@@ -19,6 +19,10 @@ export interface UserResponseDto {
   avatar?: string | null
   phone_number?: string | null
   created_at: string
+  status: number
+  address?: string | null
+  display_name?: string | null
+  full_name?: string | null
 }
 
 export interface AuthResponseDto extends UserResponseDto {

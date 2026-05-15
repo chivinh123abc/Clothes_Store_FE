@@ -20,12 +20,14 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { userApi } from '../../apis/userApi'
 import type { UserResponseDto } from '../../types/user'
 import { useToast } from '../../contexts/ToastContext'
+import ConfirmModal from '../../components/ui/ConfirmModal'
 
 const AdminUserList: React.FC = () => {
   const [users, setUsers] = useState<UserResponseDto[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterRole, setFilterRole] = useState<'all' | 'admin' | 'user'>('all')
+  const [userToDelete, setUserToDelete] = useState<number | null>(null)
   const { showToast } = useToast()
 
   // Modal State
@@ -38,7 +40,7 @@ const AdminUserList: React.FC = () => {
     password: '',
     phone_number: '',
     role: 0,
-    is_active: true
+    status: 0
   })
 
   const fetchUsers = useCallback(async () => {
@@ -70,7 +72,7 @@ const AdminUserList: React.FC = () => {
         password: '', // Don't show password on edit
         phone_number: user.phone_number || '',
         role: user.role,
-        is_active: user.is_active
+        status: user.status ?? (user.is_active ? 0 : 1)
       })
     } else {
       setEditingUser(null)
@@ -80,10 +82,20 @@ const AdminUserList: React.FC = () => {
         password: '',
         phone_number: '',
         role: 0,
-        is_active: true
+        status: 0
       })
     }
     setIsModalOpen(true)
+  }
+
+  const handleResendVerification = async (email: string) => {
+    try {
+      await userApi.resendVerification(email)
+      showToast('Verification email resent successfully', 'success')
+    } catch (error: any) {
+      const errorMsg = error.response?.data?.message || error.message
+      showToast(`Failed to resend: ${errorMsg}`, 'error')
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -93,6 +105,7 @@ const AdminUserList: React.FC = () => {
         // Update
         const updateData = { ...formData }
         if (!updateData.password) delete (updateData as any).password
+
         await userApi.adminUpdate(editingUser.user_id, updateData)
         showToast('User updated successfully')
       } else {
@@ -120,10 +133,10 @@ const AdminUserList: React.FC = () => {
     }
   }
 
-  const handleDeleteUser = async (id: number) => {
-    if (!window.confirm('Are you sure you want to PERMANENTLY delete this user?')) return
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return
     try {
-      await userApi.adminDelete(id)
+      await userApi.adminDelete(userToDelete)
       showToast('User deleted permanently', 'success')
       fetchUsers()
     } catch (error: any) {
@@ -149,6 +162,16 @@ const AdminUserList: React.FC = () => {
 
   return (
     <div className="space-y-8">
+      <ConfirmModal
+        isOpen={userToDelete !== null}
+        title="Delete User"
+        message="Are you sure you want to PERMANENTLY delete this user? This action cannot be undone and will remove all associated data."
+        confirmText="Delete Permanently"
+        onConfirm={handleDeleteUser}
+        onClose={() => setUserToDelete(null)}
+        type="danger"
+      />
+
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -185,10 +208,9 @@ const AdminUserList: React.FC = () => {
             <button
               key={role}
               onClick={() => setFilterRole(role)}
-              className={`flex-1 py-2 px-4 rounded-lg font-oswald text-[10px] uppercase tracking-[0.2em] transition-all ${
-                filterRole === role
-                  ? 'bg-t1-red text-white shadow-lg shadow-t1-red/20'
-                  : 'text-gray-500 hover:text-white'
+              className={`flex-1 py-2 px-4 rounded-lg font-oswald text-[10px] uppercase tracking-[0.2em] transition-all ${filterRole === role
+                ? 'bg-t1-red text-white shadow-lg shadow-t1-red/20'
+                : 'text-gray-500 hover:text-white'
               }`}
             >
               {role}
@@ -259,10 +281,9 @@ const AdminUserList: React.FC = () => {
                     <td className="px-6 py-5">
                       <motion.div
                         whileHover={{ y: -2 }}
-                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all ${
-                          user.role === 1
-                            ? 'bg-t1-red/10 border-t1-red/20 text-t1-red'
-                            : 'bg-white/5 border-white/10 text-gray-400'
+                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all ${user.role === 1
+                          ? 'bg-t1-red/10 border-t1-red/20 text-t1-red'
+                          : 'bg-white/5 border-white/10 text-gray-400'
                         }`}
                       >
                         {user.role === 1 ? <Shield size={12} /> : <ShieldOff size={12} />}
@@ -276,10 +297,16 @@ const AdminUserList: React.FC = () => {
                         <motion.div
                           animate={{ scale: [1, 1.2, 1] }}
                           transition={{ repeat: Infinity, duration: 2 }}
-                          className={`w-1.5 h-1.5 rounded-full ${user.is_active ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]'}`}
+                          className={`w-1.5 h-1.5 rounded-full ${(user.status === 0 || (user.status === undefined && user.is_active))
+                            ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]'
+                            : (user.status === 2 ? 'bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.4)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]')
+                          }`}
                         />
-                        <span className={`font-oswald text-[10px] uppercase tracking-widest ${user.is_active ? 'text-green-500' : 'text-red-500'}`}>
-                          {user.is_active ? 'Active' : 'Banned'}
+                        <span className={`font-oswald text-[10px] uppercase tracking-widest ${(user.status === 0 || (user.status === undefined && user.is_active))
+                          ? 'text-green-500'
+                          : (user.status === 2 ? 'text-yellow-500' : 'text-red-500')
+                        }`}>
+                          {(user.status === 0 || (user.status === undefined && user.is_active)) ? 'Active' : (user.status === 2 ? 'Pending' : 'Banned')}
                         </span>
                       </div>
                     </td>
@@ -300,23 +327,33 @@ const AdminUserList: React.FC = () => {
                         >
                           <Edit2 size={16} />
                         </motion.button>
+                        {user.status === 2 && (
+                          <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() => handleResendVerification(user.email)}
+                            title="Resend Verification Email"
+                            className="p-2 bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 rounded-lg hover:bg-yellow-500 hover:text-white transition-all"
+                          >
+                            <Mail size={16} />
+                          </motion.button>
+                        )}
                         <motion.button
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
-                          onClick={() => handleUpdateStatus(user.user_id, !user.is_active)}
-                          title={user.is_active ? 'Ban User' : 'Unban User'}
-                          className={`p-2 rounded-lg border transition-all ${
-                            user.is_active
-                              ? 'bg-red-500/10 border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white'
-                              : 'bg-green-500/10 border-green-500/20 text-green-500 hover:bg-green-500 hover:text-white'
+                          onClick={() => handleUpdateStatus(user.user_id, !(user.status === 0 || user.is_active))}
+                          title={(user.status === 0 || user.is_active) ? 'Ban User' : 'Unban User'}
+                          className={`p-2 rounded-lg border transition-all ${(user.status === 0 || user.is_active)
+                            ? 'bg-red-500/10 border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white'
+                            : 'bg-green-500/10 border-green-500/20 text-green-500 hover:bg-green-500 hover:text-white'
                           }`}
                         >
-                          {user.is_active ? <XCircle size={16} /> : <CheckCircle2 size={16} />}
+                          {(user.status === 0 || user.is_active) ? <XCircle size={16} /> : <CheckCircle2 size={16} />}
                         </motion.button>
                         <motion.button
                           whileHover={{ scale: 1.1, backgroundColor: '#e2012d' }}
                           whileTap={{ scale: 0.9 }}
-                          onClick={() => handleDeleteUser(user.user_id)}
+                          onClick={() => setUserToDelete(user.user_id)}
                           title="Delete Permanently"
                           className="p-2 bg-white/5 border border-white/10 text-gray-400 rounded-lg hover:border-t1-red hover:text-white transition-all"
                         >
@@ -444,12 +481,13 @@ const AdminUserList: React.FC = () => {
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-oswald uppercase tracking-[0.2em] text-gray-500 ml-1">Account Status</label>
                       <select
-                        value={formData.is_active ? 'true' : 'false'}
-                        onChange={(e) => setFormData({ ...formData, is_active: e.target.value === 'true' })}
+                        value={formData.status}
+                        onChange={(e) => setFormData({ ...formData, status: Number(e.target.value) })}
                         className="w-full bg-white/[0.03] border border-white/10 rounded-xl py-3 px-4 text-white focus:border-t1-red/50 focus:outline-none transition-all font-oswald text-sm appearance-none"
                       >
-                        <option value="true" className="bg-[#0f0f0f]">Active</option>
-                        <option value="false" className="bg-[#0f0f0f]">Banned / Inactive</option>
+                        <option value={0} className="bg-[#0f0f0f]">Active</option>
+                        <option value={2} className="bg-[#0f0f0f]">Pending Activation</option>
+                        <option value={1} className="bg-[#0f0f0f]">Banned / Disabled</option>
                       </select>
                     </div>
                   </div>
