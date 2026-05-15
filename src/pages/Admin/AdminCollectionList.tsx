@@ -1,9 +1,12 @@
-import React, { useEffect, useState } from 'react'
+/* eslint-disable no-console */
+import React, { useEffect, useState, useCallback } from 'react'
 import { Plus, Pencil, Trash2, ArrowLeft, Grid, Save, X, ChevronRight } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import collectionApi from '~/apis/collectionApi'
 import type { Collection } from '~/types/collection'
+import { useToast } from '~/contexts/ToastContext'
+import ConfirmModal from '~/components/ui/ConfirmModal'
 
 const AdminCollectionList = () => {
   const navigate = useNavigate()
@@ -12,21 +15,24 @@ const AdminCollectionList = () => {
   const [showModal, setShowModal] = useState(false)
   const [currentCollection, setCurrentCollection] = useState<Partial<Collection> | null>(null)
   const [saving, setSaving] = useState(false)
+  const { showToast } = useToast()
+  const [collectionToDelete, setCollectionToDelete] = useState<number | null>(null)
 
-  const fetchCollections = async () => {
+  const fetchCollections = useCallback(async () => {
     try {
       const res = await collectionApi.getAll()
       setCollections(res.data)
     } catch (error) {
       console.error('Failed to fetch collections', error)
+      showToast('Failed to fetch collections', 'error')
     } finally {
       setLoading(false)
     }
-  }
+  }, [showToast])
 
   useEffect(() => {
     fetchCollections()
-  }, [])
+  }, [fetchCollections])
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -36,27 +42,32 @@ const AdminCollectionList = () => {
     try {
       if (currentCollection.collection_id) {
         await collectionApi.update(currentCollection.collection_id, currentCollection)
+        showToast('Collection updated successfully', 'success')
       } else {
         await collectionApi.create(currentCollection)
+        showToast('Collection created successfully', 'success')
       }
       setShowModal(false)
       fetchCollections()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to save collection', error)
-      alert('Failed to save collection')
+      const errorMsg = error.response?.data?.message || error.message
+      showToast(`Failed to save collection: ${errorMsg}`, 'error')
     } finally {
       setSaving(false)
     }
   }
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm('Are you sure you want to delete this collection? Dependencies might break.')) return
+  const handleDelete = async () => {
+    if (!collectionToDelete) return
     try {
-      await collectionApi.delete(id)
+      await collectionApi.delete(collectionToDelete)
+      showToast('Collection deleted successfully', 'success')
+      setCollectionToDelete(null)
       fetchCollections()
     } catch (error) {
       console.error('Failed to delete collection', error)
-      alert('Failed to delete collection. It might have sub-collections.')
+      showToast('Failed to delete collection. It might have sub-collections.', 'error')
     }
   }
 
@@ -75,6 +86,16 @@ const AdminCollectionList = () => {
 
   return (
     <div className="space-y-8">
+      <ConfirmModal
+        isOpen={collectionToDelete !== null}
+        title="Delete Collection"
+        message="Are you sure you want to delete this collection? This action cannot be undone and dependencies might break if this collection has sub-collections or is linked to products."
+        confirmText="Delete Collection"
+        onConfirm={handleDelete}
+        onClose={() => setCollectionToDelete(null)}
+        type="danger"
+      />
+
       <div className="flex items-center justify-between">
         <button
           onClick={() => navigate('/admin')}
@@ -148,7 +169,7 @@ const AdminCollectionList = () => {
                         <Pencil size={14} />
                       </button>
                       <button
-                        onClick={() => handleDelete(col.collection_id)}
+                        onClick={() => setCollectionToDelete(col.collection_id)}
                         className="p-2 text-gray-500 hover:text-t1-red hover:bg-t1-red/10 rounded-lg transition-all"
                       >
                         <Trash2 size={14} />

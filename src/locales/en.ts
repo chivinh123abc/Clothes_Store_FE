@@ -26,7 +26,9 @@ export const en = {
     secureCheckout: 'Secure Checkout',
     item: 'item',
     items: 'items',
-    join: 'JOIN'
+    join: 'JOIN',
+    save: 'SAVE',
+    cancel: 'CANCEL'
   },
   nav: {
     shop: 'SHOP',
@@ -82,6 +84,8 @@ export const en = {
     fan: 'VALUED CUSTOMER',
     info: 'Account Information',
     username: 'Username',
+    displayName: 'Display Name',
+    fullName: 'Full Name',
     email: 'Email',
     phone: 'Phone',
     location: 'Location',
@@ -111,7 +115,10 @@ export const en = {
     summaryTotalOrders: 'Total Orders',
     summaryTotalSpent: 'Total Spent',
     summaryWishlist: 'Wishlist Items',
-    summaryCart: 'Cart Items'
+    summaryCart: 'Cart Items',
+    currentPwRequired: 'Please enter your current password.',
+    newPwLength: 'New password must be at least 8 characters.',
+    pwMismatch: 'Passwords do not match.'
   },
   status: {
     pending: 'Pending',
@@ -234,7 +241,9 @@ export const en = {
     mismatch: 'Passwords do not match',
     invalidEmail: 'Invalid email',
     invalidPhone: 'Invalid phone number',
-    registerSuccess: 'Registration successful! Please login.'
+    registerSuccess: 'Registration successful! Please login.',
+    resendEmail: 'Resend Verification Email',
+    verificationSent: 'Verification email sent!'
   },
   sort: {
     relevant: 'Most Relevant',
@@ -334,6 +343,10 @@ export const en = {
     subtotal: 'Subtotal',
     shippingAtCheckout: 'Shipping & taxes calculated at checkout.',
     checkout: 'PROCEED TO CHECKOUT'
+  },
+  errors: {
+    updateProfile: 'Failed to update profile',
+    changePassword: 'Failed to change password'
   }
 }
 

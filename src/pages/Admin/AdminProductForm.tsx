@@ -1,5 +1,5 @@
 /* eslint-disable indent */
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Save, X, Package, Type, FileText, Layers, Grid, Plus, Trash2 } from 'lucide-react'
 import productApi from '~/apis/productApi'
@@ -10,11 +10,13 @@ import type { Collection } from '~/types/collection'
 import discountApi from '~/apis/discountApi'
 import type { Discount } from '~/apis/discountApi'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useToast } from '~/contexts/ToastContext'
 
 const AdminProductForm = () => {
   const { id } = useParams()
   const navigate = useNavigate()
   const isEdit = !!id
+  const { showToast } = useToast()
 
   const [categories, setCategories] = useState<Category[]>([])
   const [allCollections, setAllCollections] = useState<Collection[]>([])
@@ -34,53 +36,54 @@ const AdminProductForm = () => {
     items: [] as any[] // For variants
   })
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [catsRes, colsRes, discRes, productRes] = await Promise.all([
-          categoryApi.getCategories(),
-          collectionApi.getAll(),
-          discountApi.getAll(),
-          isEdit ? productApi.getById(Number(id)) : Promise.resolve(null)
-        ])
+  const fetchData = useCallback(async () => {
+    try {
+      const [catsRes, colsRes, discRes, productRes] = await Promise.all([
+        categoryApi.getCategories(),
+        collectionApi.getAll(),
+        discountApi.getAll(),
+        isEdit ? productApi.getById(Number(id)) : Promise.resolve(null)
+      ])
 
-        setCategories(catsRes.data)
-        setAllCollections(colsRes.data)
-        setDiscounts(discRes.data)
+      setCategories(catsRes.data)
+      setAllCollections(colsRes.data)
+      setDiscounts(discRes.data)
 
-        if (productRes) {
-          const product = productRes.data
-          setFormData({
-            product_name: product.product_name,
-            category_id: product.category_id || 0,
-            product_slug: product.product_slug,
-            product_description: product.product_description || '',
-            is_featured: !!product.is_featured,
-            is_bestseller: !!product.is_bestseller,
-            collection_ids: product.collections?.map((c: any) => c.collection_id) || [],
-            items: product.items || []
-          })
-        }
-      } catch (error) {
-        // eslint-disable-next-line no-console
-        console.error('Failed to fetch data', error)
-      } finally {
-        setLoading(false)
+      if (productRes) {
+        const product = productRes.data
+        setFormData({
+          product_name: product.product_name,
+          category_id: product.category_id || 0,
+          product_slug: product.product_slug,
+          product_description: product.product_description || '',
+          is_featured: !!product.is_featured,
+          is_bestseller: !!product.is_bestseller,
+          collection_ids: product.collections?.map((c: any) => c.collection_id) || [],
+          items: product.items || []
+        })
       }
+    } catch (error: any) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to fetch data', error)
+      showToast('Failed to load form data', 'error')
+    } finally {
+      setLoading(false)
     }
+  }, [id, isEdit, showToast])
 
+  useEffect(() => {
     fetchData()
-  }, [id, isEdit])
+  }, [fetchData])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!formData.product_name || !formData.category_id) {
-      alert('Please fill in all required fields')
+      showToast('Please fill in all required fields', 'error')
       return
     }
 
     if (formData.items.length === 0) {
-      alert('Please add at least one variant')
+      showToast('Please add at least one variant', 'error')
       setActiveTab('variants')
       return
     }
@@ -89,16 +92,17 @@ const AdminProductForm = () => {
     try {
       if (isEdit) {
         await productApi.update(Number(id), formData)
-        alert('Product updated successfully')
+        showToast('Product updated successfully', 'success')
       } else {
         await productApi.create(formData)
-        alert('Product created successfully')
+        showToast('Product created successfully', 'success')
       }
       navigate('/admin/products')
-    } catch (error) {
+    } catch (error: any) {
       // eslint-disable-next-line no-console
       console.error('Failed to save product', error)
-      alert('Failed to save product')
+      const errorMsg = error.response?.data?.message || error.message
+      showToast(`Failed to save product: ${errorMsg}`, 'error')
     } finally {
       setSaving(false)
     }

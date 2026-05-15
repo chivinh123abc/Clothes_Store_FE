@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useCallback } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import {
   Edit2,
@@ -16,6 +16,8 @@ import categoryApi from '~/apis/categoriesApi'
 import collectionApi from '~/apis/collectionApi'
 import type { Category } from '~/apis/categoriesApi'
 import type { Collection } from '~/types/collection'
+import { useToast } from '~/contexts/ToastContext'
+import ConfirmModal from '~/components/ui/ConfirmModal'
 
 const AdminProductList = () => {
   const [products, setProducts] = useState<Product[]>([])
@@ -24,11 +26,13 @@ const AdminProductList = () => {
   const [categories, setCategories] = useState<Category[]>([])
   const [collections, setCollections] = useState<Collection[]>([])
   const [searchParams, setSearchParams] = useSearchParams()
+  const [productToDelete, setProductToDelete] = useState<number | null>(null)
+  const { showToast } = useToast()
 
   const categoryFilterId = searchParams.get('category_id') ? parseInt(searchParams.get('category_id')!) : null
   const collectionFilterId = searchParams.get('collection_id') ? parseInt(searchParams.get('collection_id')!) : null
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true)
       const [prodRes, catRes, colRes] = await Promise.all([
@@ -43,27 +47,26 @@ const AdminProductList = () => {
       // eslint-disable-next-line no-console
       console.error('Failed to fetch admin data', error)
       const errorMsg = error.response?.data?.message || error.message
-      alert(`Failed to load products/filters: ${errorMsg}`)
+      showToast(`Failed to load products/filters: ${errorMsg}`, 'error')
     } finally {
       setLoading(false)
     }
-  }
+  }, [showToast])
 
   useEffect(() => {
     fetchData()
-  }, [])
+  }, [fetchData])
 
-  const handleDelete = async (id: number) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
-      try {
-        await productApi.delete(id)
-        alert('Product deleted successfully')
-        fetchData()
-      } catch (error) {
-        // eslint-disable-next-line no-console
-        console.error('Failed to delete product', error)
-        alert('Failed to delete product')
-      }
+  const handleDelete = async () => {
+    if (!productToDelete) return
+    try {
+      await productApi.delete(productToDelete)
+      showToast('Product deleted successfully', 'success')
+      fetchData()
+    } catch (error: any) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to delete product', error)
+      showToast('Failed to delete product', 'error')
     }
   }
 
@@ -104,6 +107,16 @@ const AdminProductList = () => {
 
   return (
     <div className="space-y-6">
+      <ConfirmModal
+        isOpen={productToDelete !== null}
+        title="Delete Product"
+        message="Are you sure you want to delete this product? This action cannot be undone and will remove the product from all collections."
+        confirmText="Delete Product"
+        onConfirm={handleDelete}
+        onClose={() => setProductToDelete(null)}
+        type="danger"
+      />
+
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 flex-1">
           {/* Search */}
@@ -222,7 +235,7 @@ const AdminProductList = () => {
                         <Edit2 size={16} />
                       </Link>
                       <button
-                        onClick={() => handleDelete(product.product_id)}
+                        onClick={() => setProductToDelete(product.product_id)}
                         className="p-2 text-gray-500 hover:text-t1-red transition-colors"
                       >
                         <Trash2 size={16} />

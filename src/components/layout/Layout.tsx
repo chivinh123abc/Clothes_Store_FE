@@ -8,18 +8,19 @@ interface LayoutProps {
   children: ReactNode
   footer?: ReactNode
   bleed?: boolean
+  forceNavbarOpaque?: boolean
 }
 
 /**
  * Shared layout wrapper for all pages.
  */
-function Layout({ children, footer, bleed = false }: LayoutProps) {
+function Layout({ children, footer, bleed = false, forceNavbarOpaque = false }: LayoutProps) {
   const [openNav, setOpenNav] = useState(false)
 
   return (
     <div className='bg-t1-dark min-h-screen text-t1-text font-t1-body selection:bg-t1-red selection:text-white'>
       <Banner />
-      <Navbar setOpenNav={setOpenNav} />
+      <Navbar setOpenNav={setOpenNav} forceOpaque={forceNavbarOpaque} />
       <NavModal open={openNav} onClose={() => setOpenNav(false)}>{null}</NavModal>
 
       {/* Push content below the fixed Banner + Navbar unless 'bleed' is active */}
