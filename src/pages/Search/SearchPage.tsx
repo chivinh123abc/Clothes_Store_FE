@@ -7,6 +7,7 @@ import Footer from '~/components/layout/Footer'
 import { combinedProducts } from '~/data/products'
 import type { Product } from '~/types/product'
 import { useLanguage } from '~/contexts/LanguageContext'
+import { formatPrice } from '~/utils/format'
 
 const CATEGORIES = ['All', 'tshirt', 'hoodie', 'jacket', 'pants', 'sweater', 'shirt', 'shoes', 'hat', 'accessories', 'collection']
 const SORT_KEY_MAP: Record<string, string> = {
@@ -40,7 +41,7 @@ function scoreProduct(product: Product, query: string): number {
 }
 
 export default function SearchPage() {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const [searchParams, setSearchParams] = useSearchParams()
   const query = searchParams.get('q') || ''
   const [localQuery, setLocalQuery] = useState(query)
@@ -341,11 +342,11 @@ export default function SearchPage() {
                         <div className='flex items-center gap-2'>
                           {product.items?.[0]?.sale_price && product.items[0].sale_price < product.items[0].product_item_price ? (
                             <>
-                              <span className='font-oswald font-bold text-sm text-t1-red'>${product.items[0].sale_price.toFixed(2)}</span>
-                              <span className='font-oswald text-xs text-gray-600 line-through'>${product.items[0].product_item_price.toFixed(2)}</span>
+                              <span className='font-oswald font-bold text-sm text-t1-red'>{formatPrice(product.items[0].sale_price, language)}</span>
+                              <span className='font-oswald text-xs text-gray-600 line-through'>{formatPrice(product.items[0].product_item_price, language)}</span>
                             </>
                           ) : (
-                            <span className='font-oswald font-bold text-sm text-t1-red'>${(product.items?.[0]?.product_item_price ?? 0).toFixed(2)}</span>
+                            <span className='font-oswald font-bold text-sm text-t1-red'>{formatPrice((product.items?.[0]?.product_item_price ?? 0), language)}</span>
                           )}
                         </div>
                       </div>

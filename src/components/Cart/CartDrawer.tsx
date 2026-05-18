@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom'
 import { useCart } from '~/contexts/CartContext'
 import { Link } from 'react-router-dom'
 import { useLanguage } from '~/contexts/LanguageContext'
+import { formatPrice } from '~/utils/format'
 
 interface CartDrawerProps {
   open: boolean;
@@ -12,7 +13,7 @@ interface CartDrawerProps {
 
 function CartDrawer({ open, onClose }: CartDrawerProps) {
   const { items, totalItems, totalPrice, removeCartItem, incrementQuantity, decrementQuantity } = useCart()
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
 
   return createPortal(
     <AnimatePresence>
@@ -84,7 +85,7 @@ function CartDrawer({ open, onClose }: CartDrawerProps) {
                             </button>
                           </div>
                           <div className='flex items-center gap-3 mt-1 mb-2'>
-                            <p className='font-incosolata font-bold text-t1-red text-sm'>${item.price.toFixed(2)}</p>
+                            <p className='font-incosolata font-bold text-t1-red text-sm'>{formatPrice(item.price, language)}</p>
                             <span className="text-[10px] bg-t1-gray/20 text-gray-400 px-2 py-0.5 font-oswald font-bold tracking-widest border border-t1-gray/10 uppercase">{t('cart.size')}: {item.size}</span>
                           </div>
 
@@ -99,7 +100,7 @@ function CartDrawer({ open, onClose }: CartDrawerProps) {
                                 <Plus size={12} strokeWidth={3} />
                               </button>
                             </div>
-                            <span className='font-oswald text-xs tracking-wider text-gray-500'>{t('cart.total')}: <span className="text-t1-text">${(item.price * item.quantity).toFixed(2)}</span></span>
+                            <span className='font-oswald text-xs tracking-wider text-gray-500'>{t('cart.total')}: <span className="text-t1-text">{formatPrice(item.price * item.quantity, language)}</span></span>
                           </div>
                         </div>
                       </div>
@@ -113,7 +114,7 @@ function CartDrawer({ open, onClose }: CartDrawerProps) {
                 <div className='p-6 border-t border-t1-gray/40 bg-[#0a0a0a] shadow-[0_-10px_30px_rgba(0,0,0,0.5)] z-10'>
                   <div className='flex justify-between items-end mb-4'>
                     <span className='text-xs font-inter font-bold text-gray-400 uppercase tracking-widest'>{t('cart.subtotal')}</span>
-                    <span className='text-3xl font-oswald font-black text-t1-red italic tracking-wide'>${totalPrice.toFixed(2)}</span>
+                    <span className='text-3xl font-oswald font-black text-t1-red italic tracking-wide'>{formatPrice(totalPrice, language)}</span>
                   </div>
                   <p className='text-xs text-gray-500 font-inter mb-6 italic border-b border-t1-gray/20 pb-4'>{t('cart.shippingAtCheckout')}</p>
                   <button

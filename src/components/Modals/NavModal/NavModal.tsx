@@ -4,6 +4,7 @@ import angleDownIcon from '~/assets/FAIcon/angle-down-solid-full.svg'
 import { AnimatePresence, motion } from 'framer-motion'
 import { X } from 'lucide-react'
 import { createPortal } from 'react-dom'
+import { useLanguage } from '~/contexts/LanguageContext'
 
 interface NavModalProps {
   open: boolean;
@@ -62,11 +63,15 @@ export default function NavModal({ open, onClose, children }: NavModalProps) {
 }
 
 const NavMenuLogin = () => {
+  const { language, t } = useLanguage()
+
   return (
     <div className='p-3 border-b border-t1-gray/30 text-white'>
-      <p className='pb-2 font-light text-xs text-gray-400 tracking-widest'>GLOBAL / USD</p>
+      <p className='pb-2 font-light text-xs text-gray-400 tracking-widest'>
+        {language === 'vi' ? 'VIETNAM / VND' : 'GLOBAL / USD'}
+      </p>
       <div className='flex gap-2 items-center cursor-pointer hover:text-t1-red transition-colors group'>
-        <span className='font-bold uppercase tracking-wider text-sm'>Login</span>
+        <span className='font-bold uppercase tracking-wider text-sm'>{t('common.login')}</span>
         <div className='flex justify-center items-center w-5 h-5'>
           <input type="image" src={angleDownIcon} className='w-4 h-4 filter invert opacity-50 group-hover:opacity-100 transition-opacity -rotate-90 pointer-events-none' />
         </div>

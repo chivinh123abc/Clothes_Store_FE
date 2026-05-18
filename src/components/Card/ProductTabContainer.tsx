@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { FreeMode, Navigation, Scrollbar } from 'swiper/modules'
@@ -8,19 +8,71 @@ import 'swiper/css/free-mode'
 import 'swiper/css/scrollbar'
 import UniformProductCard from './UniformProductCard'
 
-import { newProducts, bestProducts, saleProducts } from '~/data/homeData'
 import { useLanguage } from '~/contexts/LanguageContext'
-
-const tabData: Record<string, any[]> = {
-  NEW: newProducts,
-  BEST: bestProducts,
-  SALE: saleProducts
-}
+import { formatPrice } from '~/utils/format'
+import productApi from '~/apis/productApi'
+import type { Product } from '~/types/product'
 
 export const ProductTabContainer = () => {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const [activeTab, setActiveTab] = useState<'NEW' | 'BEST' | 'SALE'>('NEW')
-  const products = tabData[activeTab]
+  const [allProducts, setAllProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState<boolean>(true)
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await productApi.getAll()
+        setAllProducts(response.data)
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error('Failed to fetch products for homepage:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchProducts()
+  }, [])
+
+  const NEW_PRODUCT_DAYS = 7
+  const isNewProduct = (createdAt: string) => {
+    if (!createdAt) return false
+    const createdDate = new Date(createdAt)
+    const now = new Date()
+    const diffTime = now.getTime() - createdDate.getTime()
+    const diffDays = diffTime / (1000 * 60 * 60 * 24)
+    return diffDays <= NEW_PRODUCT_DAYS
+  }
+
+  const getTabProducts = () => {
+    if (loading) return []
+
+    switch (activeTab) {
+      case 'NEW': {
+        const newProds = allProducts.filter((p) => isNewProduct(p.created_at))
+        if (newProds.length > 0) return newProds
+        return [...allProducts]
+          .sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
+          .slice(0, 8)
+      }
+      case 'BEST': {
+        const bestProds = allProducts.filter((p) => p.is_bestseller)
+        if (bestProds.length > 0) return bestProds
+        return [...allProducts]
+          .sort((a, b) => (b.sold_count || 0) - (a.sold_count || 0))
+          .slice(0, 8)
+      }
+      case 'SALE': {
+        const saleProds = allProducts.filter((p) => p.items?.[0]?.sale_price != null)
+        if (saleProds.length > 0) return saleProds
+        return allProducts.slice(0, 8)
+      }
+      default:
+        return []
+    }
+  }
+
+  const products = getTabProducts()
 
   const tabs = [
     { key: 'NEW' as const, label: t('nav.new') },
@@ -56,42 +108,75 @@ export const ProductTabContainer = () => {
       </div>
 
       {/* Product Carousel */}
-      <div className='lg:w-3/4 xl:w-[85%] bg-[#1b1b1b]'>
-        <Swiper
-          key={activeTab} // To force re-render/reset when tab changes
-          breakpoints={{
-            340: { slidesPerView: 1.5 },
-            600: { slidesPerView: 2.5 },
-            1000: { slidesPerView: 4.5 },
-            1280: { slidesPerView: 5.5 }
-          }}
-          freeMode={true}
-          navigation={true}
-          scrollbar={{ draggable: true, hide: false }}
-          modules={[FreeMode, Navigation, Scrollbar]}
-          className='h-full w-full pb-8 px-2'
-          style={{
-            '--swiper-scrollbar-bg-color': '#333',
-            '--swiper-scrollbar-drag-bg-color': '#e2012d',
-            '--swiper-scrollbar-bottom': '0px',
-            '--swiper-scrollbar-size': '0.5px',
-            '--swiper-scrollbar-sides-offset': '0px'
-          } as React.CSSProperties}
-        >
-          {products.map((prod, index) => (
-            <SwiperSlide key={index} className='h-full'>
-              <UniformProductCard
-                name={prod.name}
-                price={prod.price}
-                originalPrice={'originalPrice' in prod ? prod.originalPrice : undefined}
-                discountPercentage={'discountPercentage' in prod ? prod.discountPercentage : undefined}
-                imageUrl={prod.imageUrl}
-                soldOut={'soldOut' in prod ? prod.soldOut : false}
-              />
-            </SwiperSlide>
-          ))}
-        </Swiper>
+      <div className='lg:w-3/4 xl:w-[85%] bg-[#1b1b1b] flex items-center justify-center min-h-[300px]'>
+        {loading ? (
+          <div className='flex gap-4 p-4 overflow-hidden w-full'>
+            {Array.from({ length: 5 }).map((_, idx) => (
+              <div key={idx} className="w-[18%] min-w-[140px] flex-shrink-0 flex flex-col bg-[#1b1b1b] border-r border-[#333]">
+                <div className="bg-[#222] w-full aspect-square animate-pulse" />
+                <div className="flex flex-col justify-center py-3 px-4 h-[75px] border-t-2 border-[#333] space-y-2">
+                  <div className="h-2.5 w-full bg-white/10 rounded animate-pulse" />
+                  <div className="h-3 w-1/2 bg-white/10 rounded animate-pulse" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <Swiper
+            key={activeTab} // To force re-render/reset when tab changes
+            breakpoints={{
+              340: { slidesPerView: 1.5 },
+              600: { slidesPerView: 2.5 },
+              1000: { slidesPerView: 4.5 },
+              1280: { slidesPerView: 5.5 }
+            }}
+            freeMode={true}
+            navigation={true}
+            scrollbar={{ draggable: true, hide: false }}
+            modules={[FreeMode, Navigation, Scrollbar]}
+            className='h-full w-full pb-8 px-2'
+            style={{
+              '--swiper-scrollbar-bg-color': '#333',
+              '--swiper-scrollbar-drag-bg-color': '#e2012d',
+              '--swiper-scrollbar-bottom': '0px',
+              '--swiper-scrollbar-size': '0.5px',
+              '--swiper-scrollbar-sides-offset': '0px'
+            } as React.CSSProperties}
+          >
+            {products.map((prod) => {
+              const priceNum = prod.items?.[0]?.product_item_price ?? 0
+              const salePriceNum = prod.items?.[0]?.sale_price ?? null
+              const isSoldOut = prod.soldOut ?? (
+                prod.items && prod.items.length > 0
+                  ? prod.items.every(item => item.stock_quantity === 0)
+                  : true
+              )
+
+              const displayPrice = formatPrice(salePriceNum != null ? salePriceNum : priceNum, language)
+              const displayOriginalPrice = salePriceNum != null ? formatPrice(priceNum, language) : undefined
+              const displayDiscount = (salePriceNum != null && priceNum > 0)
+                ? Math.round(((priceNum - salePriceNum) / priceNum) * 100)
+                : undefined
+              const imageUrl = prod.items?.[0]?.product_item_image ?? ''
+
+              return (
+                <SwiperSlide key={prod.product_id} className='h-full'>
+                  <UniformProductCard
+                    id={prod.product_id.toString()}
+                    name={prod.product_name}
+                    price={displayPrice}
+                    originalPrice={displayOriginalPrice}
+                    discountPercentage={displayDiscount}
+                    imageUrl={imageUrl}
+                    soldOut={isSoldOut}
+                  />
+                </SwiperSlide>
+              )
+            })}
+          </Swiper>
+        )}
       </div>
     </div>
   )
 }
+

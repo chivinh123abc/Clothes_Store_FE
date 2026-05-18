@@ -8,13 +8,13 @@ function Banner() {
   const [isLoginOpen, setIsLoginOpen] = useState(false)
   const { user, logout } = useAuth()
   const navigate = useNavigate()
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
 
   return (
     <>
       <div className={'z-[100] fixed top-0 w-full bg-t1-dark text-t1-text h-8 px-5 flex justify-center sm:justify-between items-center font-inter text-xs tracking-widest'}>
         <div className='hidden sm:block opacity-80 hover:opacity-100 transition-opacity'>
-          <p>GLOBAL / USD</p>
+          <p>{language === 'vi' ? 'VIETNAM / VND' : 'GLOBAL / USD'}</p>
         </div>
         <div className='font-oswald tracking-[0.2em] text-[#e2012d] font-bold uppercase'>
           JUST DO IT

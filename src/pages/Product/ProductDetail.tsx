@@ -20,32 +20,70 @@ import { ProductCard } from '~/components/Product/ProductCard'
 import Layout from '~/components/layout/Layout'
 import Footer from '~/components/layout/Footer'
 import { useLanguage } from '~/contexts/LanguageContext'
+import { formatPrice } from '~/utils/format'
 import type { Product } from '~/types/product'
 import productApi from '~/apis/productApi'
 
 function ProductDetailContent({ product }: { product: Product }) {
   const { addCartItem } = useCart()
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
 
   const [userSelectedSize, setUserSelectedSize] = useState<string | null>(null)
   const [quantity, setQuantity] = useState(1)
   const [activeTab, setActiveTab] = useState('description')
   const [isAdded, setIsAdded] = useState(false)
 
-  // Extract unique sizes from product items
+  // Calculate isProductSoldOut globally for this product page
+  const isProductSoldOut = useMemo(() => {
+    return product.soldOut ?? (
+      product.items && product.items.length > 0
+        ? product.items.every(item => item.stock_quantity === 0)
+        : true
+    )
+  }, [product])
+
+  // Extract unique sizes from product items and sort them in standard order
   const availableSizes = useMemo(() => {
     if (!product?.items) return []
     const distinctSizes = [...new Set(product.items.map(item => item.size).filter(Boolean))] as string[]
-    return distinctSizes
+    const sizeOrder = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL']
+    return distinctSizes.sort((a, b) => {
+      const indexA = sizeOrder.indexOf(a.toUpperCase())
+      const indexB = sizeOrder.indexOf(b.toUpperCase())
+      const valA = indexA === -1 ? 999 : indexA
+      const valB = indexB === -1 ? 999 : indexB
+      return valA - valB
+    })
   }, [product])
 
-  // Determine the final active size (user selection or default to first available)
+  // Helper to check if a specific size is sold out
+  const isSizeSoldOut = (size: string) => {
+    const itemForSize = product.items?.find(item => item.size === size)
+    return itemForSize ? itemForSize.stock_quantity === 0 : true
+  }
+
+  // Determine the final active size (user selection or default to first available in-stock size)
   const activeSize = useMemo(() => {
     if (userSelectedSize && availableSizes.includes(userSelectedSize)) {
       return userSelectedSize
     }
-    return availableSizes[0] || ''
-  }, [userSelectedSize, availableSizes])
+    const firstInStockSize = availableSizes.find(size => {
+      const itemForSize = product.items?.find(item => item.size === size)
+      return itemForSize ? itemForSize.stock_quantity > 0 : false
+    })
+    return firstInStockSize || availableSizes[0] || ''
+  }, [userSelectedSize, availableSizes, product])
+
+  // Get stock for active size
+  const stockForActiveSize = useMemo(() => {
+    const item = product.items?.find(item => item.size === activeSize)
+    return item ? item.stock_quantity : 0
+  }, [product, activeSize])
+
+  // Get active variant based on selected size
+  const activeVariant = useMemo(() => {
+    return product.items?.find(item => item.size === activeSize) || product.items?.[0]
+  }, [product, activeSize])
 
   // Related products (same category, excluding current)
   const relatedProducts = useMemo(() => {
@@ -93,19 +131,19 @@ function ProductDetailContent({ product }: { product: Product }) {
               transition={{ duration: 0.6 }}
               className="relative aspect-square sm:aspect-[4/5] bg-t1-gray/10 border border-t1-gray/30 overflow-hidden group"
             >
-              {product.items?.[0]?.product_item_image && (
+              {(activeVariant?.product_item_image || product.items?.[0]?.product_item_image) && (
                 <img
-                  src={product.items[0].product_item_image}
+                  src={(activeVariant?.product_item_image || product.items?.[0]?.product_item_image) || undefined}
                   alt={product.product_name}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
               )}
-              {product.soldOut && (
+              {isProductSoldOut && (
                 <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-10">
                   <span className="px-10 py-5 text-4xl font-oswald font-black text-white border-4 border-white italic uppercase tracking-[0.2em]">{t('productDetail.soldOut')}</span>
                 </div>
               )}
-              {product.items?.[0]?.sale_price && !product.soldOut && (
+              {activeVariant?.sale_price && !isProductSoldOut && (
                 <div className="absolute top-6 left-6 z-20 bg-t1-red text-white font-oswald font-bold px-4 py-1 text-sm tracking-widest italic shadow-lg shadow-t1-red/20">
                   {t('shop.sale').toUpperCase()}
                 </div>
@@ -125,14 +163,20 @@ function ProductDetailContent({ product }: { product: Product }) {
               </h1>
 
               <div className="flex items-center gap-4 mb-8">
-                {product.items?.[0]?.sale_price && product.items[0].sale_price < product.items[0].product_item_price ? (
+                {activeVariant?.sale_price && activeVariant.sale_price < activeVariant.product_item_price ? (
                   <>
-                    <span className="text-3xl font-oswald font-black text-t1-red italic tracking-wide">${product.items[0].sale_price.toFixed(2)}</span>
-                    <span className="text-lg text-gray-500 line-through font-light">${product.items[0].product_item_price.toFixed(2)}</span>
-                    <span className="bg-t1-red/10 text-t1-red text-[10px] font-bold px-2 py-0.5 rounded border border-t1-red/20">{t('productDetail.save')} {Math.round((1 - product.items[0].sale_price / product.items[0].product_item_price) * 100)}%</span>
+                    <span className="text-3xl font-oswald font-black text-t1-red italic tracking-wide">
+                      {formatPrice(activeVariant.sale_price, language)}
+                    </span>
+                    <span className="text-lg text-gray-500 line-through font-light">
+                      {formatPrice(activeVariant.product_item_price, language)}
+                    </span>
+                    <span className="bg-t1-red/10 text-t1-red text-[10px] font-bold px-2 py-0.5 rounded border border-t1-red/20">{t('productDetail.save')} {Math.round((1 - activeVariant.sale_price / activeVariant.product_item_price) * 100)}%</span>
                   </>
                 ) : (
-                  <span className="text-3xl font-oswald font-black text-t1-red italic tracking-wide">${(product.items?.[0]?.product_item_price ?? 0).toFixed(2)}</span>
+                  <span className="text-3xl font-oswald font-black text-t1-red italic tracking-wide">
+                    {formatPrice(activeVariant?.product_item_price ?? 0, language)}
+                  </span>
                 )}
               </div>
 
@@ -148,19 +192,30 @@ function ProductDetailContent({ product }: { product: Product }) {
                     <button className="text-[10px] font-inter text-t1-red hover:underline uppercase tracking-widest">{t('productDetail.sizeGuide')}</button>
                   </div>
                   <div className="flex flex-wrap gap-3">
-                    {availableSizes.map((size: string) => (
-                      <button
-                        key={size}
-                        onClick={() => setUserSelectedSize(size)}
-                        disabled={product.soldOut}
-                        className={`min-w-[54px] h-[54px] border flex items-center justify-center font-oswald font-bold text-sm transition-all duration-300 ${activeSize === size
-                          ? 'bg-white border-white text-t1-dark shadow-[0_0_20px_rgba(255,255,255,0.3)]'
-                          : 'bg-transparent border-t1-gray/40 text-gray-400 hover:border-white hover:text-white'
-                          } ${product.soldOut ? 'opacity-30 cursor-not-allowed' : ''}`}
-                      >
-                        {size}
-                      </button>
-                    ))}
+                    {availableSizes.map((size: string) => {
+                      const soldOutSize = isSizeSoldOut(size)
+                      return (
+                        <button
+                          key={size}
+                          onClick={() => {
+                            setUserSelectedSize(size)
+                            setQuantity(1)
+                          }}
+                          disabled={isProductSoldOut || soldOutSize}
+                          className={`min-w-[54px] h-[54px] border flex items-center justify-center font-oswald font-bold text-sm transition-all duration-300 ${
+                            activeSize === size
+                              ? 'bg-white border-white text-t1-dark shadow-[0_0_20px_rgba(255,255,255,0.3)]'
+                              : 'bg-transparent border-t1-gray/40 text-gray-400 hover:border-white hover:text-white'
+                          } ${
+                            isProductSoldOut || soldOutSize
+                              ? 'opacity-30 cursor-not-allowed line-through border-dashed border-gray-600'
+                              : ''
+                          }`}
+                        >
+                          {size}
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
               )}
@@ -171,31 +226,37 @@ function ProductDetailContent({ product }: { product: Product }) {
                 <div className="flex items-center border border-t1-gray/40 w-fit h-14">
                   <button
                     onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                    disabled={product.soldOut}
-                    className="w-14 h-full flex items-center justify-center hover:bg-t1-gray/10 transition-colors text-gray-400"
+                    disabled={isProductSoldOut || isSizeSoldOut(activeSize)}
+                    className="w-14 h-full flex items-center justify-center hover:bg-t1-gray/10 transition-colors text-gray-400 disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     <Minus size={16} />
                   </button>
                   <span className="w-14 text-center font-oswald font-bold text-lg text-white">{quantity}</span>
                   <button
-                    onClick={() => setQuantity(q => Math.min(10, q + 1))}
-                    disabled={product.soldOut}
-                    className="w-14 h-full flex items-center justify-center hover:bg-t1-gray/10 transition-colors text-gray-400"
+                    onClick={() => setQuantity(q => Math.min(stockForActiveSize, q + 1))}
+                    disabled={isProductSoldOut || isSizeSoldOut(activeSize) || quantity >= stockForActiveSize}
+                    className="w-14 h-full flex items-center justify-center hover:bg-t1-gray/10 transition-colors text-gray-400 disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     <Plus size={16} />
                   </button>
                 </div>
+                {/* Visual indicator of remaining stock */}
+                {!isProductSoldOut && !isSizeSoldOut(activeSize) && stockForActiveSize <= 10 && (
+                  <span className="text-[10px] font-bold text-t1-red mt-2 block tracking-wider uppercase">
+                    Only {stockForActiveSize} left in stock!
+                  </span>
+                )}
               </div>
 
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 mb-12">
                 <button
                   onClick={handleAddToCart}
-                  disabled={product.soldOut || isAdded}
+                  disabled={isProductSoldOut || isSizeSoldOut(activeSize) || isAdded}
                   className={`flex-1 h-16 flex items-center justify-center gap-3 font-oswald font-black text-sm tracking-[0.2em] uppercase transition-all duration-500 overflow-hidden relative ${isAdded
                     ? 'bg-green-600 text-white shadow-[0_0_30px_rgba(22,163,74,0.4)]'
                     : 'bg-t1-red text-white hover:bg-[#ff0033] shadow-[0_0_20px_rgba(226,1,45,0.3)] hover:shadow-[0_0_35px_rgba(226,1,45,0.6)]'
-                    } ${product.soldOut ? 'bg-t1-gray/40 cursor-not-allowed shadow-none hover:bg-t1-gray/40' : ''}`}
+                    } ${isProductSoldOut || isSizeSoldOut(activeSize) ? 'bg-t1-gray/40 cursor-not-allowed shadow-none hover:bg-t1-gray/40' : ''}`}
                 >
                   <AnimatePresence mode="wait">
                     {isAdded ? (
@@ -214,7 +275,11 @@ function ProductDetailContent({ product }: { product: Product }) {
                         animate={{ y: 0, opacity: 1 }}
                         className="flex items-center gap-2"
                       >
-                        <ShoppingCart size={20} /> {t('productDetail.addToCart')}
+                        <ShoppingCart size={20} /> {
+                          isProductSoldOut || isSizeSoldOut(activeSize)
+                            ? t('productDetail.soldOut').toUpperCase()
+                            : t('productDetail.addToCart')
+                        }
                       </motion.div>
                     )}
                   </AnimatePresence>
