@@ -58,8 +58,17 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
         <div className="p-6 border-t border-white/5 space-y-4">
           <div className="flex items-center gap-3 px-2">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-t1-red to-red-900 flex items-center justify-center font-bold">
-              {user?.username?.charAt(0).toUpperCase()}
+            <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-tr from-t1-red to-red-900 flex items-center justify-center font-bold">
+              {user?.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt={user.username}
+                  className="w-full h-full object-cover"
+                  style={{ objectPosition: `center ${user.avatar.split('?position=')[1] || '50'}%` }}
+                />
+              ) : (
+                user?.username?.charAt(0).toUpperCase()
+              )}
             </div>
             <div className="flex-1 overflow-hidden">
               <p className="text-sm font-bold truncate">{user?.username}</p>

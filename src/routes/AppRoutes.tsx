@@ -10,8 +10,6 @@ import Community from '../pages/Community/Community'
 import ProductDetail from '../pages/Product/ProductDetail'
 import Shop from '../pages/Shop/Shop'
 import Collection from '../pages/Collection/Collection'
-import Layout from '../components/layout/Layout'
-import Footer from '../components/layout/Footer'
 import MyPage from '../pages/MyPage/MyPage'
 import SearchPage from '../pages/Search/SearchPage'
 import AdminLayout from '../components/layout/AdminLayout'
@@ -24,6 +22,8 @@ import AdminCollectionList from '../pages/Admin/AdminCollectionList'
 import AdminOrderList from '../pages/Admin/AdminOrderList'
 import AdminDiscountList from '../pages/Admin/AdminDiscountList'
 import VerifyAccount from '../pages/VerifyAccount/VerifyAccount'
+import Checkout from '../pages/Checkout/Checkout'
+import MoMoReturn from '../pages/Checkout/MoMoReturn'
 
 const Private = ({ children }: { children: React.ReactElement }) => {
   const { user, isLoading } = useAuth()
@@ -49,12 +49,12 @@ export default function AppRoutes() {
       <Route path='/shop/*' element={<Shop />} />
       <Route path='/checkout' element={
         <Private>
-          <Layout footer={<Footer />}>
-            <div className='py-20 text-center text-white'>
-              <h1 className='text-4xl font-oswald font-black uppercase italic mb-8'>Checkout</h1>
-              <p className='text-gray-400 italic'>Payment gateway integration in progress...</p>
-            </div>
-          </Layout>
+          <Checkout />
+        </Private>
+      } />
+      <Route path='/checkout/momo-return' element={
+        <Private>
+          <MoMoReturn />
         </Private>
       } />
       <Route path="/best" element={<Best />} />

@@ -253,7 +253,12 @@ const AdminUserList: React.FC = () => {
                           className="w-10 h-10 rounded-full bg-gradient-to-br from-t1-red/20 to-t1-red/5 border border-white/10 flex items-center justify-center overflow-hidden cursor-pointer"
                         >
                           {user.avatar ? (
-                            <img src={user.avatar} alt={user.username} className="w-full h-full object-cover" />
+                            <img
+                              src={user.avatar}
+                              alt={user.username}
+                              className="w-full h-full object-cover"
+                              style={{ objectPosition: `center ${user.avatar.split('?position=')[1] || '50'}%` }}
+                            />
                           ) : (
                             <span className="text-t1-red font-oswald text-lg">{user.username[0].toUpperCase()}</span>
                           )}

@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
+import type { ChangeEvent } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   User, Heart, ShoppingBag, Package, LogOut,
   ChevronRight, Trash2, Plus, Minus, X,
   MapPin, Mail, Phone, Edit3, Shield,
-  Star, CheckCircle, Lock, Eye, EyeOff, Loader2, Check
+  Star, CheckCircle, Lock, Eye, EyeOff, Loader2, Check, AlertTriangle
 } from 'lucide-react'
 import Layout from '~/components/layout/Layout'
 import Footer from '~/components/layout/Footer'
@@ -13,11 +14,12 @@ import AddressModal from '~/components/Modals/AddressModal/AddressModal'
 import { useAuth } from '~/hooks/useAuth'
 import { useCart } from '~/contexts/CartContext'
 import { useFavorites } from '~/contexts/FavoritesContext'
-import { mockOrders, STATUS_CONFIG } from '~/data/myPageData'
+import { STATUS_CONFIG } from '~/data/myPageData'
 import { useLanguage } from '~/contexts/LanguageContext'
 import { formatPrice } from '~/utils/format'
 import { userApi } from '~/apis/userApi'
 import { useToast } from '~/contexts/ToastContext'
+import { orderApi } from '~/apis/orderApi'
 
 type Tab = 'profile' | 'favorites' | 'cart' | 'orders'
 
@@ -29,7 +31,16 @@ export default function MyPage() {
   const navigate = useNavigate()
   const { showToast } = useToast()
   const [activeTab, setActiveTab] = useState<Tab>('profile')
-  const [expandedOrder, setExpandedOrder] = useState<string | null>(null)
+  const [expandedOrders, setExpandedOrders] = useState<string[]>([])
+  const [realOrders, setRealOrders] = useState<any[]>([])
+  const [orderStatusFilter, setOrderStatusFilter] = useState<string>('all')
+  const [cancellingId, setCancellingId] = useState<number | null>(null)
+
+  const filteredOrders = orderStatusFilter === 'all'
+    ? realOrders
+    : realOrders.filter(order => order.status === orderStatusFilter)
+  const [cancelOrderModal, setCancelOrderModal] = useState<number | null>(null)
+  const [isPayingId, setIsPayingId] = useState<number | null>(null)
 
   // Security modals state
   const [changePwOpen, setChangePwOpen] = useState(false)
@@ -53,6 +64,12 @@ export default function MyPage() {
   const [editingField, setEditingField] = useState<string | null>(null)
   const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean, field: string, value: string } | null>(null)
 
+  // Avatar positioning adjustment states
+  const [isAdjustingAvatar, setIsAdjustingAvatar] = useState(false)
+  const [tempAvatarUrl, setTempAvatarUrl] = useState<string | null>(null)
+  const [avatarPosition, setAvatarPosition] = useState(50)
+  const [avatarFile, setAvatarFile] = useState<File | null>(null)
+
   // Sync editForm when user changes
   useEffect(() => {
     if (user) {
@@ -65,6 +82,113 @@ export default function MyPage() {
       })
     }
   }, [user])
+
+  useEffect(() => {
+    const fetchUserOrders = async () => {
+      if (!user?.user_id) return
+      try {
+        const backendOrders = await orderApi.getOrdersByUserId(user.user_id)
+        const mappedOrders = backendOrders.map((order: any) => {
+          const status = order.status?.toLowerCase() || 'pending'
+
+          const dateObj = new Date(order.created_at)
+          const dateStr = dateObj.toISOString().split('T')[0]
+
+          return {
+            id: `#T1-000${order.order_id}`,
+            rawId: order.order_id,
+            date: dateStr,
+            status,
+            total: Number(order.total_amount),
+            paymentMethod: order.payment_method,
+            paymentStatus: order.payment_status,
+            items: (order.items || []).map((item: any) => ({
+              name: item.product_name || item.name || 'T1 Gear',
+              size: item.size || 'ONE SIZE',
+              qty: Number(item.quantity),
+              price: Number(item.unit_price !== undefined && item.unit_price !== null ? item.unit_price : item.price),
+              image: item.product_item_image || item.image || 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&q=80&w=400'
+            }))
+          }
+        })
+        setRealOrders(mappedOrders)
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error('Failed to load user orders:', error)
+      }
+    }
+    fetchUserOrders()
+  }, [user, activeTab])
+
+  const handleCancelOrder = async (orderId: number) => {
+    setCancelOrderModal(orderId)
+  }
+
+  const handlePayNow = async (orderId: number, total: number) => {
+    try {
+      setIsPayingId(orderId)
+      const res = await orderApi.createMoMoPayment(orderId, total)
+      if (res.payUrl) {
+        const extraData = btoa(orderId.toString())
+        const testSuccessUrl = `http://localhost:5173/checkout/momo-return?resultCode=0&extraData=${extraData}`
+        // eslint-disable-next-line no-console
+        console.log('%c[MOMO TEST URL] 👇\n' + testSuccessUrl, 'color: #e2012d; font-weight: bold; font-size: 14px;')
+        window.location.href = res.payUrl
+      }
+    } catch (err: any) {
+      console.error('Failed to init MoMo payment:', err)
+      showToast(err.response?.data?.message || 'Failed to initialize payment. Please try again.', 'error')
+    } finally {
+      setIsPayingId(null)
+    }
+  }
+
+  const handleConfirmCancelOrder = async () => {
+    const orderId = cancelOrderModal
+    if (!orderId) return
+    setCancelOrderModal(null)
+    try {
+      setCancellingId(orderId)
+      await orderApi.cancelOrder(orderId)
+      showToast(
+        language === 'vi' ? 'Đã hủy đơn hàng thành công!' : 'Order cancelled successfully!',
+        'success'
+      )
+      if (user?.user_id) {
+        const backendOrders = await orderApi.getOrdersByUserId(user.user_id)
+        const mappedOrders = backendOrders.map((order: any) => {
+          const status = order.status?.toLowerCase() || 'pending'
+          const dateObj = new Date(order.created_at)
+          const dateStr = dateObj.toISOString().split('T')[0]
+
+          return {
+            id: `#T1-000${order.order_id}`,
+            rawId: order.order_id,
+            date: dateStr,
+            status,
+            total: Number(order.total_amount),
+            paymentMethod: order.payment_method,
+            paymentStatus: order.payment_status,
+            items: (order.items || []).map((item: any) => ({
+              name: item.product_name || item.name || 'T1 Gear',
+              size: item.size || 'ONE SIZE',
+              qty: Number(item.quantity),
+              price: Number(item.unit_price !== undefined && item.unit_price !== null ? item.unit_price : item.price),
+              image: item.product_item_image || item.image || 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&q=80&w=400'
+            }))
+          }
+        })
+        setRealOrders(mappedOrders)
+      }
+    } catch (err: any) {
+      showToast(
+        err.response?.data?.message || (language === 'vi' ? 'Không thể hủy đơn hàng!' : 'Failed to cancel order!'),
+        'error'
+      )
+    } finally {
+      setCancellingId(null)
+    }
+  }
 
   const handleRequestUpdate = (field: string, value: string) => {
     // Only request update if the value actually changed
@@ -148,18 +272,77 @@ export default function MyPage() {
     navigate('/')
   }
 
+  const getAvatarPosition = (avatarUrl?: string | null): number => {
+    if (!avatarUrl) return 50
+    const parts = avatarUrl.split('?position=')
+    return parts[1] ? Number(parts[1]) : 50
+  }
+
+  const handleAvatarChange = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('Image size must be less than 5MB', 'error')
+      return
+    }
+
+    const reader = new FileReader()
+    reader.readAsDataURL(file)
+    reader.onload = () => {
+      const base64Data = reader.result as string
+      setTempAvatarUrl(base64Data)
+      setAvatarFile(file)
+      setAvatarPosition(50)
+      setIsAdjustingAvatar(true)
+    }
+    reader.onerror = () => {
+      showToast('Failed to read file', 'error')
+    }
+  }
+
+  const handleSaveAvatarPosition = async () => {
+    setSaveLoading(true)
+    try {
+      let finalAvatarUrl = ''
+
+      if (avatarFile && tempAvatarUrl) {
+        const uploadRes = await userApi.uploadAvatar(tempAvatarUrl)
+        finalAvatarUrl = `${uploadRes.secure_url}?position=${avatarPosition}`
+      } else if (user?.avatar) {
+        const cleanUrl = user.avatar.split('?position=')[0]
+        finalAvatarUrl = `${cleanUrl}?position=${avatarPosition}`
+      } else {
+        return
+      }
+
+      const updatedUser = await userApi.updateProfile({ avatar: finalAvatarUrl })
+      setUser(updatedUser as any)
+      setIsAdjustingAvatar(false)
+      setAvatarFile(null)
+      setTempAvatarUrl(null)
+      showToast('Avatar updated successfully', 'success')
+    } catch (err: any) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to save avatar', err)
+      showToast('Failed to save avatar', 'error')
+    } finally {
+      setSaveLoading(false)
+    }
+  }
+
   const tabs: { id: Tab; label: string; icon: typeof User; count?: number }[] = [
     { id: 'profile', label: t('common.profile'), icon: User },
     { id: 'favorites', label: t('common.wishlist'), icon: Heart, count: totalFavorites },
     { id: 'cart', label: t('profile.cart'), icon: ShoppingBag, count: totalItems },
-    { id: 'orders', label: t('common.order'), icon: Package, count: mockOrders.length }
+    { id: 'orders', label: t('common.order'), icon: Package, count: realOrders.length }
   ]
 
   const memberSince = user?.created_at
     ? new Date(user.created_at).toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US', { month: 'long', year: 'numeric' })
     : language === 'vi' ? 'Tháng 4 2026' : 'April 2026'
 
-  const totalSpent = mockOrders.reduce((s, o) => s + o.total, 0)
+  const totalSpent = realOrders.reduce((s, o) => s + o.total, 0)
 
   return (
     <Layout footer={<Footer />} forceNavbarOpaque={true}>
@@ -170,11 +353,47 @@ export default function MyPage() {
           <div className='px-4 md:px-10 lg:px-20 max-w-7xl mx-auto'>
             <div className='flex flex-col md:flex-row items-start md:items-center gap-6 pb-8'>
               {/* Avatar */}
-              <div className='relative'>
-                <div className='w-20 h-20 rounded-full bg-gradient-to-br from-t1-red to-[#ff4444] flex items-center justify-center text-3xl font-oswald font-black text-white shadow-[0_0_40px_rgba(226,1,45,0.4)]'>
-                  {user?.username?.[0]?.toUpperCase() || 'U'}
+              <div className='relative group/avatar cursor-pointer'>
+                <div className='w-20 h-20 rounded-full overflow-hidden bg-gradient-to-br from-t1-red to-[#ff4444] flex items-center justify-center shadow-[0_0_40px_rgba(226,1,45,0.4)] border-2 border-white/10 group-hover/avatar:border-t1-red transition-all duration-300'>
+                  {user?.avatar ? (
+                    <img
+                      src={user.avatar}
+                      alt={user.username}
+                      className='w-full h-full object-cover'
+                      style={{ objectPosition: `center ${getAvatarPosition(user.avatar)}%` }}
+                    />
+                  ) : (
+                    <span className='text-3xl font-oswald font-black text-white'>{user?.username?.[0]?.toUpperCase() || 'U'}</span>
+                  )}
                 </div>
-                <div className='absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 rounded-full border-2 border-[#111] flex items-center justify-center'>
+                {/* Upload / Adjust overlay on hover */}
+                <div className='absolute inset-0 rounded-full bg-black/75 opacity-0 group-hover/avatar:opacity-100 flex flex-col items-center justify-center transition-all duration-300 text-[9px] font-oswald font-bold tracking-wider text-white uppercase text-center p-1 select-none z-20 gap-1'>
+                  <label className="hover:text-t1-red cursor-pointer flex flex-col items-center">
+                    <Plus size={12} className="mb-0.5" />
+                    Upload
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleAvatarChange}
+                    />
+                  </label>
+                  {user?.avatar && (
+                    <button
+                      onClick={() => {
+                        setTempAvatarUrl(user.avatar!.split('?position=')[0])
+                        setAvatarPosition(getAvatarPosition(user.avatar))
+                        setAvatarFile(null)
+                        setIsAdjustingAvatar(true)
+                      }}
+                      className="hover:text-t1-red flex flex-col items-center border-t border-white/10 pt-1 w-full animate-none"
+                    >
+                      <Edit3 size={11} className="mb-0.5" />
+                      Adjust
+                    </button>
+                  )}
+                </div>
+                <div className='absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 rounded-full border-2 border-[#111] flex items-center justify-center z-10'>
                   <div className='w-2 h-2 rounded-full bg-white' />
                 </div>
               </div>
@@ -242,7 +461,7 @@ export default function MyPage() {
               {/* Stats */}
               <div className='flex gap-6 md:gap-10'>
                 {[
-                  { label: t('common.order'), value: mockOrders.length },
+                  { label: t('common.order'), value: realOrders.length },
                   { label: t('common.wishlist'), value: totalFavorites },
                   { label: t('common.spent'), value: formatPrice(totalSpent, language) }
                 ].map(stat => (
@@ -263,9 +482,7 @@ export default function MyPage() {
                     setActiveTab(tab.id)
                     window.scrollTo({ top: 0, behavior: 'smooth' })
                   }}
-                  className={`relative flex items-center gap-2 py-4 pr-6 font-oswald font-bold text-[11px] tracking-widest uppercase transition-colors duration-200 ${
-                    activeTab === tab.id ? 'text-white' : 'text-gray-600 hover:text-gray-400'
-                  }`}
+                  className={`relative flex items-center gap-2 py-4 pr-6 font-oswald font-bold text-[11px] tracking-widest uppercase transition-colors duration-200 ${activeTab === tab.id ? 'text-white' : 'text-gray-600 hover:text-gray-400'}`}
                 >
                   <tab.icon size={14} />
                   {tab.label}
@@ -504,11 +721,9 @@ export default function MyPage() {
                                   <div key={acc.name} className='flex items-center justify-between bg-[#0d0d0d] border border-white/5 px-4 py-3'>
                                     <span className={`font-oswald font-bold text-sm ${acc.color}`}>{acc.name}</span>
                                     <button
-                                      className={`text-[10px] font-oswald font-bold tracking-widest uppercase px-3 py-1 border transition-colors duration-200 ${
-                                        acc.connected
-                                          ? 'border-white/10 text-gray-500 hover:border-red-500 hover:text-red-400'
-                                          : 'border-t1-red/50 text-t1-red hover:bg-t1-red hover:text-white'
-                                      }`}
+                                      className={`text-[10px] font-oswald font-bold tracking-widest uppercase px-3 py-1 border transition-colors duration-200 ${acc.connected
+                                        ? 'border-white/10 text-gray-500 hover:border-red-500 hover:text-red-400'
+                                        : 'border-t1-red/50 text-t1-red hover:bg-t1-red hover:text-white'}`}
                                     >
                                       {acc.connected ? t('profile.disconnect') : t('profile.connect')}
                                     </button>
@@ -552,7 +767,7 @@ export default function MyPage() {
                       {t('profile.summary')}
                     </h2>
                     {[
-                      { label: t('profile.summaryTotalOrders'), value: mockOrders.length },
+                      { label: t('profile.summaryTotalOrders'), value: realOrders.length },
                       { label: t('profile.summaryTotalSpent'), value: formatPrice(totalSpent, language) },
                       { label: t('profile.summaryWishlist'), value: totalFavorites },
                       { label: t('profile.summaryCart'), value: totalItems }
@@ -751,84 +966,165 @@ export default function MyPage() {
                 transition={{ duration: 0.25 }}
                 className='space-y-4'
               >
-                <p className='font-oswald text-gray-500 text-sm tracking-widest uppercase'>
-                  {mockOrders.length} {t('common.order')}
-                </p>
-                {mockOrders.map((order, i) => {
-                  const statusCfg = STATUS_CONFIG[order.status as keyof typeof STATUS_CONFIG]
-                  const isExpanded = expandedOrder === order.id
-                  return (
-                    <motion.div
-                      key={order.id}
-                      initial={{ opacity: 0, y: 16 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.1 }}
-                      className={`bg-[#111] border transition-colors duration-300 overflow-hidden ${isExpanded ? 'border-t1-red/30' : 'border-white/5'}`}
-                    >
-                      <button
-                        onClick={() => setExpandedOrder(isExpanded ? null : order.id)}
-                        className='w-full flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 text-left'
-                      >
-                        <div className='flex flex-col sm:flex-row sm:items-center gap-4'>
-                          <div>
-                            <p className='font-oswald font-bold text-white tracking-wider text-sm'>#{order.id}</p>
-                            <p className='text-[11px] text-gray-600 mt-0.5'>{order.date}</p>
-                          </div>
-                          <span className={`inline-flex items-center gap-1.5 text-[10px] font-oswald font-bold tracking-widest uppercase border px-3 py-1 ${statusCfg.color}`}>
-                            <statusCfg.icon size={10} />
-                            {t(`status.${order.status.toLowerCase()}`)}
-                          </span>
-                        </div>
-                        <div className='flex items-center gap-4'>
-                          <div className='text-right'>
-                            <p className='font-oswald font-black text-t1-red'>{formatPrice(order.total, language)}</p>
-                            <p className='text-[10px] text-gray-600'>{order.items.length} items</p>
-                          </div>
-                          <ChevronRight
-                            size={16}
-                            className={`text-gray-600 transition-transform duration-300 ${isExpanded ? 'rotate-90' : ''}`}
-                          />
-                        </div>
-                      </button>
+                {/* ── STATUS SUB-TABS ── */}
+                <div className='flex items-center gap-1 overflow-x-auto pb-2 border-b border-white/5 scrollbar-none mb-4'>
+                  {[
+                    { id: 'all', label: { en: 'All', vi: 'Tất cả' } },
+                    { id: 'pending', label: { en: 'Pending', vi: 'Chờ xử lý' } },
+                    { id: 'paid', label: { en: 'Paid', vi: 'Đã thanh toán' } },
+                    { id: 'shipping', label: { en: 'Shipping', vi: 'Đang giao' } },
+                    { id: 'completed', label: { en: 'Completed', vi: 'Hoàn thành' } },
+                    { id: 'cancelled', label: { en: 'Cancelled', vi: 'Đã hủy' } }
+                  ].map(tab => {
+                    const isActive = orderStatusFilter === tab.id
+                    const count = tab.id === 'all'
+                      ? realOrders.length
+                      : realOrders.filter(o => o.status === tab.id).length
 
-                      <AnimatePresence>
-                        {isExpanded && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.3 }}
-                            className='overflow-hidden'
-                          >
-                            <div className='border-t border-white/5 p-5 space-y-3'>
-                              {order.items.map((item, j) => (
-                                <div key={j} className='flex items-center gap-4 py-2'>
-                                  <div className='w-14 h-14 shrink-0 bg-[#0d0d0d] overflow-hidden'>
-                                    <img src={item.image} alt={item.name} className='w-full h-full object-cover opacity-70' />
-                                  </div>
-                                  <div className='flex-1 min-w-0'>
-                                    <p className='font-inter text-sm text-white truncate'>{item.name}</p>
-                                    <p className='text-[11px] text-gray-600 uppercase'>Size: {item.size} · Qty: {item.qty}</p>
-                                  </div>
-                                  <p className='font-oswald font-bold text-sm text-t1-red shrink-0'>{formatPrice(item.price, language)}</p>
-                                </div>
-                              ))}
-                              <div className='pt-3 border-t border-white/5 flex justify-between items-center'>
-                                <span className='text-gray-600 text-xs'>{t('profile.summaryTotal')}</span>
-                                <span className='font-oswald font-black text-white'>{formatPrice(order.total, language)}</span>
-                              </div>
-                              {order.status === 'DELIVERED' && (
-                                <button className='w-full mt-2 border border-white/10 text-gray-500 hover:border-t1-red hover:text-t1-red font-oswald font-bold text-[10px] tracking-widest uppercase py-3 transition-all duration-200'>
-                                  WRITE A REVIEW
-                                </button>
-                              )}
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => setOrderStatusFilter(tab.id)}
+                        className={`px-4 py-2 text-[11px] font-oswald font-black uppercase tracking-wider transition-all duration-200 border-b-2 flex items-center gap-2 whitespace-nowrap ${isActive
+                          ? 'border-t1-red text-white'
+                          : 'border-transparent text-gray-500 hover:text-gray-300'}`}
+                      >
+                        {tab.label[language as 'en' | 'vi'] || tab.label.en}
+                        <span className={`px-1.5 py-0.5 rounded text-[9px] font-oswald font-bold ${isActive ? 'bg-t1-red text-white' : 'bg-white/5 text-gray-500'}`}>
+                          {count}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+
+                <p className='font-oswald text-gray-500 text-sm tracking-widest uppercase mb-4'>
+                  {filteredOrders.length} {t('common.order')}
+                </p>
+
+                {filteredOrders.length === 0 ? (
+                  <div className='text-center py-16 border border-dashed border-white/5 bg-[#111]/30 rounded-2xl w-full'>
+                    <p className='font-oswald text-xs tracking-widest text-gray-600 uppercase'>
+                      {language === 'vi' ? 'KHÔNG CÓ ĐƠN HÀNG NÀO Ở TRẠNG THÁI NÀY' : 'NO ORDERS IN THIS STATUS'}
+                    </p>
+                  </div>
+                ) : (
+                  filteredOrders.map((order, i) => {
+                    const statusCfg = STATUS_CONFIG[order.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.pending
+                    const isExpanded = expandedOrders.includes(order.id)
+                    return (
+                      <motion.div
+                        key={order.id}
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.1 }}
+                        className={`bg-[#111] border transition-colors duration-300 overflow-hidden ${isExpanded ? 'border-t1-red/30' : 'border-white/5'}`}
+                      >
+                        <button
+                          onClick={() => {
+                            setExpandedOrders(prev =>
+                              prev.includes(order.id)
+                                ? prev.filter(id => id !== order.id)
+                                : [...prev, order.id]
+                            )
+                          }}
+                          className='w-full flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 text-left'
+                        >
+                          <div className='flex flex-col sm:flex-row sm:items-center gap-4'>
+                            <div>
+                              <p className='font-oswald font-bold text-white tracking-wider text-sm'>#{order.id}</p>
+                              <p className='text-[11px] text-gray-600 mt-0.5'>{order.date}</p>
                             </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </motion.div>
-                  )
-                })}
+                            <span className={`inline-flex items-center gap-1.5 text-[10px] font-oswald font-bold tracking-widest uppercase border px-3 py-1 ${statusCfg.color}`}>
+                              <statusCfg.icon size={10} />
+                              {statusCfg.label[language as 'en' | 'vi'] || statusCfg.label.en}
+                            </span>
+                          </div>
+                          <div className='flex items-center gap-4'>
+                            <div className='text-right'>
+                              <p className='font-oswald font-black text-t1-red'>{formatPrice(order.total, language)}</p>
+                              <p className='text-[10px] text-gray-600'>{order.items.length} items</p>
+                            </div>
+                            <ChevronRight
+                              size={16}
+                              className={`text-gray-600 transition-transform duration-300 ${isExpanded ? 'rotate-90' : ''}`}
+                            />
+                          </div>
+                        </button>
+
+                        <AnimatePresence>
+                          {isExpanded && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.3 }}
+                              className='overflow-hidden'
+                            >
+                              <div className='border-t border-white/5 p-5 space-y-3'>
+                                {order.items.map((item: any, j: number) => (
+                                  <div key={j} className='flex items-center gap-4 py-2'>
+                                    <div className='w-14 h-14 shrink-0 bg-[#0d0d0d] overflow-hidden'>
+                                      <img src={item.image} alt={item.name} className='w-full h-full object-cover opacity-70' />
+                                    </div>
+                                    <div className='flex-1 min-w-0'>
+                                      <p className='font-inter text-sm text-white truncate'>{item.name}</p>
+                                      <p className='text-[11px] text-gray-600 uppercase'>Size: {item.size} · Qty: {item.qty}</p>
+                                    </div>
+                                    <p className='font-oswald font-bold text-sm text-t1-red shrink-0'>{formatPrice(item.price, language)}</p>
+                                  </div>
+                                ))}
+                                <div className='pt-3 border-t border-white/5 flex justify-between items-center'>
+                                  <span className='text-gray-600 text-xs'>{t('profile.summaryTotal')}</span>
+                                  <span className='font-oswald font-black text-white'>{formatPrice(order.total, language)}</span>
+                                </div>
+                                {order.status === 'completed' && (
+                                  <button className='w-full mt-2 border border-white/10 text-gray-500 hover:border-t1-red hover:text-t1-red font-oswald font-bold text-[10px] tracking-widest uppercase py-3 transition-all duration-200'>
+                                    WRITE A REVIEW
+                                  </button>
+                                )}
+                                {order.status === 'pending' && (
+                                  <div className='flex gap-2 w-full mt-2'>
+                                    <button
+                                      disabled={cancellingId === order.rawId}
+                                      onClick={() => handleCancelOrder(order.rawId)}
+                                      className='flex-1 border border-red-500/20 text-red-500 hover:border-red-500 hover:bg-red-500/10 font-oswald font-bold text-[10px] tracking-widest uppercase py-3 transition-all duration-200 flex items-center justify-center gap-2'
+                                    >
+                                      {cancellingId === order.rawId ? (
+                                        <>
+                                          <Loader2 className='w-3 h-3 animate-spin' />
+                                          {language === 'vi' ? 'ĐANG HỦY...' : 'CANCELLING...'}
+                                        </>
+                                      ) : (
+                                        language === 'vi' ? 'HỦY ĐƠN HÀNG' : 'CANCEL ORDER'
+                                      )}
+                                    </button>
+                                    {order.paymentStatus !== 'paid' && (
+                                      <button
+                                        disabled={isPayingId === order.rawId}
+                                        onClick={() => handlePayNow(order.rawId, order.total)}
+                                        className='flex-1 bg-t1-red text-white font-oswald font-bold text-[10px] tracking-widest uppercase py-3 hover:bg-[#ff0033] shadow-[0_0_15px_rgba(226,1,45,0.2)] transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed'
+                                      >
+                                        {isPayingId === order.rawId ? (
+                                          <>
+                                            <Loader2 className='w-3 h-3 animate-spin' />
+                                            {language === 'vi' ? 'ĐANG XỬ LÝ...' : 'PROCESSING...'}
+                                          </>
+                                        ) : (
+                                          language === 'vi' ? 'THANH TOÁN NGAY' : 'PAY NOW'
+                                        )}
+                                      </button>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </motion.div>
+                    )
+                  })
+                )}
               </motion.div>
             )}
 
@@ -984,6 +1280,157 @@ export default function MyPage() {
             </div>
           )}
         </AnimatePresence>
+
+        {/* Avatar Position Adjustment Modal */}
+        <AnimatePresence>
+          {isAdjustingAvatar && tempAvatarUrl && (
+            <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => {
+                  setIsAdjustingAvatar(false)
+                  setAvatarFile(null)
+                  setTempAvatarUrl(null)
+                }}
+                className="absolute inset-0 bg-black/90 backdrop-blur-sm"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="relative w-full max-w-sm bg-[#0a0a0a] border border-white/10 rounded-3xl overflow-hidden shadow-2xl p-8 text-center space-y-6"
+              >
+                <div>
+                  <h4 className="font-oswald font-black italic text-xl uppercase tracking-tight text-white">
+                    Adjust Avatar Position
+                  </h4>
+                  <p className="text-gray-500 text-[10px] mt-1 font-oswald uppercase tracking-widest">
+                    Drag the slider to reposition your avatar
+                  </p>
+                </div>
+
+                {/* Avatar Preview */}
+                <div className="flex justify-center">
+                  <div className="w-36 h-36 rounded-full overflow-hidden border-4 border-t1-red shadow-[0_0_50px_rgba(226,1,45,0.3)] bg-[#0d0d0d]">
+                    <img
+                      src={tempAvatarUrl}
+                      alt="Preview"
+                      className="w-full h-full object-cover select-none pointer-events-none"
+                      style={{ objectPosition: `center ${avatarPosition}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Position Slider */}
+                <div className="space-y-2">
+                  <div className="flex justify-between text-[10px] text-gray-500 font-oswald uppercase tracking-widest">
+                    <span>Top</span>
+                    <span>Center</span>
+                    <span>Bottom</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={avatarPosition}
+                    onChange={(e) => setAvatarPosition(Number(e.target.value))}
+                    className="w-full h-1 bg-white/15 rounded-lg appearance-none cursor-pointer accent-t1-red focus:outline-none"
+                  />
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={handleSaveAvatarPosition}
+                    disabled={saveLoading}
+                    className="flex-1 flex items-center justify-center gap-2 bg-white text-black hover:bg-t1-red hover:text-white py-3.5 rounded-xl font-oswald font-black uppercase tracking-widest text-xs transition-all duration-300 disabled:opacity-50"
+                  >
+                    {saveLoading ? 'Saving...' : 'Apply Position'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsAdjustingAvatar(false)
+                      setAvatarFile(null)
+                      setTempAvatarUrl(null)
+                    }}
+                    className="px-5 py-3.5 bg-white/5 text-gray-400 hover:text-white rounded-xl font-oswald font-bold uppercase tracking-widest text-xs transition-all"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+        {/* Cancel Order Confirmation Modal */}
+        <AnimatePresence>
+          {cancelOrderModal !== null && (
+            <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setCancelOrderModal(null)}
+                className="absolute inset-0 bg-black/90 backdrop-blur-md"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                className="relative w-full max-w-sm bg-[#111] border border-red-500/20 p-8 shadow-2xl text-center"
+              >
+                {/* Icon */}
+                <div className="w-16 h-16 bg-red-500/10 border border-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <AlertTriangle className="text-red-500" size={28} />
+                </div>
+
+                {/* Title */}
+                <h3 className="font-oswald font-black text-xl uppercase tracking-tight mb-2 text-white">
+                  {language === 'vi' ? 'Hủy đơn hàng?' : 'Cancel Order?'}
+                </h3>
+
+                {/* Order ID badge */}
+                <div className="inline-block bg-white/5 border border-white/10 px-4 py-1 mb-4">
+                  <span className="font-oswald text-xs tracking-widest text-gray-400 uppercase">
+                    #{`T1-000${cancelOrderModal}`}
+                  </span>
+                </div>
+
+                {/* Description */}
+                <p className="text-gray-400 text-sm font-inter mb-8 leading-relaxed">
+                  {language === 'vi'
+                    ? 'Hành động này không thể hoàn tác. Đơn hàng sẽ bị hủy và không thể khôi phục.'
+                    : 'This action cannot be undone. The order will be permanently cancelled.'}
+                </p>
+
+                {/* Buttons */}
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setCancelOrderModal(null)}
+                    className="flex-1 py-4 border border-white/10 font-oswald font-bold text-xs tracking-widest uppercase text-gray-400 hover:text-white hover:border-white/30 transition-all duration-200"
+                  >
+                    {language === 'vi' ? 'Giữ lại' : 'Keep Order'}
+                  </button>
+                  <button
+                    onClick={handleConfirmCancelOrder}
+                    disabled={cancellingId === cancelOrderModal}
+                    className="flex-1 py-4 bg-red-600 text-white font-oswald font-black text-xs tracking-widest uppercase hover:bg-red-500 transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-60"
+                  >
+                    {cancellingId === cancelOrderModal ? (
+                      <><Loader2 size={12} className="animate-spin" /> {language === 'vi' ? 'Đang hủy...' : 'Cancelling...'}</>
+                    ) : (
+                      language === 'vi' ? 'Xác nhận hủy' : 'Yes, Cancel'
+                    )}
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
       </div>
     </Layout>
   )

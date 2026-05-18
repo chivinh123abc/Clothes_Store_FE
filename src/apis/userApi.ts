@@ -30,6 +30,10 @@ export const userApi = {
     const response = await axiosClient.get<AuthResponseDto>('/user/refresh_token')
     return response.data
   },
+  uploadAvatar: async (fileBase64: string): Promise<{ secure_url: string }> => {
+    const response = await axiosClient.post<{ secure_url: string }>('/user/upload', { file: fileBase64 })
+    return response.data
+  },
   // Admin functions
   getUsers: async (): Promise<UserResponseDto[]> => {
     const response = await axiosClient.get<UserResponseDto[]>('/admin/users')

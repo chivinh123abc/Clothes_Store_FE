@@ -2,7 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { X, Trash2, Plus, Minus } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import { useCart } from '~/contexts/CartContext'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useLanguage } from '~/contexts/LanguageContext'
 import { formatPrice } from '~/utils/format'
 
@@ -14,6 +14,7 @@ interface CartDrawerProps {
 function CartDrawer({ open, onClose }: CartDrawerProps) {
   const { items, totalItems, totalPrice, removeCartItem, incrementQuantity, decrementQuantity } = useCart()
   const { t, language } = useLanguage()
+  const navigate = useNavigate()
 
   return createPortal(
     <AnimatePresence>
@@ -120,7 +121,8 @@ function CartDrawer({ open, onClose }: CartDrawerProps) {
                   <button
                     className='w-full py-4 bg-t1-red text-white uppercase text-sm font-oswald font-bold tracking-[0.2em] shadow-[0_0_15px_rgba(226,1,45,0.3)] hover:shadow-[0_0_25px_rgba(226,1,45,0.7)] hover:bg-[#ff0033] transition-all duration-300 focus:outline-none'
                     onClick={() => {
-                      // Proceed to checkout logic
+                      onClose()
+                      navigate('/checkout')
                     }}
                   >
                     {t('cart.checkout')}

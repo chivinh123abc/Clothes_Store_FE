@@ -24,6 +24,8 @@ export type Product = {
   soldOut?: boolean;
   collections?: { collection_id: number, collection_name: string, collection_slug: string }[];
   collection_ids?: number[];
+  sizes?: string[];
+  colors?: string[];
 
   // Nested variants
   items?: ProductItem[];

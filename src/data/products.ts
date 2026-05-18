@@ -2,6 +2,14 @@ import type { Product } from '../types/product'
 import t1Jersey from '../assets/mock-images/t1_jersey.png'
 import t1Jacket from '../assets/mock-images/t1_jacket.png'
 
+const mapCollections = (slugs: string[]): { collection_id: number; collection_name: string; collection_slug: string }[] => {
+  return slugs.map((slug, idx) => ({
+    collection_id: idx + 1,
+    collection_name: slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+    collection_slug: slug
+  }))
+}
+
 export const generateMockProducts = (count: number): Product[] => {
   const categories = ['tshirt', 'hoodie', 'jacket', 'pants', 'accessories', 'hat', 'shoes', 'shirt', 'sweater', 'collection']
   const names = ['Faker', 'Zeus', 'Oner', 'Gumayusi', 'Keria', 'T1', 'LCK Official', 'Champion', 'Elite']
@@ -54,7 +62,7 @@ export const generateMockProducts = (count: number): Product[] => {
       product_description: 'Premium quality merchandise designed for elite performance. Featuring breathable fabrics and the iconic T1 logo, this piece is built for comfort and style.',
       sizes: sizeOptions.slice(0, Math.floor(Math.random() * 4) + 1),
       colors: colorOptions.slice(0, Math.floor(Math.random() * 3) + 1),
-      collections,
+      collections: mapCollections(collections),
       items: [
         {
           product_item_id: i * 10,
@@ -82,7 +90,7 @@ const staticProducts: Product[] = [
     created_at: '2026-04-12',
     soldOut: false,
     product_description: 'A must-have for any wardrobe. This heavyweight cotton hoodie offers a relaxed fit and clean T1 branding on the chest.',
-    collections: ['essential', 'essential-apparel'],
+    collections: mapCollections(['essential', 'essential-apparel']),
     items: [{
       product_item_id: 101,
       sku: 'SKU-101',
@@ -103,7 +111,7 @@ const staticProducts: Product[] = [
     created_at: '2026-04-10',
     soldOut: true,
     product_description: 'Crisp, clean, and perfectly oversized. This white shirt is designed with a modern silhouette and premium poplin fabric.',
-    collections: ['essential', 'essential-apparel'],
+    collections: mapCollections(['essential', 'essential-apparel']),
     items: [{
       product_item_id: 102,
       sku: 'SKU-102',
@@ -124,7 +132,7 @@ const staticProducts: Product[] = [
     created_at: '2026-04-08',
     soldOut: false,
     product_description: 'Functional meets fashion. Multiple pockets and a tapered fit make these cargo pants the ultimate streetwear essential.',
-    collections: ['valorant', 'valorant-apparel'],
+    collections: mapCollections(['valorant', 'valorant-apparel']),
     items: [{
       product_item_id: 103,
       sku: 'SKU-103',
@@ -184,7 +192,7 @@ const staticProducts: Product[] = [
     created_at: '2026-02-25',
     soldOut: false,
     product_description: 'A timeless classic. Distressed details and a regular fit, perfect for any casual outfit.',
-    collections: ['worlds-2024'],
+    collections: mapCollections(['worlds-2024']),
     items: [{
       product_item_id: 106,
       sku: 'SKU-106',
@@ -320,7 +328,7 @@ const staticProducts: Product[] = [
     created_at: '2026-04-12',
     soldOut: false,
     product_description: 'The exact jersey worn by Faker and the team during the 2024 Season. Lightweight and aerodynamic.',
-    collections: ['team-kit'],
+    collections: mapCollections(['team-kit']),
     items: [{
       product_item_id: 113,
       sku: 'SKU-113',
