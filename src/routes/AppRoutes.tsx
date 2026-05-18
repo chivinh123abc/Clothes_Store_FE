@@ -22,6 +22,7 @@ import AdminProductForm from '../pages/Admin/AdminProductForm'
 import AdminCategoryList from '../pages/Admin/AdminCategoryList'
 import AdminCollectionList from '../pages/Admin/AdminCollectionList'
 import AdminOrderList from '../pages/Admin/AdminOrderList'
+import AdminDiscountList from '../pages/Admin/AdminDiscountList'
 import VerifyAccount from '../pages/VerifyAccount/VerifyAccount'
 
 const Private = ({ children }: { children: React.ReactElement }) => {
@@ -73,6 +74,7 @@ export default function AppRoutes() {
       <Route path='/admin/collections' element={<AdminProtected><AdminCollectionList /></AdminProtected>} />
       <Route path='/admin/users' element={<AdminProtected><AdminUserList /></AdminProtected>} />
       <Route path='/admin/orders' element={<AdminProtected><AdminOrderList /></AdminProtected>} />
+      <Route path='/admin/discounts' element={<AdminProtected><AdminDiscountList /></AdminProtected>} />
     </Routes>
   )
 }

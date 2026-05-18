@@ -7,6 +7,7 @@ import collectionApi from '~/apis/collectionApi'
 import type { Collection } from '~/types/collection'
 import { useToast } from '~/contexts/ToastContext'
 import ConfirmModal from '~/components/ui/ConfirmModal'
+import { useCollections } from '~/contexts/CollectionContext'
 
 const AdminCollectionList = () => {
   const navigate = useNavigate()
@@ -17,6 +18,7 @@ const AdminCollectionList = () => {
   const [saving, setSaving] = useState(false)
   const { showToast } = useToast()
   const [collectionToDelete, setCollectionToDelete] = useState<number | null>(null)
+  const { refreshCollections } = useCollections()
 
   const fetchCollections = useCallback(async () => {
     try {
@@ -49,6 +51,7 @@ const AdminCollectionList = () => {
       }
       setShowModal(false)
       fetchCollections()
+      refreshCollections()
     } catch (error: any) {
       console.error('Failed to save collection', error)
       const errorMsg = error.response?.data?.message || error.message
@@ -60,20 +63,111 @@ const AdminCollectionList = () => {
 
   const handleDelete = async () => {
     if (!collectionToDelete) return
+    const hasSubCollections = collections.some(c => c.parent_collection_id === collectionToDelete)
+    if (hasSubCollections) {
+      showToast('Cannot delete a collection that has sub-collections.', 'error')
+      setCollectionToDelete(null)
+      return
+    }
     try {
       await collectionApi.delete(collectionToDelete)
       showToast('Collection deleted successfully', 'success')
       setCollectionToDelete(null)
       fetchCollections()
+      refreshCollections()
     } catch (error) {
       console.error('Failed to delete collection', error)
       showToast('Failed to delete collection. It might have sub-collections.', 'error')
     }
   }
 
-  const getParentName = (parentId?: number) => {
-    if (!parentId) return null
-    return collections.find(c => c.collection_id === parentId)?.collection_name
+  // Check if a collection is a descendant of a target parent (to prevent circular loops)
+  const isDescendantOf = (collectionId: number, targetParentId: number): boolean => {
+    const col = collections.find(c => c.collection_id === collectionId)
+    if (!col || !col.parent_collection_id) return false
+    if (col.parent_collection_id === targetParentId) return true
+    return isDescendantOf(col.parent_collection_id, targetParentId)
+  }
+
+  // Recursive tree traversal to build indented hierarchical labels
+  const getHierarchicalOptions = () => {
+    const roots = collections.filter(c => !c.parent_collection_id)
+    const result: { id: number; label: string }[] = []
+
+    const traverse = (parentId: number, depth: number) => {
+      const children = collections.filter(c => c.parent_collection_id === parentId)
+      children.sort((a, b) => a.collection_name.localeCompare(b.collection_name))
+
+      children.forEach(child => {
+        // Prevent loops or self-selection
+        if (currentCollection?.collection_id) {
+          if (child.collection_id === currentCollection.collection_id) return
+          if (isDescendantOf(child.collection_id, currentCollection.collection_id)) return
+        }
+
+        const indent = '\u00A0\u00A0\u00A0\u00A0'.repeat(depth) + '↳ '
+        result.push({
+          id: child.collection_id,
+          label: `${indent}${child.collection_name.toUpperCase()}`
+        })
+
+        traverse(child.collection_id, depth + 1)
+      })
+    }
+
+    roots.sort((a, b) => a.collection_name.localeCompare(b.collection_name))
+    roots.forEach(root => {
+      if (currentCollection?.collection_id) {
+        if (root.collection_id === currentCollection.collection_id) return
+        if (isDescendantOf(root.collection_id, currentCollection.collection_id)) return
+      }
+
+      result.push({
+        id: root.collection_id,
+        label: root.collection_name.toUpperCase()
+      })
+      traverse(root.collection_id, 1)
+    })
+
+    return result
+  }
+
+  // Recursive path builder to get full collection path from root to current parent
+  const getCollectionPath = (parentId?: number): string[] => {
+    if (!parentId) return []
+    const parent = collections.find(c => c.collection_id === parentId)
+    if (!parent) return []
+    return [...getCollectionPath(parent.parent_collection_id || undefined), parent.collection_name]
+  }
+
+  // Get collections ordered hierarchically for display in the table
+  const getHierarchicalCollections = () => {
+    const roots = collections.filter(c => !c.parent_collection_id)
+    const result: { collection: Collection; depth: number }[] = []
+
+    const traverse = (parentId: number, depth: number) => {
+      const children = collections.filter(c => c.parent_collection_id === parentId)
+      children.sort((a, b) => a.collection_name.localeCompare(b.collection_name))
+
+      children.forEach(child => {
+        result.push({
+          collection: child,
+          depth
+        })
+        traverse(child.collection_id, depth + 1)
+      })
+    }
+
+    roots.sort((a, b) => a.collection_name.localeCompare(b.collection_name))
+    roots.forEach(root => {
+      result.push({
+        collection: root,
+        depth: 0
+      })
+      traverse(root.collection_id, 1)
+    })
+
+    return result
   }
 
   if (loading) {
@@ -131,27 +225,38 @@ const AdminCollectionList = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {collections.map((col, i) => (
+              {getHierarchicalCollections().map(({ collection: col, depth }, i) => (
                 <motion.tr
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.05 }}
+                  transition={{ delay: i * 0.03 }}
                   key={col.collection_id}
                   className="group hover:bg-white/[0.01] transition-colors"
                 >
                   <td className="px-8 py-6">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-purple-500/10 rounded-lg">
-                        <Grid size={14} className="text-purple-500" />
-                      </div>
+                    <div className="flex items-center gap-3" style={{ paddingLeft: `${depth * 28}px` }}>
+                      {depth > 0 ? (
+                        <span className="text-gray-600 font-mono text-sm select-none mr-1">↳</span>
+                      ) : (
+                        <div className="p-2 bg-purple-500/10 rounded-lg">
+                          <Grid size={14} className="text-purple-500" />
+                        </div>
+                      )}
                       <div className="flex flex-col">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           {col.parent_collection_id && (
-                            <span className="text-[10px] text-gray-600 uppercase tracking-widest font-oswald flex items-center gap-1">
-                              {getParentName(col.parent_collection_id)} <ChevronRight size={10} />
+                            <span className="text-[10px] text-gray-500 uppercase tracking-[0.15em] font-oswald flex items-center gap-1 flex-wrap">
+                              {getCollectionPath(col.parent_collection_id).map((name, idx) => (
+                                <React.Fragment key={idx}>
+                                  <span>{name}</span>
+                                  <ChevronRight size={8} className="text-gray-700" />
+                                </React.Fragment>
+                              ))}
                             </span>
                           )}
-                          <span className="font-bold text-sm uppercase tracking-tight">{col.collection_name}</span>
+                          <span className={`font-bold uppercase tracking-tight ${depth === 0 ? 'text-sm text-white font-black' : depth === 1 ? 'text-xs text-gray-300 font-semibold' : 'text-[11px] text-gray-400 font-medium'}`}>
+                            {col.collection_name}
+                          </span>
                         </div>
                         <span className="text-[10px] text-gray-600 font-mono mt-0.5">{col.collection_slug}</span>
                       </div>
@@ -169,7 +274,14 @@ const AdminCollectionList = () => {
                         <Pencil size={14} />
                       </button>
                       <button
-                        onClick={() => setCollectionToDelete(col.collection_id)}
+                        onClick={() => {
+                          const hasSubCollections = collections.some(c => c.parent_collection_id === col.collection_id)
+                          if (hasSubCollections) {
+                            showToast('Cannot delete a collection that has sub-collections. Please delete or reassign sub-collections first.', 'error')
+                            return
+                          }
+                          setCollectionToDelete(col.collection_id)
+                        }}
                         className="p-2 text-gray-500 hover:text-t1-red hover:bg-t1-red/10 rounded-lg transition-all"
                       >
                         <Trash2 size={14} />
@@ -233,14 +345,11 @@ const AdminCollectionList = () => {
                     className="w-full bg-white/[0.05] border border-white/10 rounded-xl px-4 py-4 focus:border-t1-red focus:outline-none appearance-none text-white text-sm"
                   >
                     <option value="" className="bg-[#0a0a0a]">No Parent (Root Collection)</option>
-                    {collections
-                      .filter(c => c.collection_id !== currentCollection?.collection_id) // Prevent self-parenting
-                      .map(c => (
-                        <option key={c.collection_id} value={c.collection_id} className="bg-[#0a0a0a]">
-                          {c.collection_name.toUpperCase()}
-                        </option>
-                      ))
-                    }
+                    {getHierarchicalOptions().map(opt => (
+                      <option key={opt.id} value={opt.id} className="bg-[#0a0a0a]">
+                        {opt.label}
+                      </option>
+                    ))}
                   </select>
                 </div>
 

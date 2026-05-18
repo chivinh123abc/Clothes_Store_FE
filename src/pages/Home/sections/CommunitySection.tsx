@@ -1,10 +1,13 @@
 import { motion } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
 import noticeBanner from '~/assets/Background/notice_banner.png'
 import eventBanner from '~/assets/Background/event_banner.png'
 import { useLanguage } from '~/contexts/LanguageContext'
 
 const CommunitySection = () => {
   const { t } = useLanguage()
+  const navigate = useNavigate()
+
   return (
     <section className="py-20 bg-t1-dark px-4 md:px-10 lg:px-20">
       <div className="flex flex-col items-center mb-16">
@@ -18,6 +21,7 @@ const CommunitySection = () => {
         {/* Notice Card */}
         <motion.div
           whileHover={{ y: -10 }}
+          onClick={() => navigate('/community?tab=NOTICE')}
           className="relative group h-[300px] overflow-hidden cursor-pointer border border-white/5"
         >
           <div className="absolute inset-0 bg-black/40 group-hover:bg-t1-red/10 transition-colors duration-500 z-10" />
@@ -43,6 +47,7 @@ const CommunitySection = () => {
         {/* Event Card */}
         <motion.div
           whileHover={{ y: -10 }}
+          onClick={() => navigate('/community?tab=EVENT')}
           className="relative group h-[300px] overflow-hidden cursor-pointer border border-white/5"
         >
           <div className="absolute inset-0 bg-black/40 group-hover:bg-t1-red/10 transition-colors duration-500 z-10" />

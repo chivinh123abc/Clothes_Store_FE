@@ -15,6 +15,7 @@ import { useCart } from '~/contexts/CartContext'
 import { useFavorites } from '~/contexts/FavoritesContext'
 import { mockOrders, STATUS_CONFIG } from '~/data/myPageData'
 import { useLanguage } from '~/contexts/LanguageContext'
+import { formatPrice } from '~/utils/format'
 import { userApi } from '~/apis/userApi'
 import { useToast } from '~/contexts/ToastContext'
 
@@ -243,7 +244,7 @@ export default function MyPage() {
                 {[
                   { label: t('common.order'), value: mockOrders.length },
                   { label: t('common.wishlist'), value: totalFavorites },
-                  { label: t('common.spent'), value: `$${totalSpent.toFixed(0)}` }
+                  { label: t('common.spent'), value: formatPrice(totalSpent, language) }
                 ].map(stat => (
                   <div key={stat.label} className='text-center'>
                     <p className='font-oswald font-black text-2xl text-white'>{stat.value}</p>
@@ -552,7 +553,7 @@ export default function MyPage() {
                     </h2>
                     {[
                       { label: t('profile.summaryTotalOrders'), value: mockOrders.length },
-                      { label: t('profile.summaryTotalSpent'), value: `$${totalSpent.toFixed(2)}` },
+                      { label: t('profile.summaryTotalSpent'), value: formatPrice(totalSpent, language) },
                       { label: t('profile.summaryWishlist'), value: totalFavorites },
                       { label: t('profile.summaryCart'), value: totalItems }
                     ].map(stat => (
@@ -620,7 +621,7 @@ export default function MyPage() {
                             <p className='font-inter text-xs text-white truncate mb-1'>{product.product_name}</p>
                             <div className='flex items-center justify-between'>
                               <span className='font-oswald font-bold text-sm text-t1-red'>
-                                ${((product.items?.[0]?.sale_price || product.items?.[0]?.product_item_price) || 0).toFixed(2)}
+                                {formatPrice(((product.items?.[0]?.sale_price || product.items?.[0]?.product_item_price) || 0), language)}
                               </span>
                               <button
                                 onClick={() => toggleFavorite(product)}
@@ -687,7 +688,7 @@ export default function MyPage() {
                               </div>
                               <div className='flex items-center gap-3'>
                                 <span className='font-oswald font-bold text-t1-red'>
-                                  ${(item.price * item.quantity).toFixed(2)}
+                                  {formatPrice(item.price * item.quantity, language)}
                                 </span>
                                 <button onClick={() => removeCartItem(item.id, item.size)} className='text-gray-700 hover:text-t1-red transition-colors'>
                                   <Trash2 size={14} />
@@ -706,7 +707,7 @@ export default function MyPage() {
                         <div className='space-y-3 mb-4 pb-4 border-b border-white/5'>
                           <div className='flex justify-between text-sm'>
                             <span className='text-gray-500'>{t('common.subtotal')} ({totalItems} {t('common.item')})</span>
-                            <span className='text-white font-oswald font-bold'>${totalPrice.toFixed(2)}</span>
+                            <span className='text-white font-oswald font-bold'>{formatPrice(totalPrice, language)}</span>
                           </div>
                           <div className='flex justify-between text-sm'>
                             <span className='text-gray-500'>{t('common.shipping')}</span>
@@ -715,7 +716,7 @@ export default function MyPage() {
                         </div>
                         <div className='flex justify-between mb-6'>
                           <span className='font-oswald font-bold uppercase tracking-wider'>{t('profile.summaryTotal')}</span>
-                          <span className='font-oswald font-black text-xl text-t1-red'>${totalPrice.toFixed(2)}</span>
+                          <span className='font-oswald font-black text-xl text-t1-red'>{formatPrice(totalPrice, language)}</span>
                         </div>
                         <button className='w-full bg-t1-red text-white font-oswald font-black text-xs tracking-[0.2em] uppercase py-4 hover:bg-white hover:text-black transition-all duration-200 mb-2'>
                           {t('common.checkout')} →
@@ -780,7 +781,7 @@ export default function MyPage() {
                         </div>
                         <div className='flex items-center gap-4'>
                           <div className='text-right'>
-                            <p className='font-oswald font-black text-t1-red'>${order.total.toFixed(2)}</p>
+                            <p className='font-oswald font-black text-t1-red'>{formatPrice(order.total, language)}</p>
                             <p className='text-[10px] text-gray-600'>{order.items.length} items</p>
                           </div>
                           <ChevronRight
@@ -809,12 +810,12 @@ export default function MyPage() {
                                     <p className='font-inter text-sm text-white truncate'>{item.name}</p>
                                     <p className='text-[11px] text-gray-600 uppercase'>Size: {item.size} · Qty: {item.qty}</p>
                                   </div>
-                                  <p className='font-oswald font-bold text-sm text-t1-red shrink-0'>${item.price.toFixed(2)}</p>
+                                  <p className='font-oswald font-bold text-sm text-t1-red shrink-0'>{formatPrice(item.price, language)}</p>
                                 </div>
                               ))}
                               <div className='pt-3 border-t border-white/5 flex justify-between items-center'>
                                 <span className='text-gray-600 text-xs'>{t('profile.summaryTotal')}</span>
-                                <span className='font-oswald font-black text-white'>${order.total.toFixed(2)}</span>
+                                <span className='font-oswald font-black text-white'>{formatPrice(order.total, language)}</span>
                               </div>
                               {order.status === 'DELIVERED' && (
                                 <button className='w-full mt-2 border border-white/10 text-gray-500 hover:border-t1-red hover:text-t1-red font-oswald font-bold text-[10px] tracking-widest uppercase py-3 transition-all duration-200'>
