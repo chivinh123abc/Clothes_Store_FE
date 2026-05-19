@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChevronDown,
@@ -11,12 +11,14 @@ import {
   Edit3,
   Filter,
   MessageSquare,
-  Package
+  Package,
+  Loader2
 } from 'lucide-react'
 import Layout from '~/components/layout/Layout'
 import Footer from '~/components/layout/Footer'
 import BGImage from '~/assets/Background/first_bg_img.jpg'
 import { useLanguage } from '~/contexts/LanguageContext'
+import { reviewApi } from '~/apis/reviewApi'
 
 import {
   notices,
@@ -36,10 +38,30 @@ function Community() {
   const [searchQuery, setSearchQuery] = useState('')
   const [activeCategory, setActiveCategory] = useState('ALL')
   const [isWriting, setIsWriting] = useState(false)
+  const [realReviews, setRealReviews] = useState<any[]>([])
+  const [isLoadingReviews, setIsLoadingReviews] = useState(false)
 
   useEffect(() => {
     setActiveTab(tabFromUrl)
   }, [tabFromUrl])
+
+  useEffect(() => {
+    if (activeTab === 'REVIEW') {
+      const fetchReviews = async () => {
+        try {
+          setIsLoadingReviews(true)
+          const res: any = await reviewApi.getAll()
+          setRealReviews(res.data || res)
+        } catch (err) {
+          // eslint-disable-next-line no-console
+          console.error('Failed to load reviews:', err)
+        } finally {
+          setIsLoadingReviews(false)
+        }
+      }
+      fetchReviews()
+    }
+  }, [activeTab])
 
   const handleTabChange = (tabName: string) => {
     setActiveTab(tabName)
@@ -155,33 +177,56 @@ function Community() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
-              className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
+              className='w-full'
             >
-              {reviews.map((review, i) => (
-                <motion.div
-                  key={review.id}
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.07 }}
-                  className='bg-[#161616] p-8 border border-white/5 shadow-xl group hover:border-t1-red/40 transition-all duration-300 relative flex flex-col'
-                >
-                  <div className='absolute top-0 right-0 bg-t1-red text-white text-[9px] font-oswald px-3 py-1 tracking-widest'>
-                    {t('community.verified')}
-                  </div>
-                  <div className='flex gap-0.5 mb-5 text-t1-red text-lg'>
-                    {'★'.repeat(review.rating)}
-                    <span className='text-gray-700'>{'★'.repeat(5 - review.rating)}</span>
-                  </div>
-                  <p className='text-gray-400 font-inter text-sm italic leading-relaxed flex-grow mb-6'>
-                    "{review.text}"
-                  </p>
-                  <div className='border-t border-white/5 pt-5'>
-                    <p className='font-oswald font-bold tracking-wider text-white text-sm uppercase'>{review.user}</p>
-                    <p className='text-[10px] text-t1-red uppercase tracking-widest mt-1'>↳ {review.item}</p>
-                    <p className='text-[10px] text-gray-600 mt-1'>{review.date}</p>
-                  </div>
-                </motion.div>
-              ))}
+              {isLoadingReviews ? (
+                <div className='flex justify-center items-center py-20'>
+                  <Loader2 className='w-8 h-8 text-t1-red animate-spin' />
+                </div>
+              ) : (
+                <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
+                  {(realReviews.length > 0 ? realReviews : reviews).map((review: any, i: number) => {
+                    const rating = review.rating
+                    const text = review.text
+                    const user = review.display_name || review.username || review.user || 'Customer'
+                    const item = review.product || review.item || 'T1 Gear'
+                    const date = review.created_at ? new Date(review.created_at).toISOString().split('T')[0] : review.date
+
+                    return (
+                      <motion.div
+                        key={review.review_id || review.id || i}
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.07 }}
+                        className='bg-[#161616] p-8 border border-white/5 shadow-xl group hover:border-t1-red/40 transition-all duration-300 relative flex flex-col'
+                      >
+                        <div className='absolute top-0 right-0 bg-t1-red text-white text-[9px] font-oswald px-3 py-1 tracking-widest'>
+                          {t('community.verified')}
+                        </div>
+                        <div className='flex gap-0.5 mb-5 text-t1-red text-lg'>
+                          {'★'.repeat(rating)}
+                          <span className='text-gray-700'>{'★'.repeat(5 - rating)}</span>
+                        </div>
+                        <p className='text-gray-400 font-inter text-sm italic leading-relaxed flex-grow mb-6'>
+                          "{text}"
+                        </p>
+                        {review.image_url && (
+                          <div className='w-full aspect-[4/3] rounded-lg overflow-hidden border border-white/5 bg-black/40 mb-6 group-hover:border-white/10 transition-colors shrink-0'>
+                            <img src={review.image_url} alt="Review attachment" className='w-full h-full object-cover group-hover:scale-105 transition-transform duration-700' />
+                          </div>
+                        )}
+                        <div className='border-t border-white/5 pt-5'>
+                          <p className='font-oswald font-bold tracking-wider text-white text-sm uppercase'>{user}</p>
+                          <p className='text-[10px] text-t1-red uppercase tracking-widest mt-1'>
+                            ↳ <Link to={`/product/${review.product_id}`} className="hover:underline hover:text-white transition-colors">{item}</Link>
+                          </p>
+                          <p className='text-[10px] text-gray-600 mt-1'>{date}</p>
+                        </div>
+                      </motion.div>
+                    )
+                  })}
+                </div>
+              )}
             </motion.div>
           )}
 

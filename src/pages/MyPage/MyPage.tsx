@@ -6,7 +6,7 @@ import {
   User, Heart, ShoppingBag, Package, LogOut,
   ChevronRight, Trash2, Plus, Minus, X,
   MapPin, Mail, Phone, Edit3, Shield,
-  Star, CheckCircle, Lock, Eye, EyeOff, Loader2, Check, AlertTriangle
+  Star, CheckCircle, Lock, Eye, EyeOff, Loader2, Check, AlertTriangle, Camera
 } from 'lucide-react'
 import Layout from '~/components/layout/Layout'
 import Footer from '~/components/layout/Footer'
@@ -20,6 +20,7 @@ import { formatPrice } from '~/utils/format'
 import { userApi } from '~/apis/userApi'
 import { useToast } from '~/contexts/ToastContext'
 import { orderApi } from '~/apis/orderApi'
+import { reviewApi } from '~/apis/reviewApi'
 
 type Tab = 'profile' | 'favorites' | 'cart' | 'orders'
 
@@ -41,6 +42,18 @@ export default function MyPage() {
     : realOrders.filter(order => order.status === orderStatusFilter)
   const [cancelOrderModal, setCancelOrderModal] = useState<number | null>(null)
   const [isPayingId, setIsPayingId] = useState<number | null>(null)
+
+  // Review states
+  const [reviewOrder, setReviewOrder] = useState<any | null>(null)
+  const [selectedReviewProduct, setSelectedReviewProduct] = useState<any | null>(null)
+  const [reviewRating, setReviewRating] = useState<number>(5)
+  const [reviewHoverRating, setReviewHoverRating] = useState<number>(0)
+  const [reviewText, setReviewText] = useState<string>('')
+  const [isSubmittingReview, setIsSubmittingReview] = useState<boolean>(false)
+  const [reviewedProductIds, setReviewedProductIds] = useState<number[]>([])
+  const [reviewImageFile, setReviewImageFile] = useState<File | null>(null)
+  const [reviewImageUrlPreview, setReviewImageUrlPreview] = useState<string | null>(null)
+  const [isUploadingImage, setIsUploadingImage] = useState<boolean>(false)
 
   // Security modals state
   const [changePwOpen, setChangePwOpen] = useState(false)
@@ -103,6 +116,7 @@ export default function MyPage() {
             paymentMethod: order.payment_method,
             paymentStatus: order.payment_status,
             items: (order.items || []).map((item: any) => ({
+              productId: Number(item.product_id),
               name: item.product_name || item.name || 'T1 Gear',
               size: item.size || 'ONE SIZE',
               qty: Number(item.quantity),
@@ -122,6 +136,57 @@ export default function MyPage() {
 
   const handleCancelOrder = async (orderId: number) => {
     setCancelOrderModal(orderId)
+  }
+
+  const handleOpenReviewModal = (order: any) => {
+    setReviewOrder(order)
+    setReviewRating(5)
+    setReviewText('')
+    if (order.items && order.items.length === 1) {
+      setSelectedReviewProduct(order.items[0])
+    } else {
+      setSelectedReviewProduct(null)
+    }
+  }
+
+  const handleCloseReviewModal = () => {
+    setReviewOrder(null)
+    setSelectedReviewProduct(null)
+  }
+
+  const handleSubmitReview = async () => {
+    if (!selectedReviewProduct || !reviewText.trim() || !reviewOrder) return
+    try {
+      setIsSubmittingReview(true)
+      await reviewApi.create({
+        product_id: selectedReviewProduct.productId,
+        rating: reviewRating,
+        text: reviewText
+      })
+      showToast(
+        language === 'vi' ? 'Gửi đánh giá thành công! Cảm ơn bạn.' : 'Review submitted successfully! Thank you.',
+        'success'
+      )
+      setReviewedProductIds(prev => [...prev, selectedReviewProduct.productId])
+
+      const remainingItems = reviewOrder.items.filter((item: any) =>
+        item.productId !== selectedReviewProduct.productId && !reviewedProductIds.includes(item.productId)
+      )
+      if (remainingItems.length === 0) {
+        handleCloseReviewModal()
+      } else {
+        setSelectedReviewProduct(null)
+        setReviewText('')
+        setReviewRating(5)
+      }
+    } catch (err: any) {
+      showToast(
+        err.response?.data?.message || (language === 'vi' ? 'Không thể gửi đánh giá!' : 'Failed to submit review!'),
+        'error'
+      )
+    } finally {
+      setIsSubmittingReview(false)
+    }
   }
 
   const handlePayNow = async (orderId: number, total: number) => {
@@ -170,6 +235,7 @@ export default function MyPage() {
             paymentMethod: order.payment_method,
             paymentStatus: order.payment_status,
             items: (order.items || []).map((item: any) => ({
+              productId: Number(item.product_id),
               name: item.product_name || item.name || 'T1 Gear',
               size: item.size || 'ONE SIZE',
               qty: Number(item.quantity),
@@ -1068,7 +1134,7 @@ export default function MyPage() {
                                       <img src={item.image} alt={item.name} className='w-full h-full object-cover opacity-70' />
                                     </div>
                                     <div className='flex-1 min-w-0'>
-                                      <p className='font-inter text-sm text-white truncate'>{item.name}</p>
+                                      <Link to={`/product/${item.productId}`} className='font-inter text-sm text-white truncate hover:text-t1-red transition-colors block'>{item.name}</Link>
                                       <p className='text-[11px] text-gray-600 uppercase'>Size: {item.size} · Qty: {item.qty}</p>
                                     </div>
                                     <p className='font-oswald font-bold text-sm text-t1-red shrink-0'>{formatPrice(item.price, language)}</p>
@@ -1078,9 +1144,12 @@ export default function MyPage() {
                                   <span className='text-gray-600 text-xs'>{t('profile.summaryTotal')}</span>
                                   <span className='font-oswald font-black text-white'>{formatPrice(order.total, language)}</span>
                                 </div>
-                                {order.status === 'completed' && (
-                                  <button className='w-full mt-2 border border-white/10 text-gray-500 hover:border-t1-red hover:text-t1-red font-oswald font-bold text-[10px] tracking-widest uppercase py-3 transition-all duration-200'>
-                                    WRITE A REVIEW
+                                {order.status === 'completed' && order.items && order.items.length > 0 && (
+                                  <button
+                                    onClick={() => handleOpenReviewModal(order)}
+                                    className='w-full mt-2 border border-white/10 text-gray-500 hover:border-t1-red hover:text-t1-red font-oswald font-bold text-[10px] tracking-widest uppercase py-3 transition-all duration-200'
+                                  >
+                                    {language === 'vi' ? 'VIẾT ĐÁNH GIÁ' : 'WRITE A REVIEW'}
                                   </button>
                                 )}
                                 {order.status === 'pending' && (
@@ -1426,6 +1495,154 @@ export default function MyPage() {
                     )}
                   </button>
                 </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Write a Review Modal */}
+        <AnimatePresence>
+          {reviewOrder && (
+            <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => handleCloseReviewModal()}
+                className="absolute inset-0 bg-black/90 backdrop-blur-md"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                className="relative w-full max-w-lg bg-[#111] border border-white/5 p-8 shadow-2xl overflow-hidden rounded-2xl"
+              >
+                {/* Header */}
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="font-oswald font-black text-xl uppercase tracking-tight text-white">
+                    {language === 'vi' ? 'ĐÁNH GIÁ SẢN PHẨM' : 'WRITE A REVIEW'}
+                  </h3>
+                  <button onClick={() => handleCloseReviewModal()} className="text-gray-500 hover:text-white transition-colors">
+                    <X size={20} />
+                  </button>
+                </div>
+
+                {/* Step 1: Select which product to review if there are multiple */}
+                {reviewOrder.items && reviewOrder.items.length > 1 && !selectedReviewProduct ? (
+                  <div className="space-y-4">
+                    <p className="text-xs text-gray-500 font-inter uppercase tracking-wider mb-2">
+                      {language === 'vi' ? 'Chọn sản phẩm bạn muốn đánh giá:' : 'Select a product to review:'}
+                    </p>
+                    <div className="max-h-[300px] overflow-y-auto pr-1 space-y-2 scrollbar-thin scrollbar-thumb-t1-red">
+                      {reviewOrder.items.map((item: any, idx: number) => {
+                        const hasReviewed = reviewedProductIds.includes(item.productId)
+                        return (
+                          <button
+                            key={idx}
+                            disabled={hasReviewed}
+                            onClick={() => setSelectedReviewProduct(item)}
+                            className={`w-full flex items-center gap-4 p-3 bg-white/[0.02] border transition-all text-left group ${hasReviewed ? 'opacity-50 border-white/5 cursor-not-allowed' : 'border-white/5 hover:border-t1-red/30 hover:bg-white/[0.04]'}`}
+                          >
+                            <img src={item.image} alt={item.name} className="w-12 h-12 object-cover shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="font-inter text-sm text-white truncate group-hover:text-t1-red transition-colors">{item.name}</p>
+                              <p className="text-[10px] text-gray-600 mt-1 uppercase">Size: {item.size}</p>
+                            </div>
+                            {hasReviewed ? (
+                              <span className="text-[9px] font-oswald text-emerald-500 font-bold uppercase tracking-wider border border-emerald-500/20 px-2 py-0.5 shrink-0 bg-emerald-500/5">
+                                {language === 'vi' ? 'ĐÃ ĐÁNH GIÁ' : 'REVIEWED'}
+                              </span>
+                            ) : (
+                              <ChevronRight size={16} className="text-gray-600 group-hover:text-white transition-colors shrink-0" />
+                            )}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  // Step 2: Show Review Form
+                  <div>
+                    {selectedReviewProduct && (
+                      <div className="flex items-center gap-4 p-3 bg-white/[0.02] border border-white/5 rounded-xl mb-6">
+                        <img src={selectedReviewProduct.image} alt={selectedReviewProduct.name} className="w-12 h-12 object-cover shrink-0 rounded-lg" />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-inter text-sm text-white truncate font-medium">{selectedReviewProduct.name}</p>
+                          <p className="text-[10px] text-gray-600 mt-0.5 uppercase">Size: {selectedReviewProduct.size}</p>
+                        </div>
+                        {reviewOrder.items.length > 1 && (
+                          <button
+                            onClick={() => setSelectedReviewProduct(null)}
+                            className="text-[9px] font-oswald font-bold text-t1-red uppercase tracking-wider border border-t1-red/20 px-2 py-1 bg-t1-red/5 hover:bg-t1-red hover:text-white transition-all rounded"
+                          >
+                            {language === 'vi' ? 'Đổi SP' : 'Change'}
+                          </button>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Rating selector */}
+                    <div className="mb-6 text-center">
+                      <p className="text-xs text-gray-500 font-inter uppercase tracking-wider mb-2">
+                        {language === 'vi' ? 'Đánh giá của bạn:' : 'Your Rating:'}
+                      </p>
+                      <div className="flex justify-center gap-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => setReviewRating(star)}
+                            onMouseEnter={() => setReviewHoverRating(star)}
+                            onMouseLeave={() => setReviewHoverRating(0)}
+                            className="text-gray-600 hover:scale-110 active:scale-95 transition-all focus:outline-none"
+                          >
+                            <Star
+                              size={32}
+                              className={`transition-colors duration-200 fill-current ${(reviewHoverRating || reviewRating) >= star ? 'text-t1-red' : 'text-transparent border-gray-600'
+                                }`}
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Textarea */}
+                    <div className="mb-6">
+                      <label className="block text-xs text-gray-500 font-inter uppercase tracking-wider mb-2">
+                        {language === 'vi' ? 'Nhận xét chi tiết:' : 'Detailed Review:'}
+                      </label>
+                      <textarea
+                        rows={4}
+                        value={reviewText}
+                        onChange={(e) => setReviewText(e.target.value)}
+                        placeholder={language === 'vi' ? 'Hãy chia sẻ cảm nhận của bạn về sản phẩm này...' : 'Share your thoughts about this product...'}
+                        className="w-full bg-[#151515] border border-white/5 rounded-xl p-4 text-white text-sm focus:outline-none focus:border-t1-red/50 transition-all font-inter placeholder:text-gray-600"
+                      />
+                    </div>
+
+                    {/* Buttons */}
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => handleCloseReviewModal()}
+                        className="flex-1 py-3.5 border border-white/10 font-oswald font-bold text-xs tracking-widest uppercase text-gray-400 hover:text-white hover:border-white/30 transition-all duration-200"
+                      >
+                        {language === 'vi' ? 'HỦY' : 'CANCEL'}
+                      </button>
+                      <button
+                        onClick={handleSubmitReview}
+                        disabled={isSubmittingReview || !reviewText.trim()}
+                        className="flex-1 py-3.5 bg-t1-red text-white font-oswald font-black text-xs tracking-widest uppercase hover:bg-red-700 transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isSubmittingReview ? (
+                          <><Loader2 size={12} className="animate-spin" /> {language === 'vi' ? 'ĐANG GỬI...' : 'SUBMITTING...'}</>
+                        ) : (
+                          language === 'vi' ? 'GỬI ĐÁNH GIÁ' : 'SUBMIT REVIEW'
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </motion.div>
             </div>
           )}

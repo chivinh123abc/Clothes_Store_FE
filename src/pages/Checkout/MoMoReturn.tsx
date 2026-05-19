@@ -1,16 +1,14 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { CheckCircle, XCircle, Loader2, ArrowRight } from 'lucide-react'
 import Layout from '~/components/layout/Layout'
 import Footer from '~/components/layout/Footer'
 import { orderApi } from '~/apis/orderApi'
-import { useLanguage } from '~/contexts/LanguageContext'
 
 export default function MoMoReturn() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
-  const { language } = useLanguage()
 
   const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing')
   const [errorMessage, setErrorMessage] = useState('')

@@ -185,35 +185,39 @@ const AdminOrderList: React.FC = () => {
 
         <div className="flex flex-col md:flex-row gap-4">
           {/* Delivery Status */}
-          <div className="flex-1 flex bg-white/[0.03] border border-white/5 rounded-xl p-1 overflow-x-auto">
-            {['all', 'pending', 'shipping', 'completed', 'cancelled'].map((status) => (
-              <button
-                key={status}
-                onClick={() => setFilterStatus(status)}
-                className={`flex-1 py-2 px-4 rounded-lg font-oswald text-[10px] uppercase tracking-[0.2em] transition-all whitespace-nowrap ${filterStatus === status
-                  ? 'bg-t1-red text-white shadow-lg shadow-t1-red/20'
-                  : 'text-gray-500 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                {status}
-              </button>
-            ))}
+          <div className="flex-1 overflow-x-auto scrollbar-none bg-white/[0.03] border border-white/5 rounded-xl p-1">
+            <div className="grid grid-cols-6 min-w-[600px] w-full gap-1">
+              {['all', 'pending', 'paid', 'shipping', 'completed', 'cancelled'].map((status) => (
+                <button
+                  key={status}
+                  onClick={() => setFilterStatus(status)}
+                  className={`w-full py-2 px-1 rounded-lg font-oswald text-[10px] uppercase tracking-[0.2em] transition-all whitespace-nowrap text-center ${filterStatus === status
+                    ? 'bg-t1-red text-white shadow-lg shadow-t1-red/20'
+                    : 'text-gray-500 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  {status}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Payment Status */}
-          <div className="md:w-64 flex bg-white/[0.03] border border-white/5 rounded-xl p-1">
-            {['all', 'paid', 'unpaid'].map((pStatus) => (
-              <button
-                key={pStatus}
-                onClick={() => setFilterPayment(pStatus)}
-                className={`flex-1 py-2 px-4 rounded-lg font-oswald text-[10px] uppercase tracking-[0.2em] transition-all whitespace-nowrap ${filterPayment === pStatus
-                  ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
-                  : 'text-gray-500 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                {pStatus}
-              </button>
-            ))}
+          <div className="md:w-64 bg-white/[0.03] border border-white/5 rounded-xl p-1">
+            <div className="grid grid-cols-3 w-full gap-1">
+              {['all', 'paid', 'unpaid'].map((pStatus) => (
+                <button
+                  key={pStatus}
+                  onClick={() => setFilterPayment(pStatus)}
+                  className={`w-full py-2 px-1 rounded-lg font-oswald text-[10px] uppercase tracking-[0.2em] transition-all whitespace-nowrap text-center ${filterPayment === pStatus
+                    ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
+                    : 'text-gray-500 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  {pStatus}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -313,11 +317,11 @@ const AdminOrderList: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="relative inline-block group/select">
+                      <div className="relative w-[135px] group/select">
                         <select
                           value={order.status.toLowerCase()}
                           onChange={(e) => handleUpdateStatus(order.order_id, e.target.value)}
-                          className={`appearance-none pl-3 pr-8 py-1.5 rounded-full text-[10px] font-oswald font-bold uppercase tracking-wider border border-white/10 outline-none cursor-pointer transition-all hover:border-white/30 focus:border-t1-red/50 ${getStatusColor(order.status)}`}
+                          className={`w-full appearance-none pl-4 pr-8 py-1.5 rounded-full text-[10px] font-oswald font-bold uppercase tracking-wider border border-white/10 outline-none cursor-pointer transition-all hover:border-white/30 focus:border-t1-red/50 ${getStatusColor(order.status)}`}
                         >
                           <option value="pending" className="bg-[#111] text-amber-400">PENDING</option>
                           <option

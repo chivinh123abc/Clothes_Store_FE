@@ -1,5 +1,6 @@
 /* eslint-disable indent */
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
+import type { ChangeEvent } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -12,8 +13,15 @@ import {
   ArrowLeft,
   ShieldCheck,
   Truck,
-  RotateCcw
+  RotateCcw,
+  Camera,
+  X,
+  Loader2,
+  Edit3,
+  Trash2
 } from 'lucide-react'
+import { useAuth } from '~/hooks/useAuth'
+import { reviewApi } from '~/apis/reviewApi'
 import { useCart } from '~/contexts/CartContext'
 import { combinedProducts } from '~/data/products'
 import { ProductCard } from '~/components/Product/ProductCard'
@@ -27,6 +35,244 @@ import productApi from '~/apis/productApi'
 function ProductDetailContent({ product }: { product: Product }) {
   const { addCartItem } = useCart()
   const { t, language } = useLanguage()
+  const { user } = useAuth()
+
+  const [productReviews, setProductReviews] = useState<any[]>([])
+  const [isLoadingReviews, setIsLoadingReviews] = useState(false)
+
+  // Edit Review Modal States
+  const [editingReview, setEditingReview] = useState<any | null>(null)
+  const [editRating, setEditRating] = useState<number>(5)
+  const [editHoverRating, setEditHoverRating] = useState<number>(0)
+  const [editText, setEditText] = useState<string>('')
+  const [, setEditImageFile] = useState<File | null>(null)
+  const [editImageUrlPreview, setEditImageUrlPreview] = useState<string | null>(null)
+  const [isSubmittingEdit, setIsSubmittingEdit] = useState<boolean>(false)
+  const [isUploadingEditImage, setIsUploadingEditImage] = useState<boolean>(false)
+
+  // Write Review Modal States
+  const [isOpenWriteModal, setIsOpenWriteModal] = useState<boolean>(false)
+  const [writeRating, setWriteRating] = useState<number>(5)
+  const [writeHoverRating, setWriteHoverRating] = useState<number>(0)
+  const [writeText, setWriteText] = useState<string>('')
+  const [, setWriteImageFile] = useState<File | null>(null)
+  const [writeImageUrlPreview, setWriteImageUrlPreview] = useState<string | null>(null)
+  const [isSubmittingWrite, setIsSubmittingWrite] = useState<boolean>(false)
+  const [isUploadingWriteImage, setIsUploadingWriteImage] = useState<boolean>(false)
+
+  // Size Guide Modal States
+  const [isOpenSizeGuide, setIsOpenSizeGuide] = useState<boolean>(false)
+  const [sgHeight, setSgHeight] = useState<string>('')
+  const [sgWeight, setSgWeight] = useState<string>('')
+  const [sgRecommendedSize, setSgRecommendedSize] = useState<string | null>(null)
+
+  const handleOpenSizeGuide = () => {
+    setIsOpenSizeGuide(true)
+    setSgHeight('')
+    setSgWeight('')
+    setSgRecommendedSize(null)
+  }
+
+  const handleCloseSizeGuide = () => {
+    setIsOpenSizeGuide(false)
+  }
+
+  const handleCalculateSize = () => {
+    const h = parseInt(sgHeight)
+    const w = parseInt(sgWeight)
+    if (isNaN(h) || isNaN(w) || h <= 0 || w <= 0) {
+      setSgRecommendedSize(null)
+      return
+    }
+    let sizeByHeight = 'M'
+    if (h < 160) sizeByHeight = 'S'
+    else if (h < 168) sizeByHeight = 'M'
+    else if (h < 175) sizeByHeight = 'L'
+    else if (h < 182) sizeByHeight = 'XL'
+    else if (h < 190) sizeByHeight = 'XXL'
+    else sizeByHeight = 'XXXL'
+
+    let sizeByWeight = 'M'
+    if (w < 50) sizeByWeight = 'S'
+    else if (w < 60) sizeByWeight = 'M'
+    else if (w < 70) sizeByWeight = 'L'
+    else if (w < 80) sizeByWeight = 'XL'
+    else if (w < 90) sizeByWeight = 'XXL'
+    else sizeByWeight = 'XXXL'
+
+    const sizes = ['S', 'M', 'L', 'XL', 'XXL', 'XXXL']
+    const idxH = sizes.indexOf(sizeByHeight)
+    const idxW = sizes.indexOf(sizeByWeight)
+    const finalSize = sizes[Math.max(idxH, idxW)] || 'M'
+
+    setSgRecommendedSize(finalSize)
+  }
+
+  const handleOpenWriteModal = () => {
+    setIsOpenWriteModal(true)
+    setWriteRating(5)
+    setWriteText('')
+    setWriteImageUrlPreview(null)
+    setWriteImageFile(null)
+  }
+
+  const handleCloseWriteModal = () => {
+    setIsOpenWriteModal(false)
+    setWriteImageUrlPreview(null)
+    setWriteImageFile(null)
+  }
+
+  const handleWriteImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setWriteImageFile(file)
+
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setWriteImageUrlPreview(reader.result as string)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleRemoveWriteImage = () => {
+    setWriteImageFile(null)
+    setWriteImageUrlPreview(null)
+  }
+
+  const handleSubmitWrite = async () => {
+    if (!writeText.trim()) return
+    try {
+      setIsSubmittingWrite(true)
+      let image_url = ''
+
+      if (writeImageUrlPreview) {
+        setIsUploadingWriteImage(true)
+        try {
+          const res = await reviewApi.uploadImage({ file: writeImageUrlPreview })
+          image_url = res.data.secure_url
+        } catch (uploadErr) {
+          console.error(uploadErr)
+          setIsUploadingWriteImage(false)
+          return
+        } finally {
+          setIsUploadingWriteImage(false)
+        }
+      }
+
+      await reviewApi.create({
+        product_id: product.product_id,
+        rating: writeRating,
+        text: writeText,
+        image_url: image_url || undefined
+      })
+
+      handleCloseWriteModal()
+      fetchProductReviews()
+    } catch (err) {
+      console.error('Failed to create review:', err)
+    } finally {
+      setIsSubmittingWrite(false)
+    }
+  }
+
+  const fetchProductReviews = useCallback(async () => {
+    try {
+      setIsLoadingReviews(true)
+      const res = await reviewApi.getByProductId(product.product_id)
+      setProductReviews(res.data || res)
+    } catch (err) {
+      console.error('Failed to load reviews:', err)
+    } finally {
+      setIsLoadingReviews(false)
+    }
+  }, [product.product_id])
+
+  useEffect(() => {
+    fetchProductReviews()
+  }, [fetchProductReviews])
+
+  const handleOpenEditModal = (review: any) => {
+    setEditingReview(review)
+    setEditRating(review.rating)
+    setEditText(review.text)
+    setEditImageUrlPreview(review.image_url || null)
+    setEditImageFile(null)
+  }
+
+  const handleCloseEditModal = () => {
+    setEditingReview(null)
+    setEditImageUrlPreview(null)
+    setEditImageFile(null)
+  }
+
+  const handleEditImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setEditImageFile(file)
+
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setEditImageUrlPreview(reader.result as string)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleRemoveEditImage = () => {
+    setEditImageFile(null)
+    setEditImageUrlPreview(null)
+  }
+
+  const handleDeleteReview = async (reviewId: number) => {
+    const confirmMessage = language === 'vi'
+      ? 'Bạn có chắc chắn muốn xóa đánh giá này không?'
+      : 'Are you sure you want to delete this review?'
+    if (!window.confirm(confirmMessage)) return
+
+    try {
+      await reviewApi.delete(reviewId)
+      fetchProductReviews()
+    } catch (err) {
+      console.error('Failed to delete review:', err)
+    }
+  }
+
+  const handleSubmitEdit = async () => {
+    if (!editingReview || !editText.trim()) return
+    try {
+      setIsSubmittingEdit(true)
+      let image_url = editImageUrlPreview
+
+      // If a new image was chosen (Base64 data in editImageUrlPreview)
+      if (editImageUrlPreview && editImageUrlPreview.startsWith('data:image')) {
+        setIsUploadingEditImage(true)
+        try {
+          const res = await reviewApi.uploadImage({ file: editImageUrlPreview })
+          image_url = res.data.secure_url
+        } catch (uploadErr) {
+          console.error(uploadErr)
+          setIsUploadingEditImage(false)
+          return
+        } finally {
+          setIsUploadingEditImage(false)
+        }
+      }
+
+      await reviewApi.update(editingReview.review_id, {
+        rating: editRating,
+        text: editText,
+        image_url: image_url || undefined
+      })
+
+      handleCloseEditModal()
+      fetchProductReviews()
+    } catch (err) {
+      console.error('Failed to update review:', err)
+    } finally {
+      setIsSubmittingEdit(false)
+    }
+  }
 
   const [userSelectedSize, setUserSelectedSize] = useState<string | null>(null)
   const [quantity, setQuantity] = useState(1)
@@ -189,7 +435,7 @@ function ProductDetailContent({ product }: { product: Product }) {
                 <div className="mb-8">
                   <div className="flex justify-between items-center mb-4">
                     <span className="text-xs font-oswald font-bold tracking-[0.2em] uppercase text-gray-400">{t('productDetail.selectSize')}</span>
-                    <button className="text-[10px] font-inter text-t1-red hover:underline uppercase tracking-widest">{t('productDetail.sizeGuide')}</button>
+                    <button onClick={handleOpenSizeGuide} className="text-[10px] font-inter text-t1-red hover:underline uppercase tracking-widest">{t('productDetail.sizeGuide')}</button>
                   </div>
                   <div className="flex flex-wrap gap-3">
                     {availableSizes.map((size: string) => {
@@ -202,15 +448,13 @@ function ProductDetailContent({ product }: { product: Product }) {
                             setQuantity(1)
                           }}
                           disabled={isProductSoldOut || soldOutSize}
-                          className={`min-w-[54px] h-[54px] border flex items-center justify-center font-oswald font-bold text-sm transition-all duration-300 ${
-                            activeSize === size
-                              ? 'bg-white border-white text-t1-dark shadow-[0_0_20px_rgba(255,255,255,0.3)]'
-                              : 'bg-transparent border-t1-gray/40 text-gray-400 hover:border-white hover:text-white'
-                          } ${
-                            isProductSoldOut || soldOutSize
+                          className={`min-w-[54px] h-[54px] border flex items-center justify-center font-oswald font-bold text-sm transition-all duration-300 ${activeSize === size
+                            ? 'bg-white border-white text-t1-dark shadow-[0_0_20px_rgba(255,255,255,0.3)]'
+                            : 'bg-transparent border-t1-gray/40 text-gray-400 hover:border-white hover:text-white'
+                            } ${isProductSoldOut || soldOutSize
                               ? 'opacity-30 cursor-not-allowed line-through border-dashed border-gray-600'
                               : ''
-                          }`}
+                            }`}
                         >
                           {size}
                         </button>
@@ -317,7 +561,7 @@ function ProductDetailContent({ product }: { product: Product }) {
         {/* Details Tabs */}
         <div className="mt-24">
           <div className="flex border-b border-t1-gray/20 mb-10 overflow-x-auto no-scrollbar">
-            {['description', 'specs', 'shipping'].map((tab) => (
+            {['description', 'specs', 'shipping', 'reviews'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -326,7 +570,7 @@ function ProductDetailContent({ product }: { product: Product }) {
                   : 'border-transparent text-gray-500 hover:text-white'
                   }`}
               >
-                {t(`productDetail.${tab}`)}
+                {tab === 'reviews' ? (language === 'vi' ? 'ĐÁNH GIÁ' : 'REVIEWS') : t(`productDetail.${tab}`)}
               </button>
             ))}
           </div>
@@ -368,6 +612,95 @@ function ProductDetailContent({ product }: { product: Product }) {
                 <p>{t('productDetail.returnInfo')}</p>
               </motion.div>
             )}
+            {activeTab === 'reviews' && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+                <div className="flex justify-between items-center pb-6 border-b border-white/5">
+                  <div>
+                    <h3 className="font-oswald font-black text-xl text-white uppercase italic tracking-wider">
+                      {language === 'vi' ? 'ĐÁNH GIÁ TỪ KHÁCH HÀNG' : 'CUSTOMER REVIEWS'}
+                    </h3>
+                    <p className="text-xs text-gray-500 font-inter mt-1">
+                      {productReviews.length} {language === 'vi' ? 'lượt đánh giá' : 'reviews'}
+                    </p>
+                  </div>
+                  {user && (
+                    <button
+                      onClick={handleOpenWriteModal}
+                      className="px-6 py-3 bg-t1-red hover:bg-white text-white hover:text-black font-oswald font-bold text-xs tracking-wider uppercase transition-all duration-300 shadow-[0_10px_20px_rgba(226,1,45,0.2)]"
+                    >
+                      {language === 'vi' ? 'VIẾT ĐÁNH GIÁ' : 'WRITE A REVIEW'}
+                    </button>
+                  )}
+                </div>
+                {isLoadingReviews ? (
+                  <div className="flex justify-center items-center py-10">
+                    <Loader2 className="w-8 h-8 text-t1-red animate-spin" />
+                  </div>
+                ) : productReviews.length === 0 ? (
+                  <div className="text-center py-10 border border-dashed border-white/10 rounded-xl bg-white/[0.01]">
+                    <p className="text-gray-500 font-inter text-sm italic">
+                      {language === 'vi' ? 'Chưa có đánh giá nào cho sản phẩm này.' : 'No reviews yet for this product.'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {productReviews.map((rev: any, idx: number) => {
+                      const rating = rev.rating
+                      const text = rev.text
+                      const userDisplay = rev.display_name || rev.username || rev.user || 'Customer'
+                      const date = rev.created_at ? new Date(rev.created_at).toISOString().split('T')[0] : 'Recently'
+                      const isOwnReview = Number(rev.user_id) === Number(user?.user_id)
+                      const isAdmin = Number(user?.role) === 1
+
+                      return (
+                        <div key={rev.review_id || idx} className="bg-[#111111] p-6 border border-white/5 shadow-md flex flex-col justify-between relative group">
+                          {(isOwnReview || isAdmin) && (
+                            <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
+                              <button
+                                onClick={() => handleOpenEditModal(rev)}
+                                className="p-1.5 bg-white/5 hover:bg-t1-red text-gray-400 hover:text-white rounded-md transition-colors"
+                                title={language === 'vi' ? 'Chỉnh sửa đánh giá' : 'Edit review'}
+                              >
+                                <Edit3 size={14} />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteReview(rev.review_id)}
+                                className="p-1.5 bg-white/5 hover:bg-t1-red text-gray-400 hover:text-white rounded-md transition-colors"
+                                title={language === 'vi' ? 'Xóa đánh giá' : 'Delete review'}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          )}
+                          <div>
+                            <div className="flex justify-between items-start mb-3 pr-16">
+                              <div className="flex gap-0.5 text-t1-red text-sm">
+                                {'★'.repeat(rating)}
+                                <span className="text-gray-700">{'★'.repeat(5 - rating)}</span>
+                              </div>
+                            </div>
+                            <p className="text-gray-300 font-inter text-sm italic leading-relaxed mb-4">
+                              "{text}"
+                            </p>
+                          </div>
+
+                          {rev.image_url && (
+                            <div className="w-24 h-24 rounded-lg overflow-hidden border border-white/5 bg-black/40 mb-4 shrink-0">
+                              <img src={rev.image_url} alt="Review attachment" className="w-full h-full object-cover" />
+                            </div>
+                          )}
+
+                          <div className="border-t border-white/5 pt-3 flex justify-between items-center">
+                            <span className="font-oswald font-bold tracking-wider text-white text-xs uppercase block">{userDisplay}</span>
+                            <span className="text-[10px] text-gray-600 font-inter">{date}</span>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </motion.div>
+            )}
           </div>
         </div>
 
@@ -386,6 +719,394 @@ function ProductDetailContent({ product }: { product: Product }) {
           </div>
         )}
       </div>
+      {/* Write Review Modal */}
+      <AnimatePresence>
+        {isOpenWriteModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Overlay Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={handleCloseWriteModal}
+              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            />
+
+            {/* Modal Container */}
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              transition={{ type: 'spring', duration: 0.5 }}
+              className="relative bg-t1-dark border border-white/10 w-full max-w-lg p-8 shadow-2xl flex flex-col z-10"
+            >
+              {/* Close Button */}
+              <button
+                onClick={handleCloseWriteModal}
+                className="absolute top-6 right-6 text-gray-500 hover:text-white transition-colors"
+              >
+                <X size={18} />
+              </button>
+
+              {/* Header */}
+              <div className="mb-6">
+                <h2 className="font-oswald font-black text-2xl text-white italic uppercase tracking-wider mb-2">
+                  {language === 'vi' ? 'VIẾT ĐÁNH GIÁ MỚI' : 'WRITE NEW REVIEW'}
+                </h2>
+                <div className="w-10 h-0.5 bg-t1-red" />
+              </div>
+
+              {/* Rating selection */}
+              <div className="mb-6">
+                <label className="block text-xs text-gray-500 font-inter uppercase tracking-wider mb-3">
+                  {language === 'vi' ? 'Đánh giá của bạn:' : 'Your Rating:'}
+                </label>
+                <div className="flex gap-2 text-3xl">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setWriteRating(star)}
+                      onMouseEnter={() => setWriteHoverRating(star)}
+                      onMouseLeave={() => setWriteHoverRating(0)}
+                      className="transition-colors duration-150"
+                    >
+                      <span
+                        className={
+                          star <= (writeHoverRating || writeRating)
+                            ? 'text-t1-red'
+                            : 'text-gray-800 hover:text-t1-red/50'
+                        }
+                      >
+                        ★
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Textarea */}
+              <div className="mb-6">
+                <label className="block text-xs text-gray-500 font-inter uppercase tracking-wider mb-2">
+                  {language === 'vi' ? 'Nhận xét chi tiết:' : 'Detailed Review:'}
+                </label>
+                <textarea
+                  rows={4}
+                  value={writeText}
+                  onChange={(e) => setWriteText(e.target.value)}
+                  placeholder={
+                    language === 'vi'
+                      ? 'Hãy chia sẻ cảm nhận của bạn về sản phẩm này...'
+                      : 'Share your thoughts about this product...'
+                  }
+                  className="w-full bg-[#151515] border border-white/5 rounded-xl p-4 text-white text-sm focus:outline-none focus:border-t1-red/50 transition-all font-inter placeholder:text-gray-600"
+                />
+              </div>
+
+              {/* Image Upload */}
+              <div className="mb-8">
+                <label className="block text-xs text-gray-500 font-inter uppercase tracking-wider mb-2 flex items-center justify-between">
+                  <span>{language === 'vi' ? 'Hình ảnh đính kèm:' : 'Attached Image:'}</span>
+                  <span className="text-[10px] text-gray-600 font-normal uppercase tracking-normal">
+                    {language === 'vi' ? 'Tối đa 1 ảnh (PNG, JPG)' : 'Max 1 photo (PNG, JPG)'}
+                  </span>
+                </label>
+
+                {writeImageUrlPreview ? (
+                  <div className="relative group w-32 h-32 rounded-xl overflow-hidden border border-white/10 bg-[#151515] flex items-center justify-center">
+                    <img src={writeImageUrlPreview} alt="Preview" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={handleRemoveWriteImage}
+                      className="absolute top-2 right-2 p-1.5 bg-black/75 hover:bg-t1-red text-white rounded-full transition-colors opacity-0 group-hover:opacity-100 duration-200"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center w-full h-28 border border-dashed border-white/10 hover:border-t1-red/40 rounded-xl bg-white/[0.01] hover:bg-white/[0.03] transition-all cursor-pointer group">
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      <Camera size={24} className="text-gray-500 group-hover:text-t1-red mb-2 transition-colors duration-200" />
+                      <p className="text-xs text-gray-500 group-hover:text-gray-400 transition-colors duration-200">
+                        {language === 'vi' ? 'Nhấp để chọn ảnh chụp sản phẩm' : 'Click to select product image'}
+                      </p>
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleWriteImageChange}
+                      className="hidden"
+                    />
+                  </label>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-4 justify-end mt-auto">
+                <button
+                  type="button"
+                  onClick={handleCloseWriteModal}
+                  className="px-6 py-3 font-oswald font-bold text-xs tracking-widest text-gray-500 hover:text-white transition-colors"
+                >
+                  {language === 'vi' ? 'HỦY BỎ' : 'CANCEL'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSubmitWrite}
+                  disabled={isSubmittingWrite}
+                  className="px-8 py-3 bg-t1-red text-white font-oswald font-black text-xs tracking-[0.2em] hover:bg-white hover:text-black transition-all flex items-center gap-2 shadow-[0_10px_20px_rgba(226,1,45,0.3)] disabled:bg-t1-gray/40 disabled:cursor-not-allowed"
+                >
+                  {isSubmittingWrite ? (
+                    <>
+                      <Loader2 size={12} className="animate-spin" />
+                      {isUploadingWriteImage
+                        ? (language === 'vi' ? 'ĐANG TẢI ẢNH...' : 'UPLOADING...')
+                        : (language === 'vi' ? 'ĐANG GỬI...' : 'SUBMITTING...')}
+                    </>
+                  ) : (
+                    language === 'vi' ? 'GỬI ĐÁNH GIÁ' : 'SUBMIT REVIEW'
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Edit Review Modal */}
+      <AnimatePresence>
+        {editingReview && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Overlay Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={handleCloseEditModal}
+              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            />
+
+            {/* Modal Container */}
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              transition={{ type: 'spring', duration: 0.5 }}
+              className="relative bg-t1-dark border border-white/10 w-full max-w-lg p-8 shadow-2xl flex flex-col z-10"
+            >
+              {/* Close Button */}
+              <button
+                onClick={handleCloseEditModal}
+                className="absolute top-6 right-6 text-gray-500 hover:text-white transition-colors"
+              >
+                <X size={18} />
+              </button>
+
+              {/* Header */}
+              <div className="mb-6">
+                <h2 className="font-oswald font-black text-2xl text-white italic uppercase tracking-wider mb-2">
+                  {language === 'vi' ? 'CHỈNH SỬA ĐÁNH GIÁ' : 'EDIT YOUR REVIEW'}
+                </h2>
+                <div className="w-10 h-0.5 bg-t1-red" />
+              </div>
+
+              {/* Rating selection */}
+              <div className="mb-6">
+                <label className="block text-xs text-gray-500 font-inter uppercase tracking-wider mb-3">
+                  {language === 'vi' ? 'Đánh giá của bạn:' : 'Your Rating:'}
+                </label>
+                <div className="flex gap-2 text-3xl">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setEditRating(star)}
+                      onMouseEnter={() => setEditHoverRating(star)}
+                      onMouseLeave={() => setEditHoverRating(0)}
+                      className="transition-colors duration-150"
+                    >
+                      <span
+                        className={
+                          star <= (editHoverRating || editRating)
+                            ? 'text-t1-red'
+                            : 'text-gray-800 hover:text-t1-red/50'
+                        }
+                      >
+                        ★
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Textarea */}
+              <div className="mb-6">
+                <label className="block text-xs text-gray-500 font-inter uppercase tracking-wider mb-2">
+                  {language === 'vi' ? 'Nhận xét chi tiết:' : 'Detailed Review:'}
+                </label>
+                <textarea
+                  rows={4}
+                  value={editText}
+                  onChange={(e) => setEditText(e.target.value)}
+                  placeholder={
+                    language === 'vi'
+                      ? 'Hãy chia sẻ cảm nhận của bạn về sản phẩm này...'
+                      : 'Share your thoughts about this product...'
+                  }
+                  className="w-full bg-[#151515] border border-white/5 rounded-xl p-4 text-white text-sm focus:outline-none focus:border-t1-red/50 transition-all font-inter placeholder:text-gray-600"
+                />
+              </div>
+
+              {/* Image Upload */}
+              <div className="mb-8">
+                <label className="block text-xs text-gray-500 font-inter uppercase tracking-wider mb-2 flex items-center justify-between">
+                  <span>{language === 'vi' ? 'Hình ảnh đính kèm:' : 'Attached Image:'}</span>
+                  <span className="text-[10px] text-gray-600 font-normal uppercase tracking-normal">
+                    {language === 'vi' ? 'Tối đa 1 ảnh (PNG, JPG)' : 'Max 1 photo (PNG, JPG)'}
+                  </span>
+                </label>
+
+                {editImageUrlPreview ? (
+                  <div className="relative group w-32 h-32 rounded-xl overflow-hidden border border-white/10 bg-[#151515] flex items-center justify-center">
+                    <img src={editImageUrlPreview} alt="Preview" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={handleRemoveEditImage}
+                      className="absolute top-2 right-2 p-1.5 bg-black/75 hover:bg-t1-red text-white rounded-full transition-colors opacity-0 group-hover:opacity-100 duration-200"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center w-full h-28 border border-dashed border-white/10 hover:border-t1-red/40 rounded-xl bg-white/[0.01] hover:bg-white/[0.03] transition-all cursor-pointer group">
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      <Camera size={24} className="text-gray-500 group-hover:text-t1-red mb-2 transition-colors duration-200" />
+                      <p className="text-xs text-gray-500 group-hover:text-gray-400 transition-colors duration-200">
+                        {language === 'vi' ? 'Nhấp để chọn ảnh chụp sản phẩm' : 'Click to select product image'}
+                      </p>
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleEditImageChange}
+                      className="hidden"
+                    />
+                  </label>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-4 justify-end mt-auto">
+                <button
+                  type="button"
+                  onClick={handleCloseEditModal}
+                  className="px-6 py-3 font-oswald font-bold text-xs tracking-widest text-gray-500 hover:text-white transition-colors"
+                >
+                  {language === 'vi' ? 'HỦY BỎ' : 'CANCEL'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSubmitEdit}
+                  disabled={isSubmittingEdit}
+                  className="px-8 py-3 bg-t1-red text-white font-oswald font-black text-xs tracking-[0.2em] hover:bg-white hover:text-black transition-all flex items-center gap-2 shadow-[0_10px_20px_rgba(226,1,45,0.3)] disabled:bg-t1-gray/40 disabled:cursor-not-allowed"
+                >
+                  {isSubmittingEdit ? (
+                    <>
+                      <Loader2 size={12} className="animate-spin" />
+                      {isUploadingEditImage
+                        ? (language === 'vi' ? 'ĐANG TẢI ẢNH...' : 'UPLOADING...')
+                        : (language === 'vi' ? 'ĐANG LƯU...' : 'SAVING...')}
+                    </>
+                  ) : (
+                    language === 'vi' ? 'LƯU THAY ĐỔI' : 'SAVE CHANGES'
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+      {/* Size Guide Modal */}
+      <AnimatePresence>
+        {isOpenSizeGuide && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={handleCloseSizeGuide}
+              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              transition={{ type: 'spring', duration: 0.5 }}
+              className="relative bg-t1-dark border border-white/10 w-full max-w-md p-8 shadow-2xl flex flex-col z-10"
+            >
+              <button
+                onClick={handleCloseSizeGuide}
+                className="absolute top-6 right-6 text-gray-500 hover:text-white transition-colors"
+              >
+                <X size={18} />
+              </button>
+
+              <div className="mb-6">
+                <h2 className="font-oswald font-black text-2xl text-white italic uppercase tracking-wider mb-2">
+                  {language === 'vi' ? 'ƯỚC LƯỢNG KÍCH CỠ' : 'SIZE ESTIMATOR'}
+                </h2>
+                <div className="w-10 h-0.5 bg-t1-red" />
+              </div>
+
+              <div className="space-y-4 mb-6">
+                <div>
+                  <label className="block text-xs text-gray-400 font-inter uppercase tracking-wider mb-2">
+                    {language === 'vi' ? 'Chiều cao (cm):' : 'Height (cm):'}
+                  </label>
+                  <input
+                    type="number"
+                    value={sgHeight}
+                    onChange={(e) => setSgHeight(e.target.value)}
+                    placeholder="VD: 170"
+                    className="w-full bg-[#151515] border border-white/5 rounded-xl p-3 text-white text-sm focus:outline-none focus:border-t1-red/50 transition-all font-inter placeholder:text-gray-600"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-400 font-inter uppercase tracking-wider mb-2">
+                    {language === 'vi' ? 'Cân nặng (kg):' : 'Weight (kg):'}
+                  </label>
+                  <input
+                    type="number"
+                    value={sgWeight}
+                    onChange={(e) => setSgWeight(e.target.value)}
+                    placeholder="VD: 60"
+                    className="w-full bg-[#151515] border border-white/5 rounded-xl p-3 text-white text-sm focus:outline-none focus:border-t1-red/50 transition-all font-inter placeholder:text-gray-600"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleCalculateSize}
+                className="w-full py-3 bg-white text-black font-oswald font-bold text-sm tracking-wider uppercase hover:bg-t1-red hover:text-white transition-colors mb-6"
+              >
+                {language === 'vi' ? 'GỢI Ý SIZE' : 'SUGGEST SIZE'}
+              </button>
+
+              {sgRecommendedSize && (
+                <div className="bg-white/5 border border-white/10 rounded-xl p-6 text-center">
+                  <p className="text-sm text-gray-400 font-inter uppercase tracking-wider mb-2">
+                    {language === 'vi' ? 'Size phù hợp với bạn là:' : 'Recommended Size for you:'}
+                  </p>
+                  <p className="text-4xl font-oswald font-black text-t1-red italic">
+                    {sgRecommendedSize}
+                  </p>
+                </div>
+              )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </Layout>
   )
 }
