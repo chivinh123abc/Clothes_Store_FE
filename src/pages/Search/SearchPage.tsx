@@ -282,7 +282,7 @@ export default function SearchPage() {
                             onClick={() => setActiveCategory(cat)}
                             className={`text-[10px] font-oswald font-bold tracking-widest uppercase px-3 py-1.5 transition-all duration-200 ${activeCategory === cat ? 'bg-t1-red text-white shadow-[0_0_15px_rgba(226,1,45,0.3)]' : 'bg-white/5 text-gray-500 hover:bg-white/10 hover:text-white'}`}
                           >
-                            {cat === 'All' ? t('nav.all') : t(`nav.${cat.toLowerCase()}`)}
+                            {cat === 'All' ? t('nav.all') : t(`categories.${cat.toLowerCase()}`)}
                           </button>
                         ))}
                       </div>
@@ -338,7 +338,9 @@ export default function SearchPage() {
                         <p className='font-inter text-xs text-white leading-snug mb-1 line-clamp-2 group-hover:text-gray-100'>
                           {query ? highlightMatch(product.product_name, query) : product.product_name}
                         </p>
-                        <p className='text-[10px] text-gray-600 uppercase tracking-widest mb-2'>{product.category_name}</p>
+                        <p className='text-[10px] text-gray-600 uppercase tracking-widest mb-2'>
+                          {product.category_name ? t(`categories.${product.category_name.toLowerCase()}`) : ''}
+                        </p>
                         <div className='flex items-center gap-2'>
                           {product.items?.[0]?.sale_price && product.items[0].sale_price < product.items[0].product_item_price ? (
                             <>

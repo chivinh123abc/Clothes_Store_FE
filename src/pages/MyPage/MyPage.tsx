@@ -51,7 +51,6 @@ export default function MyPage() {
   const [reviewText, setReviewText] = useState<string>('')
   const [isSubmittingReview, setIsSubmittingReview] = useState<boolean>(false)
   const [reviewedProductIds, setReviewedProductIds] = useState<number[]>([])
-  const [reviewImageFile, setReviewImageFile] = useState<File | null>(null)
   const [reviewImageUrlPreview, setReviewImageUrlPreview] = useState<string | null>(null)
   const [isUploadingImage, setIsUploadingImage] = useState<boolean>(false)
 
@@ -142,6 +141,7 @@ export default function MyPage() {
     setReviewOrder(order)
     setReviewRating(5)
     setReviewText('')
+    setReviewImageUrlPreview(null)
     if (order.items && order.items.length === 1) {
       setSelectedReviewProduct(order.items[0])
     } else {
@@ -152,16 +152,49 @@ export default function MyPage() {
   const handleCloseReviewModal = () => {
     setReviewOrder(null)
     setSelectedReviewProduct(null)
+    setReviewImageUrlPreview(null)
+  }
+
+  const handleReviewImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setReviewImageUrlPreview(reader.result as string)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleRemoveReviewImage = () => {
+    setReviewImageUrlPreview(null)
   }
 
   const handleSubmitReview = async () => {
     if (!selectedReviewProduct || !reviewText.trim() || !reviewOrder) return
     try {
       setIsSubmittingReview(true)
+      let image_url = ''
+
+      if (reviewImageUrlPreview) {
+        setIsUploadingImage(true)
+        try {
+          const res = await reviewApi.uploadImage({ file: reviewImageUrlPreview })
+          image_url = res.data.secure_url
+        } catch (uploadErr) {
+          console.error(uploadErr)
+          setIsUploadingImage(false)
+          return
+        } finally {
+          setIsUploadingImage(false)
+        }
+      }
+
       await reviewApi.create({
         product_id: selectedReviewProduct.productId,
         rating: reviewRating,
-        text: reviewText
+        text: reviewText,
+        image_url: image_url || undefined
       })
       showToast(
         language === 'vi' ? 'Gửi đánh giá thành công! Cảm ơn bạn.' : 'Review submitted successfully! Thank you.',
@@ -178,6 +211,7 @@ export default function MyPage() {
         setSelectedReviewProduct(null)
         setReviewText('')
         setReviewRating(5)
+        setReviewImageUrlPreview(null)
       }
     } catch (err: any) {
       showToast(
@@ -1621,21 +1655,66 @@ export default function MyPage() {
                       />
                     </div>
 
+                    {/* Image Upload */}
+                    <div className="mb-6">
+                      <label className="block text-xs text-gray-500 font-inter uppercase tracking-wider mb-2 flex items-center justify-between">
+                        <span>{language === 'vi' ? 'Hình ảnh đính kèm:' : 'Attached Image:'}</span>
+                        <span className="text-[10px] text-gray-600 font-normal uppercase tracking-normal">
+                          {language === 'vi' ? 'Tối đa 1 ảnh (PNG, JPG)' : 'Max 1 photo (PNG, JPG)'}
+                        </span>
+                      </label>
+
+                      {reviewImageUrlPreview ? (
+                        <div className="relative group w-24 h-24 rounded-xl overflow-hidden border border-white/10 bg-[#151515] flex items-center justify-center">
+                          <img src={reviewImageUrlPreview} alt="Preview" className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={handleRemoveReviewImage}
+                            className="absolute top-2 right-2 p-1.5 bg-black/75 hover:bg-t1-red text-white rounded-full transition-colors opacity-0 group-hover:opacity-100 duration-200"
+                          >
+                            <X size={12} />
+                          </button>
+                        </div>
+                      ) : (
+                        <label className="flex flex-col items-center justify-center w-full h-24 border border-dashed border-white/10 hover:border-t1-red/40 rounded-xl bg-white/[0.01] hover:bg-white/[0.03] transition-all cursor-pointer group">
+                          <div className="flex flex-col items-center justify-center pt-3 pb-3">
+                            <Camera size={20} className="text-gray-500 group-hover:text-t1-red mb-1 transition-colors duration-200" />
+                            <p className="text-[11px] text-gray-500 group-hover:text-gray-400 transition-colors duration-200">
+                              {language === 'vi' ? 'Nhấp để chọn ảnh chụp sản phẩm' : 'Click to select product image'}
+                            </p>
+                          </div>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleReviewImageChange}
+                            className="hidden"
+                          />
+                        </label>
+                      )}
+                    </div>
+
                     {/* Buttons */}
                     <div className="flex gap-3">
                       <button
+                        type="button"
                         onClick={() => handleCloseReviewModal()}
                         className="flex-1 py-3.5 border border-white/10 font-oswald font-bold text-xs tracking-widest uppercase text-gray-400 hover:text-white hover:border-white/30 transition-all duration-200"
                       >
                         {language === 'vi' ? 'HỦY' : 'CANCEL'}
                       </button>
                       <button
+                        type="button"
                         onClick={handleSubmitReview}
                         disabled={isSubmittingReview || !reviewText.trim()}
                         className="flex-1 py-3.5 bg-t1-red text-white font-oswald font-black text-xs tracking-widest uppercase hover:bg-red-700 transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {isSubmittingReview ? (
-                          <><Loader2 size={12} className="animate-spin" /> {language === 'vi' ? 'ĐANG GỬI...' : 'SUBMITTING...'}</>
+                          <>
+                            <Loader2 size={12} className="animate-spin" />
+                            {isUploadingImage
+                              ? (language === 'vi' ? 'ĐANG TẢI ẢNH...' : 'UPLOADING...')
+                              : (language === 'vi' ? 'ĐANG GỬI...' : 'SUBMITTING...')}
+                          </>
                         ) : (
                           language === 'vi' ? 'GỬI ĐÁNH GIÁ' : 'SUBMIT REVIEW'
                         )}
