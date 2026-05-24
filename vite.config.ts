@@ -12,5 +12,16 @@ export default defineConfig({
     alias: [
       { find: '~', replacement: '/src' }
     ]
+  },
+  server: {
+    proxy: {
+      // Proxy to HuggingFace IDM-VTON Gradio Space (avoids CORS)
+      '/hf-tryon': {
+        target: 'https://yisol-idm-vton.hf.space',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/hf-tryon/, ''),
+        secure: true
+      }
+    }
   }
 })

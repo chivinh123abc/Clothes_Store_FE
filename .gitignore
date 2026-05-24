@@ -12,6 +12,7 @@ dist
 dist-ssr
 *.local
 lint-results.txt
+*.txt
 
 # Editor directories and files
 .vscode/*

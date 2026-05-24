@@ -16,10 +16,12 @@ import { Link, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useLanguage } from '~/contexts/LanguageContext'
 import { useCollections } from '~/contexts/CollectionContext'
+import { useAuth } from '~/hooks/useAuth'
 // import type { Collection } from '~/types/collection'
 
 // 1. For Medal
 export const NavMenuListModal = () => {
+  const { user } = useAuth()
   const [activeMenu, setActiveMenu] = useState<
     'shop' | 'legacy' | 'community' | null
   >(null)
@@ -98,7 +100,7 @@ export const NavMenuListModal = () => {
           </motion.li>
         )}
       </AnimatePresence>
-      <li className="relative border-b border-t1-gray/30 px-4 py-4 hover:bg-white/5 transition-colors">
+      <li className="border-b border-t1-gray/30 px-4 py-4 hover:bg-white/5 transition-colors">
         <Link to='/community?tab=NOTICE' className={`hover:text-t1-red transition-colors ${isParentActive('/community') ? 'text-t1-red' : ''}`}>
           {t('nav.community')}
         </Link>
@@ -122,6 +124,17 @@ export const NavMenuListModal = () => {
           </motion.li>
         )}
       </AnimatePresence>
+      {/* TRY ON (Only visible when logged in) */}
+      {user && (
+        <li className="border-b border-t1-gray/30 px-4 py-4 hover:bg-white/5 transition-colors">
+          <Link to="/try-on" className={`flex items-center gap-2 hover:text-t1-red transition-colors ${isActive('/try-on') ? 'text-t1-red' : ''}`}>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-t1-red animate-pulse" />
+              {t('nav.tryOn')}
+            </span>
+          </Link>
+        </li>
+      )}
     </ul>
   )
 }
@@ -266,6 +279,7 @@ const CommunityExpand = () => {
 
 // 2. For Nav
 export const NavMenuListMedium = () => {
+  const { user } = useAuth()
   const location = useLocation()
   const isActive = (path: string) => location.pathname === path
   const isParentActive = (basePath: string) => location.pathname.startsWith(basePath)
@@ -288,6 +302,20 @@ export const NavMenuListMedium = () => {
       <li>
         <DropdownItem title={t('nav.community')} content={CommunityContent} href='/community?tab=NOTICE' active={isParentActive('/community')} />
       </li>
+      {/* TRY ON (Only visible when logged in) */}
+      {user && (
+        <li>
+          <Link
+            to="/try-on"
+            className={`flex items-center gap-1.5 hover:text-t1-red transition-colors cursor-pointer ${
+              isActive('/try-on') ? 'text-t1-red' : ''
+            }`}
+          >
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-t1-red animate-pulse" />
+            {t('nav.tryOn')}
+          </Link>
+        </li>
+      )}
     </ul>
   )
 }

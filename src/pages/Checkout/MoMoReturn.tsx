@@ -1,14 +1,19 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { CheckCircle, XCircle, Loader2, ArrowRight } from 'lucide-react'
 import Layout from '~/components/layout/Layout'
 import Footer from '~/components/layout/Footer'
 import { orderApi } from '~/apis/orderApi'
+import { useNotifications } from '~/contexts/NotificationContext'
+import { useAuth } from '~/hooks/useAuth'
 
 export default function MoMoReturn() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
+  const { addNotification } = useNotifications()
+  const { user } = useAuth()
+  const confirmedRef = useRef(false)
 
   const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing')
   const [errorMessage, setErrorMessage] = useState('')
@@ -17,6 +22,9 @@ export default function MoMoReturn() {
   const extraData = searchParams.get('extraData') // We passed base64 encoded orderId in extraData
 
   useEffect(() => {
+    if (confirmedRef.current) return
+    confirmedRef.current = true
+
     const confirmPayment = async () => {
       try {
         if (resultCode === '0') {
@@ -26,6 +34,59 @@ export default function MoMoReturn() {
             const orderId = parseInt(orderIdStr, 10)
             if (!isNaN(orderId)) {
               await orderApi.confirmMoMoPayment(orderId)
+
+              // Fetch details to retrieve final order total for premium notifications
+              try {
+                const orderData = await orderApi.getOrderDetails(orderId)
+                const amount = parseFloat(orderData?.total_amount || '0')
+                const userDisplayName = user?.full_name || user?.display_name || user?.username || 'Customer'
+
+                addNotification(
+                  user?.user_id || 'unknown',
+                  { en: 'Payment Confirmed!', vi: 'Thanh toán thành công!' },
+                  {
+                    en: `Your payment of $${amount.toFixed(2)} was successfully processed for order #T1-000${orderId}.`,
+                    vi: `Thanh toán $${amount.toFixed(2)} cho đơn hàng #T1-000${orderId} đã được xác nhận thành công.`
+                  },
+                  'success',
+                  '/my-page'
+                )
+
+                addNotification(
+                  'admin',
+                  { en: 'MoMo Order Paid', vi: 'Đơn MoMo đã thanh toán' },
+                  {
+                    en: `Order #T1-000${orderId} has been successfully paid via MoMo by ${userDisplayName} for $${amount.toFixed(2)}.`,
+                    vi: `Đơn hàng #T1-000${orderId} trị giá $${amount.toFixed(2)} đã được thanh toán thành công qua MoMo bởi ${userDisplayName}.`
+                  },
+                  'order_received',
+                  '/admin/orders'
+                )
+              } catch (notifErr) {
+                console.error('Notification trigger details fetch failed:', notifErr)
+                // Fallback triggers if order details fetch fails
+                addNotification(
+                  user?.user_id || 'unknown',
+                  { en: 'Payment Confirmed!', vi: 'Thanh toán thành công!' },
+                  {
+                    en: `Your order #T1-000${orderId} has been paid successfully via MoMo.`,
+                    vi: `Đơn hàng #T1-000${orderId} của bạn đã thanh toán thành công qua MoMo.`
+                  },
+                  'success',
+                  '/my-page'
+                )
+
+                addNotification(
+                  'admin',
+                  { en: 'MoMo Order Paid', vi: 'Đơn MoMo đã thanh toán' },
+                  {
+                    en: `Order #T1-000${orderId} has been paid via MoMo.`,
+                    vi: `Đơn hàng #T1-000${orderId} đã thanh toán thành công qua MoMo.`
+                  },
+                  'order_received',
+                  '/admin/orders'
+                )
+              }
             }
           }
           setStatus('success')
