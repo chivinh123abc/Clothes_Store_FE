@@ -4,6 +4,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { LayoutDashboard, ShoppingBag, Users, LogOut, ChevronRight, Layers, Grid, Package, Percent } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useAuth } from '~/hooks/useAuth'
+import NotificationDropdown from '~/components/Navbar/NotificationDropdown'
 
 interface AdminLayoutProps {
   children: React.ReactNode
@@ -91,9 +92,13 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           <h2 className="font-oswald font-black italic text-2xl uppercase tracking-tight">
             {menuItems.find(i => i.path === location.pathname)?.label || 'Admin'}
           </h2>
-          <div className="flex items-center gap-4">
-            <span className="text-[10px] font-oswald text-gray-500 tracking-[0.3em] uppercase">Status: Live</span>
-            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+          <div className="flex items-center gap-6">
+            <NotificationDropdown />
+            <div className="h-4 w-px bg-white/10" />
+            <div className="flex items-center gap-4">
+              <span className="text-[10px] font-oswald text-gray-500 tracking-[0.3em] uppercase">Status: Live</span>
+              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+            </div>
           </div>
         </header>
 

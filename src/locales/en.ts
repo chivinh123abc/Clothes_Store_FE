@@ -64,7 +64,8 @@ export const en = {
     worlds2024: '2024 WORLDS COLLECTION',
     worlds2023: '2023 WORLDS COLLECTION',
     leagueOfLegends: 'E-SPORTS EDITION',
-    valorant: 'PRO GAMER SERIES'
+    valorant: 'PRO GAMER SERIES',
+    tryOn: 'TRY ON'
   },
   search: {
     engine: 'Search Engine',
@@ -347,6 +348,46 @@ export const en = {
   errors: {
     updateProfile: 'Failed to update profile',
     changePassword: 'Failed to change password'
+  },
+  tryOn: {
+    title: 'TRY ON',
+    subtitle: 'Try Before You Buy',
+    desc: 'Upload your photo or pick an avatar, choose a clothing item, and see yourself wearing it — powered by AI.',
+    badge: 'AI Virtual Try-On',
+    step1: 'Choose Model',
+    step2: 'Choose Outfit',
+    step3: 'Try-On Result',
+    tabTemplate: 'Choose Avatar',
+    tabUpload: 'Upload My Photo',
+    tips: 'Tips for best results',
+    tip1: 'Full body visible from head to toe',
+    tip2: 'Stand straight, arms slightly away from body',
+    tip3: 'Plain / uncluttered background',
+    tip4: 'Good lighting, front-facing',
+    previewLabel: 'Model Preview',
+    selectedItem: 'Selected Item',
+    noItemSelected: 'No item selected',
+    searchPlaceholder: 'Search clothing...',
+    next: 'NEXT — CHOOSE OUTFIT',
+    tryItOn: 'TRY IT ON',
+    processing: 'AI Is Working Its Magic',
+    processingDesc: 'IDM-VTON is generating your virtual outfit...',
+    elapsed: 'Elapsed',
+    result: "Here's How It Looks!",
+    complete: 'Try-On Complete!',
+    download: 'DOWNLOAD PHOTO',
+    addToCart: 'ADD TO CART',
+    addedToCart: 'ADDED TO CART!',
+    viewProduct: 'VIEW PRODUCT PAGE',
+    tryAnother: 'Try Another Outfit',
+    startOver: 'START OVER',
+    failed: 'Try-On Failed',
+    failedDesc: 'The HuggingFace server may be busy. Please wait a moment and try again.',
+    tryAgain: 'TRY AGAIN',
+    aiPowered: 'AI-Generated • Powered by IDM-VTON',
+    dropPhoto: 'DROP PHOTO HERE',
+    dropPhotoSub: 'or click to browse • JPG, PNG, WEBP',
+    tryOnButton: 'TRY ON'
   }
 }
 

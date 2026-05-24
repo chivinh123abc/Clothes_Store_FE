@@ -66,7 +66,8 @@ export const vi: TranslationKeys = {
     worlds2024: 'BST MÙA THU 2024',
     worlds2023: 'BST MÙA HÈ 2023',
     leagueOfLegends: 'PHIÊN BẢN E-SPORTS',
-    valorant: 'DÒNG SẢN PHẨM PRO GAMER'
+    valorant: 'DÒNG SẢN PHẨM PRO GAMER',
+    tryOn: 'THỬ ĐỒ'
   },
   search: {
     engine: 'Công cụ tìm kiếm',
@@ -349,5 +350,45 @@ export const vi: TranslationKeys = {
   errors: {
     updateProfile: 'Cập nhật thông tin thất bại',
     changePassword: 'Đổi mật khẩu thất bại'
+  },
+  tryOn: {
+    title: 'THỬ ĐỒ',
+    subtitle: 'Thử Trước Khi Mua',
+    desc: 'Upload ảnh hoặc chọn avatar, chọn quần áo, và xem bạn mặc lên người — được hỗ trợ bởi AI.',
+    badge: 'AI Thử Đồ Ảo',
+    step1: 'Chọn Model',
+    step2: 'Chọn Trang Phục',
+    step3: 'Kết Quả Thử Đồ',
+    tabTemplate: 'Chọn Avatar',
+    tabUpload: 'Upload Ảnh Của Tôi',
+    tips: 'Mẹo để có kết quả tốt nhất',
+    tip1: 'Chụp toàn thân từ đầu đến chân',
+    tip2: 'Đứng thẳng, tay hơi dang ra',
+    tip3: 'Nền phông đơn giản, không rối mắt',
+    tip4: 'Ánh sáng tốt, mặt hướng về phía trước',
+    previewLabel: 'Xem Trước Model',
+    selectedItem: 'Sản Phẩm Đã Chọn',
+    noItemSelected: 'Chưa chọn sản phẩm',
+    searchPlaceholder: 'Tìm kiếm quần áo...',
+    next: 'TIẾP THEO — CHỌN TRANG PHỤC',
+    tryItOn: 'THỬ ĐỒ NGAY',
+    processing: 'AI Đang Xử Lý',
+    processingDesc: 'IDM-VTON đang tạo hình ảnh thử đồ của bạn...',
+    elapsed: 'Đã chạy',
+    result: 'Đây Là Kết Quả!',
+    complete: 'Thử Đồ Hoàn Tất!',
+    download: 'TẢI ẢNH VỀ',
+    addToCart: 'THÊM VÀO GIỎ',
+    addedToCart: 'ĐÃ THÊM VÀO GIỎ!',
+    viewProduct: 'XEM TRANG SẢN PHẨM',
+    tryAnother: 'Thử Trang Phục Khác',
+    startOver: 'BẮT ĐẦU LẠI',
+    failed: 'Thử Đồ Thất Bại',
+    failedDesc: 'Server HuggingFace có thể đang bận. Vui lòng chờ và thử lại.',
+    tryAgain: 'THỬ LẠI',
+    aiPowered: 'Tạo bởi AI • IDM-VTON',
+    dropPhoto: 'KÉO THẢ ẢNH VÀO ĐÂY',
+    dropPhotoSub: 'hoặc click để chọn file • JPG, PNG, WEBP',
+    tryOnButton: 'THỬ ĐỒ'
   }
 }

@@ -11,11 +11,13 @@ import {
   DollarSign,
   CreditCard,
   CheckCircle2,
-  Clock
+  Clock,
+  ArrowUpCircle
 } from 'lucide-react'
 import { AnimatePresence } from 'framer-motion'
 import { orderApi } from '../../apis/orderApi'
 import { useToast } from '../../contexts/ToastContext'
+import { useNotifications } from '../../contexts/NotificationContext'
 import OrderDetailsModal from './OrderDetailsModal'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 
@@ -42,6 +44,7 @@ const AdminOrderList: React.FC = () => {
   const [detailsLoading, setDetailsLoading] = useState(false)
   const [orderToDelete, setOrderToDelete] = useState<number | null>(null)
   const { showToast } = useToast()
+  const { addNotification } = useNotifications()
 
   const fetchOrders = useCallback(async () => {
     try {
@@ -64,6 +67,47 @@ const AdminOrderList: React.FC = () => {
     try {
       await orderApi.updateOrderStatus(id, newStatus)
       showToast(`Order status updated to ${newStatus}`, 'success')
+
+      // Notify the buyer of their order status change
+      const order = orders.find(o => o.order_id === id)
+      if (order) {
+        const buyerId = order.user_id
+        if (newStatus === 'shipping') {
+          addNotification(
+            buyerId,
+            { en: 'Order Shipped!', vi: 'Đơn hàng đang giao!' },
+            {
+              en: `Your order #T1-000${id} has been dispatched and is on its way.`,
+              vi: `Đơn hàng #T1-000${id} của bạn đã được gửi đi và đang trên đường giao đến bạn.`
+            },
+            'info',
+            '/my-page'
+          )
+        } else if (newStatus === 'completed') {
+          addNotification(
+            buyerId,
+            { en: 'Order Completed!', vi: 'Đơn hàng hoàn tất!' },
+            {
+              en: `Your order #T1-000${id} has been successfully completed. Thank you!`,
+              vi: `Đơn hàng #T1-000${id} của bạn đã hoàn thành xuất sắc. Cảm ơn bạn!`
+            },
+            'success',
+            '/my-page'
+          )
+        } else if (newStatus === 'cancelled') {
+          addNotification(
+            buyerId,
+            { en: 'Order Cancelled', vi: 'Đơn hàng đã hủy' },
+            {
+              en: `Your order #T1-000${id} has been cancelled.`,
+              vi: `Đơn hàng #T1-000${id} của bạn đã bị hủy.`
+            },
+            'info',
+            '/my-page'
+          )
+        }
+      }
+
       fetchOrders()
     } catch (error: any) {
       const errorMsg = error.response?.data?.message || error.message
@@ -75,6 +119,22 @@ const AdminOrderList: React.FC = () => {
     try {
       await orderApi.updateOrderStatus(id, undefined, newPaymentStatus)
       showToast(`Payment status updated to ${newPaymentStatus}`, 'success')
+
+      // Notify the buyer of payment verification
+      const order = orders.find(o => o.order_id === id)
+      if (order && newPaymentStatus === 'paid') {
+        addNotification(
+          order.user_id,
+          { en: 'Payment Confirmed!', vi: 'Xác nhận thanh toán!' },
+          {
+            en: `Your payment for order #T1-000${id} has been successfully verified.`,
+            vi: `Thanh toán cho đơn hàng #T1-000${id} của bạn đã được xác nhận thành công.`
+          },
+          'success',
+          '/my-page'
+        )
+      }
+
       fetchOrders()
     } catch (error: any) {
       const errorMsg = error.response?.data?.message || error.message
@@ -127,6 +187,17 @@ const AdminOrderList: React.FC = () => {
       case 'cancelled': return 'text-rose-400 bg-rose-400/10'
       default: return 'text-gray-400 bg-gray-400/10'
     }
+  }
+
+  const getNextStatus = (currentStatus: string): string | null => {
+    const status = currentStatus.toLowerCase()
+    if (status === 'pending' || status === 'paid') {
+      return 'shipping'
+    }
+    if (status === 'shipping') {
+      return 'completed'
+    }
+    return null
   }
 
   return (
@@ -317,27 +388,42 @@ const AdminOrderList: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="relative w-[135px] group/select">
-                        <select
-                          value={order.status.toLowerCase()}
-                          onChange={(e) => handleUpdateStatus(order.order_id, e.target.value)}
-                          className={`w-full appearance-none pl-4 pr-8 py-1.5 rounded-full text-[10px] font-oswald font-bold uppercase tracking-wider border border-white/10 outline-none cursor-pointer transition-all hover:border-white/30 focus:border-t1-red/50 ${getStatusColor(order.status)}`}
-                        >
-                          <option value="pending" className="bg-[#111] text-amber-400">PENDING</option>
-                          <option
-                            value="paid"
-                            disabled={order.payment_method?.toLowerCase() === 'cod'}
-                            className={`bg-[#111] ${order.payment_method?.toLowerCase() === 'cod' ? 'text-gray-600' : 'text-blue-300'}`}
+                      <div className="flex items-center gap-2">
+                        <div className="relative w-[135px] group/select">
+                          <select
+                            value={order.status.toLowerCase()}
+                            onChange={(e) => handleUpdateStatus(order.order_id, e.target.value)}
+                            className={`w-full appearance-none pl-4 pr-8 py-1.5 rounded-full text-[10px] font-oswald font-bold uppercase tracking-wider border border-white/10 outline-none cursor-pointer transition-all hover:border-white/30 focus:border-t1-red/50 ${getStatusColor(order.status)}`}
                           >
-                            PAID {order.payment_method?.toLowerCase() === 'cod' ? '(N/A for COD)' : ''}
-                          </option>
-                          <option value="shipping" className="bg-[#111] text-blue-400">SHIPPING</option>
-                          <option value="completed" className="bg-[#111] text-emerald-400">COMPLETED</option>
-                          <option value="cancelled" className="bg-[#111] text-rose-400">CANCELLED</option>
-                        </select>
-                        <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none opacity-50">
-                          <Filter size={10} />
+                            <option value="pending" className="bg-[#111] text-amber-400">PENDING</option>
+                            <option
+                              value="paid"
+                              disabled={order.payment_method?.toLowerCase() === 'cod'}
+                              className={`bg-[#111] ${order.payment_method?.toLowerCase() === 'cod' ? 'text-gray-600' : 'text-blue-300'}`}
+                            >
+                              PAID {order.payment_method?.toLowerCase() === 'cod' ? '(N/A for COD)' : ''}
+                            </option>
+                            <option value="shipping" className="bg-[#111] text-blue-400">SHIPPING</option>
+                            <option value="completed" className="bg-[#111] text-emerald-400">COMPLETED</option>
+                            <option value="cancelled" className="bg-[#111] text-rose-400">CANCELLED</option>
+                          </select>
+                          <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none opacity-50">
+                            <Filter size={10} />
+                          </div>
                         </div>
+
+                        {/* Quick Upgrade Level Up Button */}
+                        {getNextStatus(order.status) ? (
+                          <button
+                            onClick={() => handleUpdateStatus(order.order_id, getNextStatus(order.status)!)}
+                            className="p-2 bg-t1-red/10 text-t1-red hover:bg-t1-red hover:text-white rounded-full border border-t1-red/30 hover:border-t1-red transition-all cursor-pointer flex items-center justify-center group/btn shrink-0"
+                            title={`Upgrade status to ${getNextStatus(order.status)?.toUpperCase()}`}
+                          >
+                            <ArrowUpCircle size={14} className="group-hover/btn:scale-110 transition-transform" />
+                          </button>
+                        ) : (
+                          <div className="w-[30px] h-[30px] shrink-0" />
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right">

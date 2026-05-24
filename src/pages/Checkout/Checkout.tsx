@@ -16,6 +16,7 @@ import {
 import { useCart } from '~/contexts/CartContext'
 import { useAuth } from '~/hooks/useAuth'
 import { useToast } from '~/contexts/ToastContext'
+import { useNotifications } from '~/contexts/NotificationContext'
 import { useLanguage } from '~/contexts/LanguageContext'
 import { formatPrice } from '~/utils/format'
 import { orderApi } from '~/apis/orderApi'
@@ -27,6 +28,7 @@ export default function Checkout() {
   const { items, totalPrice, clearCart } = useCart()
   const { user } = useAuth()
   const { showToast } = useToast()
+  const { addNotification } = useNotifications()
   const { language, t } = useLanguage()
   const navigate = useNavigate()
 
@@ -101,6 +103,43 @@ export default function Checkout() {
 
       const newOrder = await orderApi.createOrder(orderPayload)
 
+      // Notify the customer and admin immediately about the new order creation (regardless of MoMo or COD)
+      addNotification(
+        user.user_id,
+        {
+          en: paymentMethod === 'momo' ? 'Order Initialized' : 'Order Placed!',
+          vi: paymentMethod === 'momo' ? 'Đơn hàng được khởi tạo' : 'Đặt hàng thành công!'
+        },
+        {
+          en: paymentMethod === 'momo'
+            ? `Your order #T1-000${newOrder.order_id} has been created. Awaiting payment via MoMo.`
+            : `Your order #T1-000${newOrder.order_id} has been placed successfully via Cash On Delivery.`,
+          vi: paymentMethod === 'momo'
+            ? `Đơn hàng #T1-000${newOrder.order_id} của bạn đã được khởi tạo. Đang chờ thanh toán qua ví MoMo.`
+            : `Đơn hàng #T1-000${newOrder.order_id} của bạn đã được đặt thành công bằng hình thức COD.`
+        },
+        'order_placed',
+        '/my-page'
+      )
+
+      addNotification(
+        'admin',
+        {
+          en: paymentMethod === 'momo' ? 'New MoMo Order Created' : 'New COD Order',
+          vi: paymentMethod === 'momo' ? 'Đơn hàng MoMo mới được tạo' : 'Đơn hàng COD mới'
+        },
+        {
+          en: paymentMethod === 'momo'
+            ? `New order #T1-000${newOrder.order_id} received from ${fullName} for $${finalTotal.toFixed(2)} (Awaiting payment).`
+            : `New COD order #T1-000${newOrder.order_id} received from ${fullName} for $${finalTotal.toFixed(2)}.`,
+          vi: paymentMethod === 'momo'
+            ? `Đơn hàng MoMo mới #T1-000${newOrder.order_id} từ ${fullName} trị giá $${finalTotal.toFixed(2)} (Đang chờ thanh toán).`
+            : `Đơn hàng COD mới #T1-000${newOrder.order_id} từ ${fullName} trị giá $${finalTotal.toFixed(2)}.`
+        },
+        'order_received',
+        '/admin/orders'
+      )
+
       // 2. Create the child order items
       // For each item in the cart, resolve its product_item_id
       const itemPromises = items.map(async (cartItem) => {
@@ -152,6 +191,7 @@ export default function Checkout() {
         total: finalTotal,
         paymentMethod
       })
+
       showToast('Order placed successfully!', 'success')
     } catch (error: any) {
       // eslint-disable-next-line no-console

@@ -24,6 +24,7 @@ import AdminDiscountList from '../pages/Admin/AdminDiscountList'
 import VerifyAccount from '../pages/VerifyAccount/VerifyAccount'
 import Checkout from '../pages/Checkout/Checkout'
 import MoMoReturn from '../pages/Checkout/MoMoReturn'
+import TryOnPage from '../pages/TryOn/TryOnPage'
 
 const Private = ({ children }: { children: React.ReactElement }) => {
   const { user, isLoading } = useAuth()
@@ -64,6 +65,7 @@ export default function AppRoutes() {
       <Route path='/community' element={<Community />} />
       <Route path='/my-page' element={<Private><MyPage /></Private>} />
       <Route path='/search' element={<SearchPage />} />
+      <Route path='/try-on' element={<Private><TryOnPage /></Private>} />
 
       {/* Admin Routes */}
       <Route path='/admin' element={<AdminProtected><AdminDashboard /></AdminProtected>} />

@@ -11,6 +11,7 @@ import menuIcon from '~/assets/Navbar/menu.png'
 import { Heart } from 'lucide-react'
 import { useAuth } from '~/hooks/useAuth'
 import { useFavorites } from '~/contexts/FavoritesContext'
+import NotificationDropdown from './NotificationDropdown'
 
 interface NavbarProps {
   setOpenNav: Dispatch<SetStateAction<boolean>>;
@@ -104,6 +105,12 @@ function Navbar({ setOpenNav, forceOpaque = false }: NavbarProps) {
               )}
             </button>
           </div>
+
+          {user && (
+            <div className='flex items-center'>
+              <NotificationDropdown />
+            </div>
+          )}
 
           <CartIcon onClick={() => setIsCartOpen(true)} />
 

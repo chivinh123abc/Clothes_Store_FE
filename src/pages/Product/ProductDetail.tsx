@@ -18,7 +18,8 @@ import {
   X,
   Loader2,
   Edit3,
-  Trash2
+  Trash2,
+  Sparkles
 } from 'lucide-react'
 import { useAuth } from '~/hooks/useAuth'
 import { reviewApi } from '~/apis/reviewApi'
@@ -31,6 +32,20 @@ import { useLanguage } from '~/contexts/LanguageContext'
 import { formatPrice } from '~/utils/format'
 import type { Product } from '~/types/product'
 import productApi from '~/apis/productApi'
+
+const isClothingProduct = (cat?: string, name?: string): boolean => {
+  const c = (cat || '').toLowerCase()
+  const n = (name || '').toLowerCase()
+  // ONLY upper body clothing keywords (tops)
+  const clothingKeywords = ['tshirt', 'shirt', 'hoodie', 'sweater', 'jacket', 'apparel', 'áo thun', 'sơ mi', 'áo len', 'áo khoác', 'áo hoodie', 't-shirt', 'uniform', 'team kit', 'jersey', 'áo đấu', 'đồng phục', 'áo']
+  // Excluded keywords (accessories, lower body, full body)
+  const excludeKeywords = ['pants', 'quần', 'shorts', 'jeans', 'skirt', 'dress', 'váy', 'đầm', 'one-piece', 'suit', 'bag', 'túi', 'balo', 'shoe', 'giày', 'hat', 'mũ', 'nón', 'accessory', 'phụ kiện', 'gift', 'quà', 'chair', 'ghế', 'mouse', 'chuột', 'keyboard', 'bàn phím', 'pad', 'tất', 'sock', 'keycap', 'móc khóa', 'keychain', 'sticker', 'sổ', 'notebook', 'bình nước', 'bottle', 'cup', 'ly', 'cốc', 'banner', 'poster', 'giftcard', 'card']
+
+  const hasClothing = clothingKeywords.some(k => c.includes(k) || n.includes(k))
+  const hasExclude = excludeKeywords.some(k => c.includes(k) || n.includes(k))
+
+  return hasClothing && !hasExclude
+}
 
 function ProductDetailContent({ product }: { product: Product }) {
   const { addCartItem } = useCart()
@@ -528,6 +543,18 @@ function ProductDetailContent({ product }: { product: Product }) {
                     )}
                   </AnimatePresence>
                 </button>
+
+                {/* TRY ON Button */}
+                {user && isClothingProduct(product.category_name, product.product_name) && (
+                  <Link
+                    to={`/try-on?productId=${product.product_id}`}
+                    className="h-16 px-5 border border-t1-red/60 hover:border-t1-red text-t1-red hover:bg-t1-red hover:text-white flex items-center justify-center gap-2 font-oswald font-bold text-xs tracking-[0.15em] uppercase transition-all duration-300 hover:shadow-[0_0_25px_rgba(226,1,45,0.3)] group whitespace-nowrap"
+                  >
+                    <Sparkles size={16} className="group-hover:rotate-12 transition-transform duration-300" />
+                    {language === 'vi' ? 'THỬ ĐỒ' : 'TRY ON'}
+                  </Link>
+                )}
+
                 <button className="w-16 h-16 border border-t1-gray/40 flex items-center justify-center text-gray-400 hover:text-white hover:border-white transition-all duration-300">
                   <Heart size={20} />
                 </button>
