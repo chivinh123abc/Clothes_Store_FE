@@ -1,10 +1,14 @@
 /* eslint-disable indent */
 import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { LayoutDashboard, ShoppingBag, Users, LogOut, ChevronRight, Layers, Grid, Package, Percent } from 'lucide-react'
+import {
+  LayoutDashboard, ShoppingBag, Users, LogOut, ChevronRight,
+  Layers, Grid, Package, Percent, Sun, Moon
+} from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useAuth } from '~/hooks/useAuth'
 import NotificationDropdown from '~/components/Navbar/NotificationDropdown'
+import { useAdminTheme } from '~/contexts/AdminThemeContext'
 
 interface AdminLayoutProps {
   children: React.ReactNode
@@ -12,6 +16,7 @@ interface AdminLayoutProps {
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const { logout, user } = useAuth()
+  const { theme, themeMode, toggleTheme } = useAdminTheme()
   const location = useLocation()
 
   const menuItems = [
@@ -25,13 +30,13 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   ]
 
   return (
-    <div className="flex min-h-screen bg-[#050505] text-white">
+    <div className={`flex min-h-screen transition-colors duration-300 ${theme.getBgClass()}`}>
       {/* Sidebar */}
-      <aside className="w-64 bg-[#0a0a0a] border-r border-white/5 flex flex-col fixed inset-y-0 z-50">
+      <aside className={`w-64 flex flex-col fixed inset-y-0 z-50 transition-colors duration-300 ${theme.getSidebarBgClass()}`}>
         <div className="p-8">
           <Link to="/" className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-t1-red flex items-center justify-center font-oswald font-black italic text-xl">T1</div>
-            <span className="font-oswald font-black italic tracking-tighter text-xl uppercase">Admin Panel</span>
+            <div className="w-8 h-8 bg-t1-red flex items-center justify-center font-oswald font-black italic text-xl text-white">T1</div>
+            <span className={`font-oswald font-black italic tracking-tighter text-xl uppercase ${theme.getTextClass()}`}>Admin Panel</span>
           </Link>
         </div>
 
@@ -42,10 +47,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 group ${isActive
-                  ? 'bg-t1-red text-white'
-                  : 'text-gray-500 hover:bg-white/5 hover:text-white'
-                  }`}
+                className={`flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 group ${
+                  isActive
+                    ? theme.getMenuActiveBtnClass()
+                    : theme.getMenuInactiveBtnClass()
+                }`}
               >
                 <div className="flex items-center gap-3">
                   {item.icon}
@@ -57,9 +63,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           })}
         </nav>
 
-        <div className="p-6 border-t border-white/5 space-y-4">
+        <div className={`p-6 border-t space-y-4 transition-colors duration-300 ${theme.getBorderClass()}`}>
           <div className="flex items-center gap-3 px-2">
-            <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-tr from-t1-red to-red-900 flex items-center justify-center font-bold">
+            <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-tr from-t1-red to-red-900 flex items-center justify-center font-bold text-white shrink-0">
               {user?.avatar ? (
                 <img
                   src={user.avatar}
@@ -72,13 +78,17 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               )}
             </div>
             <div className="flex-1 overflow-hidden">
-              <p className="text-sm font-bold truncate">{user?.username}</p>
-              <p className="text-[10px] text-gray-500 uppercase tracking-widest font-oswald">Administrator</p>
+              <p className={`text-sm font-bold truncate ${theme.getTextClass()}`}>{user?.username}</p>
+              <p className={`text-[10px] uppercase tracking-widest font-oswald ${theme.getTextMutedClass()}`}>Administrator</p>
             </div>
           </div>
           <button
             onClick={logout}
-            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-white/5 text-gray-400 hover:bg-red-900/20 hover:text-t1-red transition-all duration-200"
+            className={`w-full flex items-center justify-center gap-2 py-3 px-4 rounded-lg transition-all duration-200 ${
+              themeMode === 'light'
+                ? 'bg-gray-100 text-gray-700 hover:bg-red-50 hover:text-t1-red border border-gray-200'
+                : 'bg-white/5 text-gray-400 hover:bg-red-900/20 hover:text-t1-red'
+            }`}
           >
             <LogOut size={18} />
             <span className="font-oswald font-bold tracking-widest uppercase text-xs">Sign Out</span>
@@ -88,15 +98,31 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
       {/* Main Content */}
       <main className="flex-1 ml-64 min-h-screen">
-        <header className="h-20 border-b border-white/5 flex items-center justify-between px-10 sticky top-0 bg-[#050505]/80 backdrop-blur-md z-40">
-          <h2 className="font-oswald font-black italic text-2xl uppercase tracking-tight">
+        <header className={`h-20 border-b flex items-center justify-between px-10 sticky top-0 z-40 transition-colors duration-300 ${theme.getHeaderBgClass()}`}>
+          <h2 className={`font-oswald font-black italic text-2xl uppercase tracking-tight ${theme.getTextClass()}`}>
             {menuItems.find(i => i.path === location.pathname)?.label || 'Admin'}
           </h2>
+          
           <div className="flex items-center gap-6">
+            {/* Theme Toggle Button using Factory Method */}
+            <button
+              onClick={toggleTheme}
+              className={`p-2.5 rounded-lg border transition-all duration-300 ${
+                themeMode === 'light'
+                  ? 'border-gray-200 hover:bg-gray-100 text-gray-700'
+                  : 'border-white/5 hover:bg-white/5 text-gray-300'
+              }`}
+              title={themeMode === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+            >
+              {themeMode === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+            </button>
+
             <NotificationDropdown />
-            <div className="h-4 w-px bg-white/10" />
+            
+            <div className={`h-4 w-px transition-colors duration-300 ${theme.getBorderClass()}`} />
+            
             <div className="flex items-center gap-4">
-              <span className="text-[10px] font-oswald text-gray-500 tracking-[0.3em] uppercase">Status: Live</span>
+              <span className={`text-[10px] font-oswald tracking-[0.3em] uppercase ${theme.getTextMutedClass()}`}>Status: Live</span>
               <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
             </div>
           </div>

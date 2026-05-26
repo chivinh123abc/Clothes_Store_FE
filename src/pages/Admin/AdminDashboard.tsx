@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react'
-import { ShoppingBag, TrendingUp, Users, DollarSign, Layers, Grid, Loader2, ArrowRight, Sparkles, AlertCircle, ShoppingCart } from 'lucide-react'
+import {
+  ShoppingBag, TrendingUp, Users, DollarSign, Layers,
+  Grid, Loader2, ArrowRight, Sparkles, AlertCircle, ShoppingCart
+} from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { orderApi } from '~/apis/orderApi'
@@ -8,6 +11,7 @@ import type { Product } from '~/types/product'
 import { userApi } from '~/apis/userApi'
 import { formatPrice } from '~/utils/format'
 import { useLanguage } from '~/contexts/LanguageContext'
+import { useAdminTheme } from '~/contexts/AdminThemeContext'
 
 interface Order {
   order_id: number
@@ -46,6 +50,7 @@ const STATUS_LABELS = {
 
 const AdminDashboard = () => {
   const { language } = useLanguage()
+  const { theme, themeMode } = useAdminTheme()
   const [orders, setOrders] = useState<Order[]>([])
   const [products, setProducts] = useState<Product[]>([])
   const [users, setUsers] = useState<UserDto[]>([])
@@ -167,19 +172,19 @@ const AdminDashboard = () => {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
-              className="bg-[#0a0a0a] border border-white/5 p-6 rounded-2xl hover:border-white/10 transition-all duration-300 relative group cursor-pointer overflow-hidden"
+              className={`p-6 rounded-2xl transition-all duration-300 relative group cursor-pointer overflow-hidden ${theme.getCardBgClass()}`}
             >
               <div className="absolute top-0 left-0 w-1 h-full bg-transparent group-hover:bg-t1-red transition-all duration-300" />
               <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-white/5 rounded-xl group-hover:bg-white/10 transition-colors">
+                <div className={`p-3 rounded-xl transition-colors ${themeMode === 'light' ? 'bg-gray-100 group-hover:bg-gray-200' : 'bg-white/5 group-hover:bg-white/10'}`}>
                   {stat.icon}
                 </div>
                 <span className="text-[10px] font-oswald font-bold text-green-500 bg-green-500/10 px-2 py-1 rounded-full">
                   {stat.change}
                 </span>
               </div>
-              <p className="font-oswald text-xs text-gray-500 uppercase tracking-widest mb-1 group-hover:text-gray-300 transition-colors">{stat.label}</p>
-              <p className="font-oswald font-black text-2xl italic tracking-tight text-white group-hover:text-t1-red transition-colors">{stat.value}</p>
+              <p className={`font-oswald text-xs uppercase tracking-widest mb-1 group-hover:text-t1-red transition-colors ${theme.getTextMutedClass()}`}>{stat.label}</p>
+              <p className={`font-oswald font-black text-2xl italic tracking-tight group-hover:text-t1-red transition-colors ${theme.getTextClass()}`}>{stat.value}</p>
             </motion.div>
           </Link>
         ))}
@@ -188,37 +193,37 @@ const AdminDashboard = () => {
       {/* Management Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Link to="/admin/products" className="group">
-          <div className="bg-[#0a0a0a] border border-white/5 p-8 rounded-2xl group-hover:border-t1-red/30 transition-all duration-300 relative overflow-hidden">
+          <div className={`p-8 rounded-2xl group-hover:border-t1-red/30 transition-all duration-300 relative overflow-hidden ${theme.getCardBgClass()}`}>
             <div className="absolute top-0 right-0 w-24 h-24 bg-t1-red/5 rounded-full blur-2xl group-hover:bg-t1-red/10 transition-all" />
             <ShoppingBag className="text-gray-500 group-hover:text-t1-red mb-4 transition-colors" size={32} />
-            <h4 className="font-oswald font-black text-xl uppercase tracking-tight text-white">
+            <h4 className={`font-oswald font-black text-xl uppercase tracking-tight ${theme.getTextClass()}`}>
               {language === 'vi' ? 'Sản phẩm' : 'Products'}
             </h4>
-            <p className="text-xs text-gray-500 mt-1 uppercase tracking-widest font-oswald">
+            <p className={`text-xs mt-1 uppercase tracking-widest font-oswald ${theme.getTextMutedClass()}`}>
               {language === 'vi' ? 'Quản lý kho & Biến thể' : 'Manage inventory & variants'}
             </p>
           </div>
         </Link>
         <Link to="/admin/categories" className="group">
-          <div className="bg-[#0a0a0a] border border-white/5 p-8 rounded-2xl group-hover:border-blue-500/30 transition-all duration-300 relative overflow-hidden">
+          <div className={`p-8 rounded-2xl group-hover:border-blue-500/30 transition-all duration-300 relative overflow-hidden ${theme.getCardBgClass()}`}>
             <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl group-hover:bg-blue-500/10 transition-all" />
             <Layers className="text-gray-500 group-hover:text-blue-500 mb-4 transition-colors" size={32} />
-            <h4 className="font-oswald font-black text-xl uppercase tracking-tight text-white">
+            <h4 className={`font-oswald font-black text-xl uppercase tracking-tight ${theme.getTextClass()}`}>
               {language === 'vi' ? 'Danh mục' : 'Categories'}
             </h4>
-            <p className="text-xs text-gray-500 mt-1 uppercase tracking-widest font-oswald">
+            <p className={`text-xs mt-1 uppercase tracking-widest font-oswald ${theme.getTextMutedClass()}`}>
               {language === 'vi' ? 'Tổ chức phân loại sản phẩm' : 'Organize product types'}
             </p>
           </div>
         </Link>
         <Link to="/admin/collections" className="group">
-          <div className="bg-[#0a0a0a] border border-white/5 p-8 rounded-2xl group-hover:border-purple-500/30 transition-all duration-300 relative overflow-hidden">
+          <div className={`p-8 rounded-2xl group-hover:border-purple-500/30 transition-all duration-300 relative overflow-hidden ${theme.getCardBgClass()}`}>
             <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/5 rounded-full blur-2xl group-hover:bg-purple-500/10 transition-all" />
             <Grid className="text-gray-500 group-hover:text-purple-500 mb-4 transition-colors" size={32} />
-            <h4 className="font-oswald font-black text-xl uppercase tracking-tight text-white">
+            <h4 className={`font-oswald font-black text-xl uppercase tracking-tight ${theme.getTextClass()}`}>
               {language === 'vi' ? 'Bộ sưu tập' : 'Collections'}
             </h4>
-            <p className="text-xs text-gray-500 mt-1 uppercase tracking-widest font-oswald">
+            <p className={`text-xs mt-1 uppercase tracking-widest font-oswald ${theme.getTextMutedClass()}`}>
               {language === 'vi' ? 'Nhóm sản phẩm chiến dịch' : 'Handle hierarchical grouping'}
             </p>
           </div>
@@ -228,10 +233,10 @@ const AdminDashboard = () => {
       {/* Recent Activity / Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Recent Sales Panel */}
-        <div className="bg-[#0a0a0a] border border-white/5 rounded-2xl p-8 flex flex-col justify-between">
+        <div className={`rounded-2xl p-8 flex flex-col justify-between ${theme.getCardBgClass()}`}>
           <div>
             <div className="flex items-center justify-between mb-6">
-              <h3 className="font-oswald font-black italic text-xl uppercase tracking-tight text-white flex items-center gap-2">
+              <h3 className={`font-oswald font-black italic text-xl uppercase tracking-tight flex items-center gap-2 ${theme.getTextClass()}`}>
                 <Sparkles size={18} className="text-t1-red" />
                 {language === 'vi' ? 'Đơn hàng vừa qua' : 'Recent Sales'}
               </h3>
@@ -242,7 +247,7 @@ const AdminDashboard = () => {
 
             <div className="space-y-4">
               {recentSales.length === 0 ? (
-                <div className="text-center py-12 text-gray-600 font-oswald text-xs tracking-widest uppercase">
+                <div className={`text-center py-12 font-oswald text-xs tracking-widest uppercase ${theme.getTextMutedClass()}`}>
                   {language === 'vi' ? 'CHƯA CÓ ĐƠN HÀNG NÀO' : 'NO GIVEN SALES YET'}
                 </div>
               ) : (
@@ -251,17 +256,17 @@ const AdminDashboard = () => {
                   const badgeLabel = STATUS_LABELS[order.status as keyof typeof STATUS_LABELS]?.[language as 'vi' | 'en'] || order.status
 
                   return (
-                    <div key={order.order_id} className="flex items-center justify-between py-3.5 border-b border-white/5 last:border-0 hover:bg-white/[0.01] px-2 transition-all">
+                    <div key={order.order_id} className={`flex items-center justify-between py-3.5 border-b last:border-0 px-2 transition-all ${theme.getBorderClass()} ${theme.getHoverBgClass()}`}>
                       <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-white/5 rounded-lg flex items-center justify-center text-gray-400 font-oswald font-black">
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-oswald font-black ${themeMode === 'light' ? 'bg-gray-100 text-gray-700' : 'bg-white/5 text-gray-400'}`}>
                           {order.user_name ? order.user_name.substring(0, 2).toUpperCase() : 'US'}
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-white group-hover:text-t1-red transition-colors">
+                          <p className={`text-sm font-bold transition-colors ${theme.getTextClass()} group-hover:text-t1-red`}>
                             {order.user_name || order.user_email || 'Customer'}
                           </p>
                           <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-[10px] text-gray-500 font-oswald uppercase tracking-widest">
+                            <span className={`text-[10px] font-oswald uppercase tracking-widest ${theme.getTextMutedClass()}`}>
                               #T1-000{order.order_id}
                             </span>
                             <span className={`text-[8px] font-oswald font-bold tracking-widest uppercase px-2 py-0.5 rounded border ${badgeColor}`}>
@@ -272,7 +277,7 @@ const AdminDashboard = () => {
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-black text-t1-red">{formatPrice(parseFloat(order.total_amount || '0'), language)}</p>
-                        <p className="text-[9px] text-gray-600 font-oswald uppercase tracking-widest mt-0.5">
+                        <p className={`text-[9px] font-oswald uppercase tracking-widest mt-0.5 ${theme.getTextMutedClass()}`}>
                           {new Date(order.created_at).toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US')}
                         </p>
                       </div>
@@ -285,9 +290,9 @@ const AdminDashboard = () => {
         </div>
 
         {/* Dynamic Analytics Chart Panel */}
-        <div className="bg-[#0a0a0a] border border-white/5 rounded-2xl p-8 flex flex-col justify-between min-h-[400px]">
+        <div className={`rounded-2xl p-8 flex flex-col justify-between min-h-[400px] ${theme.getCardBgClass()}`}>
           <div>
-            <h3 className="font-oswald font-black italic text-xl uppercase mb-6 tracking-tight text-white flex items-center gap-2">
+            <h3 className={`font-oswald font-black italic text-xl uppercase mb-6 tracking-tight flex items-center gap-2 ${theme.getTextClass()}`}>
               <TrendingUp size={18} className="text-t1-red" />
               {language === 'vi' ? 'Doanh Thu 7 Ngày Qua' : '7-Day Revenue Analytics'}
             </h3>
@@ -308,8 +313,8 @@ const AdminDashboard = () => {
                   const gridVal = maxRevenue * (1 - ratio)
                   return (
                     <g key={index} className="opacity-20">
-                      <line x1={paddingX} y1={y} x2={chartWidth - paddingX} y2={y} stroke="white" strokeWidth="0.5" strokeDasharray="4" />
-                      <text x={paddingX - 10} y={y + 3} textAnchor="end" className="fill-gray-500 font-oswald text-[9px] font-bold">
+                      <line x1={paddingX} y1={y} x2={chartWidth - paddingX} y2={y} stroke={themeMode === 'light' ? '#000' : '#fff'} strokeWidth="0.5" strokeDasharray="4" />
+                      <text x={paddingX - 10} y={y + 3} textAnchor="end" className={`font-oswald text-[9px] font-bold ${themeMode === 'light' ? 'fill-gray-600' : 'fill-gray-400'}`}>
                         {gridVal >= 1000 ? `$${(gridVal / 1000).toFixed(1)}k` : `$${Math.round(gridVal)}`}
                       </text>
                     </g>
@@ -341,7 +346,7 @@ const AdminDashboard = () => {
                       cx={p.x}
                       cy={p.y}
                       r={hoveredPoint === i ? 6 : 4}
-                      className="fill-[#0a0a0a] stroke-t1-red"
+                      className={`${themeMode === 'light' ? 'fill-white' : 'fill-[#0a0a0a]'} stroke-t1-red`}
                       strokeWidth={hoveredPoint === i ? 3 : 2}
                     />
                     {hoveredPoint === i && (
@@ -362,7 +367,7 @@ const AdminDashboard = () => {
                     x={p.x}
                     y={chartHeight - 10}
                     textAnchor="middle"
-                    className="fill-gray-500 font-oswald text-[9px] tracking-wider uppercase font-bold"
+                    className={`font-oswald text-[9px] tracking-wider uppercase font-bold ${themeMode === 'light' ? 'fill-gray-600' : 'fill-gray-400'}`}
                   >
                     {p.label.split(',')[0]}
                   </text>
@@ -376,7 +381,11 @@ const AdminDashboard = () => {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 10 }}
-                    className="absolute bg-black/95 border border-t1-red/30 p-3 rounded-lg shadow-2xl z-20 pointer-events-none text-left"
+                    className={`absolute border p-3 rounded-lg shadow-2xl z-20 pointer-events-none text-left ${
+                      themeMode === 'light'
+                        ? 'bg-white border-gray-200 text-gray-900 shadow-md'
+                        : 'bg-black/95 border-t1-red/30 text-white shadow-2xl'
+                    }`}
                     style={{
                       left: `${(points[hoveredPoint].x / chartWidth) * 90}%`,
                       top: `${(points[hoveredPoint].y / chartHeight) * 55}%`
@@ -388,7 +397,7 @@ const AdminDashboard = () => {
                     <p className="font-oswald font-black text-sm text-t1-red mt-1">
                       {formatPrice(points[hoveredPoint].val, language)}
                     </p>
-                    <p className="text-[9px] text-gray-400 mt-0.5">
+                    <p className={`text-[9px] mt-0.5 ${themeMode === 'light' ? 'text-gray-600' : 'text-gray-400'}`}>
                       {points[hoveredPoint].count} {language === 'vi' ? 'đơn hàng' : 'orders'}
                     </p>
                   </motion.div>
@@ -397,7 +406,7 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-          <div className="pt-4 border-t border-white/5 flex justify-between text-[10px] text-gray-500 font-oswald tracking-widest uppercase">
+          <div className={`pt-4 border-t flex justify-between text-[10px] font-oswald tracking-widest uppercase ${theme.getBorderClass()} ${theme.getTextMutedClass()}`}>
             <span>{language === 'vi' ? 'HOẠT ĐỘNG: LIVE' : 'STATUS: LIVE'}</span>
             <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />

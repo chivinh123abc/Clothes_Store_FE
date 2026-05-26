@@ -13,6 +13,7 @@ import Collection from '../pages/Collection/Collection'
 import MyPage from '../pages/MyPage/MyPage'
 import SearchPage from '../pages/Search/SearchPage'
 import AdminLayout from '../components/layout/AdminLayout'
+import { AdminThemeProvider } from '../contexts/AdminThemeContext'
 import AdminDashboard from '../pages/Admin/AdminDashboard'
 import AdminProductList from '../pages/Admin/AdminProductList'
 import AdminUserList from '../pages/Admin/AdminUserList'
@@ -36,7 +37,11 @@ const AdminProtected = ({ children }: { children: React.ReactElement }) => {
   const { user, isLoading } = useAuth()
   if (isLoading) return null
   if (!user || Number(user.role) !== 1) return <Navigate to='/' />
-  return <AdminLayout>{children}</AdminLayout>
+  return (
+    <AdminThemeProvider>
+      <AdminLayout>{children}</AdminLayout>
+    </AdminThemeProvider>
+  )
 }
 
 export default function AppRoutes() {
