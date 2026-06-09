@@ -266,6 +266,7 @@ export const en = {
     upTo: 'Up to',
     category: 'Category',
     browse: 'Browse',
+    new: 'New',
     newArrivals: 'New Arrivals',
     bestSellers: 'Best Sellers',
     legacy: 'Legacy',

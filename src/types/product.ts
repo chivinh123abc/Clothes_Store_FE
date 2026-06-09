@@ -5,6 +5,7 @@ export interface ProductItem {
   product_item_image: string | null;
   product_item_price: number;
   discount_id?: number | null;
+  discount_percent?: number | null;
   sale_price?: number | null;
   size?: string;
 }

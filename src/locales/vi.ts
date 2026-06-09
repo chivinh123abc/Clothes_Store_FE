@@ -268,6 +268,7 @@ export const vi: TranslationKeys = {
     upTo: 'Lên đến',
     category: 'Danh mục',
     browse: 'Khám phá',
+    new: 'Mới',
     newArrivals: 'Sản phẩm mới',
     bestSellers: 'Bán chạy nhất',
     legacy: 'Lưu trữ',

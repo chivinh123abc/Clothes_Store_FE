@@ -1,7 +1,8 @@
 /* eslint-disable indent */
 import { useEffect, useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import BGImage from '~/assets/Background/T1 Poster.jpg'
+import bestSellersBg from '~/assets/Background/best_sellers_bg.png'
+import shopAllBg from '~/assets/Background/shop_all_bg.png'
 import { ProductCard } from '~/components/Product/ProductCard'
 import type { Product } from '~/types/product'
 // import { combinedProducts } from '~/data/products'
@@ -270,14 +271,33 @@ export function ProductList({ filter = 'all' }: ProductListProps) {
   useEffect(() => {
     setPriceRange([0, maxPrice])
   }, [maxPrice])
+  const newArrivalThresholdDate = useMemo(() => {
+    if (cProducts.length === 0) return new Date()
+    const sortedDates = [...cProducts]
+      .map(p => new Date(p.created_at || 0).getTime())
+      .sort((a, b) => b - a)
+    const index = Math.min(15, sortedDates.length - 1)
+    return new Date(sortedDates[index] || 0)
+  }, [cProducts])
+
   const isNewProduct = (createdAt: string) => {
     if (!createdAt) return false
     const createdDate = new Date(createdAt)
     const now = new Date()
-    const diffTime = now.getTime() - createdDate.getTime()
-    const diffDays = diffTime / (1000 * 60 * 60 * 24)
-    return diffDays <= NEW_PRODUCT_DAYS
+    const hasRecentProducts = cProducts.some(p => {
+      const pDate = new Date(p.created_at || 0)
+      return (now.getTime() - pDate.getTime()) / (1000 * 60 * 60 * 24) <= NEW_PRODUCT_DAYS
+    })
+
+    if (hasRecentProducts) {
+      const diffTime = now.getTime() - createdDate.getTime()
+      const diffDays = diffTime / (1000 * 60 * 60 * 24)
+      return diffDays <= NEW_PRODUCT_DAYS
+    } else {
+      return createdDate.getTime() >= newArrivalThresholdDate.getTime()
+    }
   }
+
 
   const getFilteredProducts = () => {
     let products = [...cProducts]
@@ -313,7 +333,10 @@ export function ProductList({ filter = 'all' }: ProductListProps) {
     }
 
     if (categoryFilters.length > 0) {
-      products = products.filter((p) => categoryFilters.includes((p.category_name || '').toLowerCase()))
+      products = products.filter((p) => {
+        const pCat = (p.category_name || '').toLowerCase().replace('-', '')
+        return categoryFilters.some(f => f.toLowerCase().replace('-', '') === pCat)
+      })
     }
 
     if (searchQuery) {
@@ -363,7 +386,7 @@ export function ProductList({ filter = 'all' }: ProductListProps) {
       return {
         title: t('shop.bestSellers'),
         subtitle: 'Clothes Store',
-        bannerImage: BGImage,
+        bannerImage: bestSellersBg,
         highlight: t('shop.topRated')
       }
     }
@@ -467,7 +490,7 @@ export function ProductList({ filter = 'all' }: ProductListProps) {
     return {
       title: 'Shop All',
       subtitle: 'Clothes Store',
-      bannerImage: 'https://images.unsplash.com/photo-1647221598398-944733671239?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
+      bannerImage: shopAllBg,
       highlight: 'Explore the full our collection'
     }
   }
@@ -897,3 +920,4 @@ export function ProductList({ filter = 'all' }: ProductListProps) {
     </div>
   )
 }
+

@@ -2,7 +2,6 @@ import React from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import Home from '../pages/Home/Home'
-import Register from '../pages/Register'
 import Best from '../pages/Best/Best'
 import New from '../pages/New/New'
 import Legacy from '../pages/Legacy/Legacy'
@@ -48,7 +47,7 @@ export default function AppRoutes() {
   return (
     <Routes>
       <Route path='/' element={<Home />} />
-      <Route path='/register' element={<Register />} />
+      <Route path='/register' element={<Navigate to='/' replace />} />
       <Route path='/verify-account' element={<VerifyAccount />} />
       <Route path='/new' element={<New />} />
       <Route path='/shop' element={<Shop />} />

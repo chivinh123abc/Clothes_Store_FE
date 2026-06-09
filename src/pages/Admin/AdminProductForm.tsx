@@ -102,6 +102,24 @@ const AdminProductForm = () => {
     showToast('Image applied to all variants', 'success')
   }
 
+  const handleCopyPriceToAll = (price: number) => {
+    const newItems = formData.items.map((item) => ({
+      ...item,
+      product_item_price: price
+    }))
+    setFormData({ ...formData, items: newItems })
+    showToast('Price applied to all variants', 'success')
+  }
+
+  const handleCopyDiscountToAll = (discountId: number | null) => {
+    const newItems = formData.items.map((item) => ({
+      ...item,
+      discount_id: discountId
+    }))
+    setFormData({ ...formData, items: newItems })
+    showToast('Discount applied to all variants', 'success')
+  }
+
   const fetchData = useCallback(async () => {
     try {
       const [catsRes, colsRes, discRes, productRes] = await Promise.all([
@@ -631,7 +649,19 @@ const AdminProductForm = () => {
 
                       {/* 3. Price */}
                       <div className="space-y-2">
-                        <label className="font-oswald text-[9px] uppercase tracking-widest text-gray-600">Price ($)</label>
+                        <div className="flex justify-between items-center w-full">
+                          <label className="font-oswald text-[9px] uppercase tracking-widest text-gray-600 block">Price ($)</label>
+                          {formData.items.length > 1 && item.product_item_price !== undefined && item.product_item_price > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => handleCopyPriceToAll(item.product_item_price)}
+                              className="font-oswald text-[8px] uppercase tracking-widest text-t1-red hover:text-white transition-colors duration-200"
+                              title="Apply this price to all variants"
+                            >
+                              Copy
+                            </button>
+                          )}
+                        </div>
                         <input
                           type="number"
                           min={0}
@@ -667,7 +697,19 @@ const AdminProductForm = () => {
 
                       {/* 5. Discount */}
                       <div className="space-y-2">
-                        <label className="font-oswald text-[9px] uppercase tracking-widest text-gray-600">Discount</label>
+                        <div className="flex justify-between items-center w-full">
+                          <label className="font-oswald text-[9px] uppercase tracking-widest text-gray-600 block">Discount</label>
+                          {formData.items.length > 1 && item.discount_id !== undefined && (
+                            <button
+                              type="button"
+                              onClick={() => handleCopyDiscountToAll(item.discount_id)}
+                              className="font-oswald text-[8px] uppercase tracking-widest text-t1-red hover:text-white transition-colors duration-200"
+                              title="Apply this discount to all variants"
+                            >
+                              Copy
+                            </button>
+                          )}
+                        </div>
                         <select
                           value={item.discount_id || ''}
                           onChange={(e) => {

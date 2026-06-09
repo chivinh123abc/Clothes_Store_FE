@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { FreeMode, Navigation, Scrollbar } from 'swiper/modules'
@@ -35,13 +35,32 @@ export const ProductTabContainer = () => {
   }, [])
 
   const NEW_PRODUCT_DAYS = 7
+
+  const newArrivalThresholdDate = useMemo(() => {
+    if (allProducts.length === 0) return new Date()
+    const sortedDates = [...allProducts]
+      .map(p => new Date(p.created_at || 0).getTime())
+      .sort((a, b) => b - a)
+    const index = Math.min(15, sortedDates.length - 1)
+    return new Date(sortedDates[index] || 0)
+  }, [allProducts])
+
   const isNewProduct = (createdAt: string) => {
     if (!createdAt) return false
     const createdDate = new Date(createdAt)
     const now = new Date()
-    const diffTime = now.getTime() - createdDate.getTime()
-    const diffDays = diffTime / (1000 * 60 * 60 * 24)
-    return diffDays <= NEW_PRODUCT_DAYS
+    const hasRecentProducts = allProducts.some(p => {
+      const pDate = new Date(p.created_at || 0)
+      return (now.getTime() - pDate.getTime()) / (1000 * 60 * 60 * 24) <= NEW_PRODUCT_DAYS
+    })
+
+    if (hasRecentProducts) {
+      const diffTime = now.getTime() - createdDate.getTime()
+      const diffDays = diffTime / (1000 * 60 * 60 * 24)
+      return diffDays <= NEW_PRODUCT_DAYS
+    } else {
+      return createdDate.getTime() >= newArrivalThresholdDate.getTime()
+    }
   }
 
   const getTabProducts = () => {

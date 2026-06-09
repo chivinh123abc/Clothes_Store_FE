@@ -24,8 +24,10 @@ import {
 import { useAuth } from '~/hooks/useAuth'
 import { reviewApi } from '~/apis/reviewApi'
 import { useCart } from '~/contexts/CartContext'
+import { useFavorites } from '~/contexts/FavoritesContext'
 import { combinedProducts } from '~/data/products'
 import { ProductCard } from '~/components/Product/ProductCard'
+import LoginModal from '~/components/Modals/LoginModal'
 import Layout from '~/components/layout/Layout'
 import Footer from '~/components/layout/Footer'
 import { useLanguage } from '~/contexts/LanguageContext'
@@ -51,6 +53,9 @@ function ProductDetailContent({ product }: { product: Product }) {
   const { addCartItem } = useCart()
   const { t, language } = useLanguage()
   const { user } = useAuth()
+  const { isFavorite, toggleFavorite } = useFavorites()
+  const [isLoginOpen, setIsLoginOpen] = useState(false)
+  const favorited = isFavorite(product.product_id)
 
   const [productReviews, setProductReviews] = useState<any[]>([])
   const [isLoadingReviews, setIsLoadingReviews] = useState(false)
@@ -304,6 +309,10 @@ function ProductDetailContent({ product }: { product: Product }) {
   }, [product])
 
   // Extract unique sizes from product items and sort them in standard order
+  const hasSizeSelector = useMemo(() => {
+    return ['tshirt', 'hoodie', 'jacket', 'pants', 'shirt', 'sweater', 'shoes'].includes((product.category_name || '').toLowerCase())
+  }, [product.category_name])
+
   const availableSizes = useMemo(() => {
     if (!product?.items) return []
     const distinctSizes = [...new Set(product.items.map(item => item.size).filter(Boolean))] as string[]
@@ -366,6 +375,16 @@ function ProductDetailContent({ product }: { product: Product }) {
     setTimeout(() => setIsAdded(false), 2000)
   }
 
+  const handleFavoriteClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!user) {
+      setIsLoginOpen(true)
+      return
+    }
+    toggleFavorite(product)
+  }
+
   return (
     <Layout footer={<Footer />} bleed={true}>
       {/* Breadcrumbs */}
@@ -375,7 +394,7 @@ function ProductDetailContent({ product }: { product: Product }) {
           <ChevronRight size={12} className="text-white/50" />
           <Link to="/shop" className="hover:text-white transition-colors">{t('nav.shop').toUpperCase()}</Link>
           <ChevronRight size={12} className="text-white/50" />
-          <span className="text-t1-red">{t(`categories.${product.category_name}`)}</span>
+          <span className="text-t1-red">{product.category_name ? t(`categories.${product.category_name.toLowerCase()}`) : ''}</span>
           <ChevronRight size={12} className="text-white/50" />
           <span className="text-white truncate max-w-[150px]">{product.product_name}</span>
         </div>
@@ -446,7 +465,7 @@ function ProductDetailContent({ product }: { product: Product }) {
               </p>
 
               {/* Size Selector */}
-              {availableSizes.length > 0 && (
+              {availableSizes.length > 0 && hasSizeSelector && (
                 <div className="mb-8">
                   <div className="flex justify-between items-center mb-4">
                     <span className="text-xs font-oswald font-bold tracking-[0.2em] uppercase text-gray-400">{t('productDetail.selectSize')}</span>
@@ -555,8 +574,15 @@ function ProductDetailContent({ product }: { product: Product }) {
                   </Link>
                 )}
 
-                <button className="w-16 h-16 border border-t1-gray/40 flex items-center justify-center text-gray-400 hover:text-white hover:border-white transition-all duration-300">
-                  <Heart size={20} />
+                <button
+                  onClick={handleFavoriteClick}
+                  className={`w-16 h-16 border flex items-center justify-center transition-all duration-300 ${
+                    favorited
+                      ? 'bg-t1-red border-t1-red text-white shadow-[0_0_15px_rgba(226,1,45,0.4)]'
+                      : 'border-t1-gray/40 text-gray-400 hover:text-white hover:border-white'
+                  }`}
+                >
+                  <Heart size={20} className={favorited ? 'fill-white text-white' : ''} />
                 </button>
                 <button className="w-16 h-16 border border-t1-gray/40 flex items-center justify-center text-gray-400 hover:text-white hover:border-white transition-all duration-300">
                   <Share2 size={20} />
@@ -1134,6 +1160,7 @@ function ProductDetailContent({ product }: { product: Product }) {
           </div>
         )}
       </AnimatePresence>
+      <LoginModal open={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
     </Layout>
   )
 }

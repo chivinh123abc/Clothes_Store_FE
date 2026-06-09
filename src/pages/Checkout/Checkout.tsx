@@ -89,6 +89,7 @@ export default function Checkout() {
       return
     }
 
+    let createdOrderId: number | null = null
     try {
       setIsSubmitting(true)
 
@@ -102,6 +103,7 @@ export default function Checkout() {
       }
 
       const newOrder = await orderApi.createOrder(orderPayload)
+      createdOrderId = newOrder.order_id
 
       // Notify the customer and admin immediately about the new order creation (regardless of MoMo or COD)
       addNotification(
@@ -197,6 +199,16 @@ export default function Checkout() {
       // eslint-disable-next-line no-console
       console.error('Error placing order:', error)
       showToast(error.response?.data?.message || 'Failed to place order. Please try again.', 'error')
+
+      // Clean up parent order if it was successfully created but items failed to save (e.g. out of stock)
+      if (createdOrderId) {
+        try {
+          await orderApi.deleteOrder(createdOrderId)
+        } catch (cleanupErr) {
+          // eslint-disable-next-line no-console
+          console.error('Failed to clean up orphaned order:', cleanupErr)
+        }
+      }
     } finally {
       setIsSubmitting(false)
     }

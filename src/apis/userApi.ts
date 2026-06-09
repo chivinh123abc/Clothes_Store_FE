@@ -58,5 +58,13 @@ export const userApi = {
   resendVerification: async (email: string): Promise<any> => {
     const response = await axiosClient.post('/user/resend-verification', { email })
     return response.data
+  },
+  forgotPassword: async (email: string): Promise<any> => {
+    const response = await axiosClient.post('/user/forgot-password', { email })
+    return response.data
+  },
+  resetPassword: async (data: any): Promise<any> => {
+    const response = await axiosClient.post('/user/reset-password', data)
+    return response.data
   }
 }

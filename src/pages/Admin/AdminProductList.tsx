@@ -18,6 +18,8 @@ import type { Category } from '~/apis/categoriesApi'
 import type { Collection } from '~/types/collection'
 import { useToast } from '~/contexts/ToastContext'
 import ConfirmModal from '~/components/ui/ConfirmModal'
+import { useLanguage } from '~/contexts/LanguageContext'
+import { formatPrice } from '~/utils/format'
 
 const AdminProductList = () => {
   const [products, setProducts] = useState<Product[]>([])
@@ -31,6 +33,115 @@ const AdminProductList = () => {
 
   const categoryFilterId = searchParams.get('category_id') ? parseInt(searchParams.get('category_id')!) : null
   const collectionFilterId = searchParams.get('collection_id') ? parseInt(searchParams.get('collection_id')!) : null
+  const statusFilter = searchParams.get('status') || null
+  const { language } = useLanguage()
+
+  // Helper to format price range with active language
+  const getPriceDisplay = (product: Product) => {
+    if (!product.items || product.items.length === 0) return 'N/A'
+    const prices = product.items.map(item => item.product_item_price)
+    const salePrices = product.items.map(item => item.sale_price || item.product_item_price)
+    
+    const minPrice = Math.min(...prices)
+    const maxPrice = Math.max(...prices)
+    const minSalePrice = Math.min(...salePrices)
+    const maxSalePrice = Math.max(...salePrices)
+
+    const hasSale = product.items.some(item => item.sale_price !== null && item.sale_price !== undefined)
+
+    if (hasSale) {
+      return (
+        <div className="flex flex-col">
+          <span className="font-oswald font-black text-t1-red italic text-sm">
+            {minSalePrice === maxSalePrice 
+              ? formatPrice(minSalePrice, language) 
+              : `${formatPrice(minSalePrice, language)} - ${formatPrice(maxSalePrice, language)}`}
+          </span>
+          <span className="text-[10px] text-gray-500 line-through">
+            {minPrice === maxPrice 
+              ? formatPrice(minPrice, language) 
+              : `${formatPrice(minPrice, language)} - ${formatPrice(maxPrice, language)}`}
+          </span>
+        </div>
+      )
+    }
+
+    return (
+      <span className="font-oswald text-gray-300 text-sm">
+        {minPrice === maxPrice 
+          ? formatPrice(minPrice, language) 
+          : `${formatPrice(minPrice, language)} - ${formatPrice(maxPrice, language)}`}
+      </span>
+    )
+  }
+
+  // Helper to render Stock & Status badges
+  const getStockStatus = (product: Product) => {
+    if (!product.items || product.items.length === 0) {
+      return (
+        <span className="text-[10px] font-oswald font-bold uppercase tracking-widest text-red-500 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/20">
+          No Variants
+        </span>
+      )
+    }
+
+    const totalStock = product.items.reduce((sum, item) => sum + (item.stock_quantity || 0), 0)
+
+    if (totalStock === 0) {
+      return (
+        <div className="flex flex-col gap-1 items-start">
+          <span className="text-[10px] font-oswald font-bold uppercase tracking-widest text-red-500 bg-red-500/10 px-2.5 py-1 rounded border border-red-500/20">
+            Out Of Stock
+          </span>
+          <span className="text-[10px] text-gray-500 font-oswald uppercase tracking-widest">Qty: 0</span>
+        </div>
+      )
+    }
+
+    if (totalStock <= 10) {
+      return (
+        <div className="flex flex-col gap-1 items-start">
+          <span className="text-[10px] font-oswald font-bold uppercase tracking-widest text-yellow-500 bg-yellow-500/10 px-2.5 py-1 rounded border border-yellow-500/20">
+            Low Stock
+          </span>
+          <span className="text-[10px] text-gray-400 font-oswald uppercase tracking-widest">Qty: {totalStock}</span>
+        </div>
+      )
+    }
+
+    return (
+      <div className="flex flex-col gap-1 items-start">
+        <span className="text-[10px] font-oswald font-bold uppercase tracking-widest text-green-500 bg-green-500/10 px-2.5 py-1 rounded border border-green-500/20">
+          In Stock
+        </span>
+        <span className="text-[10px] text-gray-400 font-oswald uppercase tracking-widest">Qty: {totalStock}</span>
+      </div>
+    )
+  }
+
+  // Helper to render discount badge
+  const getDiscountBadge = (product: Product) => {
+    if (!product.items || product.items.length === 0) return null
+    
+    const discounts = product.items
+      .map(item => item.discount_percent)
+      .filter((pct): pct is number => pct !== null && pct !== undefined && pct > 0)
+    
+    if (discounts.length > 0) {
+      const maxDiscount = Math.max(...discounts)
+      return (
+        <span className="text-[10px] font-oswald font-bold uppercase tracking-widest text-t1-red bg-t1-red/10 px-2.5 py-1 rounded-lg border border-t1-red/20 animate-pulse">
+          Sale -{maxDiscount}%
+        </span>
+      )
+    }
+
+    return (
+      <span className="text-[10px] font-oswald font-bold uppercase tracking-widest text-gray-600 bg-white/5 px-2.5 py-1 rounded-lg border border-white/5">
+        No Sale
+      </span>
+    )
+  }
 
   const fetchData = useCallback(async () => {
     try {
@@ -72,15 +183,32 @@ const AdminProductList = () => {
 
   const filteredProducts = useMemo(() => {
     return products.filter(p => {
+      const hasMatchingSku = p.items?.some(item => item.sku?.toLowerCase().includes(searchTerm.toLowerCase()))
       const matchesSearch = p.product_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.category_name?.toLowerCase().includes(searchTerm.toLowerCase())
+        p.category_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.product_slug.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (hasMatchingSku || false)
 
       const matchesCategory = categoryFilterId ? p.category_id === categoryFilterId : true
       const matchesCollection = collectionFilterId ? p.collections?.some(c => c.collection_id === collectionFilterId) : true
 
-      return matchesSearch && matchesCategory && matchesCollection
+      const totalStock = p.items?.reduce((sum, item) => sum + (item.stock_quantity || 0), 0) || 0
+      const hasDiscount = p.items?.some(item => item.discount_percent !== null && item.discount_percent !== undefined) || false
+
+      let matchesStatus = true
+      if (statusFilter === 'in_stock') {
+        matchesStatus = totalStock > 10
+      } else if (statusFilter === 'low_stock') {
+        matchesStatus = totalStock > 0 && totalStock <= 10
+      } else if (statusFilter === 'out_of_stock') {
+        matchesStatus = totalStock === 0
+      } else if (statusFilter === 'on_sale') {
+        matchesStatus = hasDiscount
+      }
+
+      return matchesSearch && matchesCategory && matchesCollection && matchesStatus
     })
-  }, [products, searchTerm, categoryFilterId, collectionFilterId])
+  }, [products, searchTerm, categoryFilterId, collectionFilterId, statusFilter])
 
   const setFilter = (key: string, value: string) => {
     const newParams = new URLSearchParams(searchParams)
@@ -132,7 +260,7 @@ const AdminProductList = () => {
           </div>
 
           {/* Filters Tray */}
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <div className="p-2 bg-white/5 rounded-lg border border-white/5 text-gray-500">
               <Filter size={14} />
             </div>
@@ -165,8 +293,21 @@ const AdminProductList = () => {
               ))}
             </select>
 
+            {/* Status Dropdown */}
+            <select
+              value={statusFilter || ''}
+              onChange={(e) => setFilter('status', e.target.value)}
+              className="bg-[#0a0a0a] border border-white/5 rounded-xl py-3 px-4 text-xs font-oswald uppercase tracking-widest focus:border-t1-red focus:outline-none transition-colors min-w-[140px]"
+            >
+              <option value="">All Statuses</option>
+              <option value="in_stock">In Stock</option>
+              <option value="low_stock">Low Stock</option>
+              <option value="out_of_stock">Out of Stock</option>
+              <option value="on_sale">On Sale</option>
+            </select>
+
             {/* Reset */}
-            {(categoryFilterId || collectionFilterId || searchTerm) && (
+            {(categoryFilterId || collectionFilterId || statusFilter || searchTerm) && (
               <button
                 onClick={clearFilters}
                 className="p-3 text-gray-500 hover:text-t1-red transition-colors"
@@ -193,6 +334,9 @@ const AdminProductList = () => {
               <tr className="border-b border-white/5 bg-white/[0.02]">
                 <th className="px-6 py-4 font-oswald text-[10px] uppercase tracking-[0.2em] text-gray-500">Product</th>
                 <th className="px-6 py-4 font-oswald text-[10px] uppercase tracking-[0.2em] text-gray-500">Category</th>
+                <th className="px-6 py-4 font-oswald text-[10px] uppercase tracking-[0.2em] text-gray-500">Pricing</th>
+                <th className="px-6 py-4 font-oswald text-[10px] uppercase tracking-[0.2em] text-gray-500">Stock & Status</th>
+                <th className="px-6 py-4 font-oswald text-[10px] uppercase tracking-[0.2em] text-gray-500">Discount</th>
                 <th className="px-6 py-4 font-oswald text-[10px] uppercase tracking-[0.2em] text-gray-500">Created At</th>
                 <th className="px-6 py-4 font-oswald text-[10px] uppercase tracking-[0.2em] text-gray-500 text-right">Actions</th>
               </tr>
@@ -202,8 +346,16 @@ const AdminProductList = () => {
                 <tr key={product.product_id} className="hover:bg-white/[0.01] transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-white/5 rounded-lg flex items-center justify-center font-bold text-gray-700">
-                        {product.product_name.charAt(0)}
+                      <div className="w-10 h-10 bg-white/5 rounded-lg flex items-center justify-center font-bold text-gray-400 overflow-hidden border border-white/5">
+                        {product.items?.[0]?.product_item_image ? (
+                          <img
+                            src={product.items[0].product_item_image}
+                            alt={product.product_name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          product.product_name.charAt(0)
+                        )}
                       </div>
                       <div>
                         <p className="font-bold text-sm group-hover:text-t1-red transition-colors">{product.product_name}</p>
@@ -215,6 +367,15 @@ const AdminProductList = () => {
                     <span className="text-xs bg-white/5 px-2 py-1 rounded text-gray-400 font-oswald uppercase tracking-widest">
                       {product.category_name || 'N/A'}
                     </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    {getPriceDisplay(product)}
+                  </td>
+                  <td className="px-6 py-4">
+                    {getStockStatus(product)}
+                  </td>
+                  <td className="px-6 py-4">
+                    {getDiscountBadge(product)}
                   </td>
                   <td className="px-6 py-4 text-xs text-gray-500">
                     {new Date(product.created_at).toLocaleDateString()}
