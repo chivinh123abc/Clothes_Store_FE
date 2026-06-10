@@ -130,13 +130,16 @@ function FavoritesDrawer({ open, onClose }: FavoritesDrawerProps) {
                             {!item.soldOut && (
                               <button
                                 onClick={() => {
+                                  const firstItem = item.items?.[0]
+                                  const stock = firstItem?.stock_quantity ?? 0
                                   addCartItem({
                                     id: item.product_id,
                                     name: item.product_name,
                                     price: salePrice ?? price,
+                                    originalPrice: salePrice ? price : null,
                                     imageUrl: image,
                                     size: 'M'
-                                  })
+                                  }, 1, stock)
                                 }}
                                 className='mt-auto flex items-center gap-2 text-[10px] font-oswald font-bold tracking-widest uppercase text-gray-400 hover:text-white border border-white/10 hover:border-t1-red hover:bg-t1-red/10 px-3 py-2 transition-all w-fit'
                               >

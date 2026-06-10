@@ -369,9 +369,10 @@ function ProductDetailContent({ product }: { product: Product }) {
       id: product.product_id,
       name: product.product_name,
       price: selectedItem?.sale_price ?? selectedItem?.product_item_price ?? 0,
+      originalPrice: selectedItem?.sale_price ? selectedItem.product_item_price : null,
       imageUrl: selectedItem?.product_item_image ?? null,
       size: activeSize
-    }, quantity)
+    }, quantity, stockForActiveSize)
     setTimeout(() => setIsAdded(false), 2000)
   }
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import type { ChangeEvent } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -6,7 +6,8 @@ import {
   User, Heart, ShoppingBag, Package, LogOut,
   ChevronRight, Trash2, Plus, Minus, X,
   MapPin, Mail, Phone, Edit3, Shield,
-  Star, CheckCircle, Lock, Eye, EyeOff, Loader2, Check, AlertTriangle, Camera
+  Star, CheckCircle, Lock, Eye, EyeOff, Loader2, Check, AlertTriangle, Camera,
+  CreditCard, Truck, XCircle
 } from 'lucide-react'
 import Layout from '~/components/layout/Layout'
 import Footer from '~/components/layout/Footer'
@@ -21,13 +22,14 @@ import { userApi } from '~/apis/userApi'
 import { useToast } from '~/contexts/ToastContext'
 import { orderApi } from '~/apis/orderApi'
 import { reviewApi } from '~/apis/reviewApi'
+import productApi from '~/apis/productApi'
 
 type Tab = 'profile' | 'favorites' | 'cart' | 'orders'
 
 export default function MyPage() {
   const { t, language } = useLanguage()
   const { user, logout, setUser } = useAuth()
-  const { items, removeCartItem, incrementQuantity, decrementQuantity, totalPrice, totalItems } = useCart()
+  const { items, addCartItem, removeCartItem, incrementQuantity, decrementQuantity, updateCartItemSize, totalItems } = useCart()
   const { favorites, toggleFavorite, totalFavorites } = useFavorites()
   const navigate = useNavigate()
   const { showToast } = useToast()
@@ -81,6 +83,66 @@ export default function MyPage() {
   const [tempAvatarUrl, setTempAvatarUrl] = useState<string | null>(null)
   const [avatarPosition, setAvatarPosition] = useState(50)
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
+
+  // Cart stock check and selection states
+  const [allProducts, setAllProducts] = useState<any[]>([])
+  const [selectedItems, setSelectedItems] = useState<{ [key: string]: boolean }>({})
+
+  // Load products for stock check
+  useEffect(() => {
+    if (activeTab === 'cart') {
+      const fetchStock = async () => {
+        try {
+          const res = await productApi.getAll()
+          setAllProducts(res.data || res)
+        } catch (err) {
+          console.error("Failed to load products for stock check", err)
+        }
+      }
+      fetchStock()
+    }
+  }, [activeTab])
+
+  // Helper to check if a cart item is out of stock
+  const isCartItemOutOfStock = useCallback((item: any) => {
+    if (allProducts.length === 0) return false
+    const prod = allProducts.find(p => p.product_id === item.id)
+    if (!prod) return false
+    const variant = prod.items?.find((v: any) => v.size?.toUpperCase() === item.size?.toUpperCase())
+    if (!variant) return true
+    return variant.stock_quantity === 0
+  }, [allProducts])
+
+  const handleUpdateSize = useCallback((productId: number, oldSize: string, newSize: string) => {
+    const prod = allProducts.find(p => p.product_id === productId)
+    if (!prod) return
+    const variant = prod.items?.find((v: any) => v.size?.toUpperCase() === newSize.toUpperCase())
+    if (!variant) return
+
+    const price = Number(variant.sale_price !== undefined && variant.sale_price !== null ? variant.sale_price : variant.product_item_price)
+    const originalPrice = variant.sale_price ? Number(variant.product_item_price) : null
+
+    updateCartItemSize(productId, oldSize, newSize, price, originalPrice, variant.stock_quantity)
+  }, [allProducts, updateCartItemSize])
+
+  // Initialize/Sync selections: select all in-stock items by default
+  useEffect(() => {
+    if (items.length > 0 && allProducts.length > 0) {
+      setSelectedItems(prev => {
+        const next = { ...prev }
+        let changed = false
+        items.forEach(item => {
+          const key = `${item.id}-${item.size}`
+          if (next[key] === undefined) {
+            const outOfStock = isCartItemOutOfStock(item)
+            next[key] = !outOfStock
+            changed = true
+          }
+        })
+        return changed ? next : prev
+      })
+    }
+  }, [items, allProducts, isCartItemOutOfStock])
 
   // Sync editForm when user changes
   useEffect(() => {
@@ -290,6 +352,31 @@ export default function MyPage() {
     }
   }
 
+  const handleReorder = (order: any) => {
+    if (!order.items || order.items.length === 0) return
+
+    order.items.forEach((item: any) => {
+      const prod = allProducts.find((p: any) => p.product_id === item.productId)
+      const variant = prod?.items?.find((v: any) => v.size?.toUpperCase() === item.size?.toUpperCase())
+      const stock = variant ? variant.stock_quantity : 0
+
+      addCartItem({
+        id: item.productId,
+        name: item.name,
+        price: item.price,
+        imageUrl: item.image,
+        size: item.size
+      }, item.qty, stock)
+    })
+
+    showToast(
+      language === 'vi' ? 'Đã thêm tất cả sản phẩm vào giỏ hàng!' : 'All items added to cart!',
+      'success'
+    )
+    setActiveTab('cart')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   const handleRequestUpdate = (field: string, value: string) => {
     // Only request update if the value actually changed
     if ((user as any)?.[field] === value) {
@@ -370,6 +457,35 @@ export default function MyPage() {
   const handleLogout = () => {
     logout()
     navigate('/')
+  }
+
+  // Selected items logic for checkout
+  const selectedCartItems = useMemo(() => {
+    return items.filter(item => {
+      const key = `${item.id}-${item.size}`
+      const isSelected = selectedItems[key] ?? false
+      const outOfStock = isCartItemOutOfStock(item)
+      return isSelected && !outOfStock
+    })
+  }, [items, selectedItems, isCartItemOutOfStock])
+
+  const selectedTotalPrice = useMemo(() => {
+    return selectedCartItems.reduce((sum: number, item: any) => sum + item.price * item.quantity, 0)
+  }, [selectedCartItems])
+
+  const selectedTotalItems = useMemo(() => {
+    return selectedCartItems.reduce((sum: number, item: any) => sum + item.quantity, 0)
+  }, [selectedCartItems])
+
+  const handleProceedToCheckout = () => {
+    if (selectedCartItems.length === 0) {
+      showToast(
+        language === 'vi' ? 'Vui lòng chọn ít nhất 1 sản phẩm còn hàng để thanh toán!' : 'Please select at least 1 in-stock item to proceed!',
+        'error'
+      )
+      return
+    }
+    navigate('/checkout', { state: { selectedItems: selectedCartItems } })
   }
 
   const getAvatarPosition = (avatarUrl?: string | null): number => {
@@ -977,42 +1093,132 @@ export default function MyPage() {
                   <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
                     {/* Items */}
                     <div className='lg:col-span-2 space-y-3'>
-                      {items.map((item, i) => (
-                        <motion.div
-                          key={`${item.id}-${item.size}`}
-                          initial={{ opacity: 0, x: -16 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: i * 0.06 }}
-                          className='flex gap-4 bg-[#111] border border-white/5 p-4 hover:border-white/10 transition-colors'
-                        >
-                          <Link to={`/product/${item.id}`} className='shrink-0 w-20 h-20 bg-[#0d0d0d] overflow-hidden'>
-                            <img src={item.imageUrl || ''} alt={item.name} className='w-full h-full object-cover' />
-                          </Link>
-                          <div className='flex-1 min-w-0'>
-                            <p className='font-inter text-sm text-white truncate mb-1'>{item.name}</p>
-                            <p className='text-[11px] text-gray-600 uppercase tracking-widest mb-3'>SIZE: {item.size}</p>
-                            <div className='flex items-center justify-between'>
-                              <div className='flex items-center border border-white/10'>
-                                <button onClick={() => decrementQuantity(item.id, item.size)} className='px-3 py-1 text-gray-500 hover:text-white hover:bg-white/5 transition-colors'>
-                                  <Minus size={12} />
-                                </button>
-                                <span className='px-3 py-1 text-sm font-oswald font-bold text-white border-x border-white/10 min-w-[36px] text-center'>{item.quantity}</span>
-                                <button onClick={() => incrementQuantity(item.id, item.size)} className='px-3 py-1 text-gray-500 hover:text-white hover:bg-white/5 transition-colors'>
-                                  <Plus size={12} />
-                                </button>
+                      {items.map((item, i) => {
+                        const outOfStock = isCartItemOutOfStock(item)
+                        const itemKey = `${item.id}-${item.size}`
+                        const isChecked = selectedItems[itemKey] ?? false
+                        const prod = allProducts.find(p => p.product_id === item.id)
+                        const variant = prod?.items?.find((v: any) => v.size?.toUpperCase() === item.size?.toUpperCase())
+                        const stockQuantity = variant ? variant.stock_quantity : 0
+
+                        return (
+                          <motion.div
+                            key={`${item.id}-${item.size}`}
+                            initial={{ opacity: 0, x: -16 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: i * 0.06 }}
+                            className={`flex items-center gap-4 bg-[#111] border p-4 transition-all duration-300 ${
+                              outOfStock 
+                                ? 'opacity-40 border-white/5' 
+                                : isChecked 
+                                  ? 'border-t1-red/30 bg-[#141414]/30' 
+                                  : 'border-white/5 hover:border-white/10'
+                            }`}
+                          >
+                            {/* Checkbox */}
+                            <div className="flex items-center justify-center shrink-0">
+                              <input
+                                type="checkbox"
+                                checked={!outOfStock && isChecked}
+                                disabled={outOfStock}
+                                onChange={(e) => {
+                                  setSelectedItems(prev => ({
+                                    ...prev,
+                                    [itemKey]: e.target.checked
+                                  }))
+                                }}
+                                className={`w-4 h-4 rounded border bg-transparent checked:bg-t1-red checked:border-t1-red focus:ring-0 cursor-pointer disabled:opacity-20 disabled:cursor-not-allowed ${
+                                  outOfStock ? 'border-gray-800' : 'border-white/20'
+                                }`}
+                              />
+                            </div>
+
+                            <Link to={`/product/${item.id}`} className='shrink-0 w-20 h-20 bg-[#0d0d0d] overflow-hidden relative'>
+                              <img src={item.imageUrl || ''} alt={item.name} className='w-full h-full object-cover' />
+                              {outOfStock && (
+                                <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                                  <span className="bg-red-600 text-[8px] font-oswald font-bold px-1.5 py-0.5 tracking-wider text-white uppercase italic">
+                                    {language === 'vi' ? 'HẾT HÀNG' : 'SOLD OUT'}
+                                  </span>
+                                </div>
+                              )}
+                            </Link>
+                            <div className='flex-1 min-w-0'>
+                              <div className="flex justify-between items-start gap-2 mb-1">
+                                <p className='font-inter text-sm text-white truncate'>{item.name}</p>
+                                {outOfStock && (
+                                  <span className="text-[9px] font-bold text-red-500 tracking-wider uppercase border border-red-500/20 bg-red-500/10 px-2 py-0.5">
+                                    {language === 'vi' ? 'Hết hàng' : 'Sold Out'}
+                                  </span>
+                                )}
                               </div>
-                              <div className='flex items-center gap-3'>
-                                <span className='font-oswald font-bold text-t1-red'>
-                                  {formatPrice(item.price * item.quantity, language)}
-                                </span>
-                                <button onClick={() => removeCartItem(item.id, item.size)} className='text-gray-700 hover:text-t1-red transition-colors'>
-                                  <Trash2 size={14} />
-                                </button>
+                              {(() => {
+                                const prod = allProducts.find(p => p.product_id === item.id)
+                                const availableVariants = prod?.items?.filter((v: any) => v.stock_quantity > 0) || []
+                                
+                                return availableVariants.length > 0 ? (
+                                  <div className="flex items-center gap-2 mb-3">
+                                    <span className="text-[11px] text-gray-500 uppercase tracking-widest">{t('cart.size') || 'SIZE'}:</span>
+                                    <select
+                                      value={item.size}
+                                      onChange={(e) => handleUpdateSize(item.id, item.size, e.target.value)}
+                                      disabled={outOfStock}
+                                      className="bg-transparent text-white border border-white/10 px-2 py-0.5 text-xs font-oswald font-bold outline-none cursor-pointer hover:border-t1-red focus:border-t1-red transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                      {!availableVariants.some((v: any) => v.size?.toUpperCase() === item.size?.toUpperCase()) && (
+                                        <option value={item.size} className="bg-[#111] text-gray-500">
+                                          {item.size} ({language === 'vi' ? 'Hết' : 'Out'})
+                                        </option>
+                                      )}
+                                      {availableVariants.map((v: any) => (
+                                        <option key={v.size} value={v.size} className="bg-[#111] text-white">
+                                          {v.size}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                ) : (
+                                  <p className='text-[11px] text-gray-600 uppercase tracking-widest mb-3'>SIZE: {item.size}</p>
+                                )
+                              })()}
+                              <div className='flex items-center justify-between'>
+                                <div className='flex items-center border border-white/10'>
+                                  <button 
+                                    onClick={() => !outOfStock && decrementQuantity(item.id, item.size)} 
+                                    disabled={outOfStock}
+                                    className='px-3 py-1 text-gray-500 hover:text-white hover:bg-white/5 transition-colors disabled:opacity-30 disabled:cursor-not-allowed'
+                                  >
+                                    <Minus size={12} />
+                                  </button>
+                                  <span className={`px-3 py-1 text-sm font-oswald font-bold border-x border-white/10 min-w-[36px] text-center ${outOfStock ? 'text-gray-600' : 'text-white'}`}>{item.quantity}</span>
+                                  <button 
+                                    onClick={() => !outOfStock && item.quantity < stockQuantity && incrementQuantity(item.id, item.size)} 
+                                    disabled={outOfStock || item.quantity >= stockQuantity}
+                                    className='px-3 py-1 text-gray-500 hover:text-white hover:bg-white/5 transition-colors disabled:opacity-30 disabled:cursor-not-allowed'
+                                  >
+                                    <Plus size={12} />
+                                  </button>
+                                </div>
+                                <div className='flex items-center gap-3'>
+                                  <div className="flex flex-col items-end">
+                                    <span className={`font-oswald font-bold ${outOfStock ? 'text-gray-600 line-through' : 'text-t1-red'}`}>
+                                      {formatPrice(item.price * item.quantity, language)}
+                                    </span>
+                                    {item.originalPrice && item.originalPrice > item.price && !outOfStock && (
+                                      <span className="text-[10px] text-gray-500 line-through font-light">
+                                        {formatPrice(item.originalPrice * item.quantity, language)}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <button onClick={() => removeCartItem(item.id, item.size)} className='text-gray-700 hover:text-t1-red transition-colors'>
+                                    <Trash2 size={14} />
+                                  </button>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </motion.div>
-                      ))}
+                          </motion.div>
+                        )
+                      })}
                     </div>
 
                     {/* Summary */}
@@ -1021,8 +1227,10 @@ export default function MyPage() {
                         <h3 className='font-oswald font-bold uppercase tracking-wider text-sm mb-4 text-gray-400'>{t('profile.summary')}</h3>
                         <div className='space-y-3 mb-4 pb-4 border-b border-white/5'>
                           <div className='flex justify-between text-sm'>
-                            <span className='text-gray-500'>{t('common.subtotal')} ({totalItems} {t('common.item')})</span>
-                            <span className='text-white font-oswald font-bold'>{formatPrice(totalPrice, language)}</span>
+                            <span className='text-gray-500'>
+                              {t('common.subtotal')} ({selectedTotalItems} {language === 'vi' ? 'được chọn' : 'selected'})
+                            </span>
+                            <span className='text-white font-oswald font-bold'>{formatPrice(selectedTotalPrice, language)}</span>
                           </div>
                           <div className='flex justify-between text-sm'>
                             <span className='text-gray-500'>{t('common.shipping')}</span>
@@ -1031,13 +1239,17 @@ export default function MyPage() {
                         </div>
                         <div className='flex justify-between mb-6'>
                           <span className='font-oswald font-bold uppercase tracking-wider'>{t('profile.summaryTotal')}</span>
-                          <span className='font-oswald font-black text-xl text-t1-red'>{formatPrice(totalPrice, language)}</span>
+                          <span className='font-oswald font-black text-xl text-t1-red'>{formatPrice(selectedTotalPrice, language)}</span>
                         </div>
-                        <button className='w-full bg-t1-red text-white font-oswald font-black text-xs tracking-[0.2em] uppercase py-4 hover:bg-white hover:text-black transition-all duration-200 mb-2'>
-                          {t('common.checkout')} →
+                        <button 
+                          onClick={handleProceedToCheckout}
+                          disabled={selectedCartItems.length === 0}
+                          className='w-full bg-t1-red hover:bg-[#ff0033] disabled:bg-t1-gray/40 disabled:cursor-not-allowed text-white font-oswald font-black text-xs tracking-[0.2em] uppercase py-4 hover:bg-white hover:text-black transition-all duration-200 mb-2'
+                        >
+                          {t('common.checkout')} ({selectedCartItems.length}) →
                         </button>
                         <Link to='/shop' className='block text-center text-gray-600 hover:text-white text-[11px] font-oswald tracking-widest uppercase transition-colors py-2'>
-                          {t('profile.seeMore')}
+                          {t('common.seeMore')}
                         </Link>
                       </div>
 
@@ -1162,6 +1374,77 @@ export default function MyPage() {
                               className='overflow-hidden'
                             >
                               <div className='border-t border-white/5 p-5 space-y-3'>
+                                {/* ── ORDER TRACKING TIMELINE ── */}
+                                {order.status !== 'cancelled' ? (
+                                  <div className="py-6 px-2 md:px-4 my-2 bg-white/[0.01] border border-white/5 rounded-xl">
+                                    <div className="relative flex items-center justify-between w-full">
+                                      {/* Background Line */}
+                                      <div className="absolute left-6 right-6 top-5 h-0.5 bg-white/5 z-0" />
+                                      {/* Progress Line */}
+                                      <div 
+                                        className="absolute left-6 top-5 h-0.5 bg-t1-red transition-all duration-500 z-0" 
+                                        style={{ 
+                                          width: `calc(${
+                                            order.status === 'pending' ? '0%' :
+                                            order.status === 'paid' ? '33.33%' :
+                                            order.status === 'shipping' ? '66.66%' : '100%'
+                                          } - 12px)`
+                                        }}
+                                      />
+                                      
+                                      {/* Steps */}
+                                      {[
+                                        { key: 'pending', label: { en: 'Placed', vi: 'Đặt hàng' }, icon: Package },
+                                        { key: 'paid', label: { en: 'Paid', vi: 'Thanh toán' }, icon: CreditCard },
+                                        { key: 'shipping', label: { en: 'Shipping', vi: 'Đang giao' }, icon: Truck },
+                                        { key: 'completed', label: { en: 'Completed', vi: 'Hoàn thành' }, icon: Check }
+                                      ].map((step, idx) => {
+                                        const stepNum = idx + 1;
+                                        const currentStep = 
+                                          order.status === 'pending' ? 1 :
+                                          order.status === 'paid' ? 2 :
+                                          order.status === 'shipping' ? 3 : 4;
+                                        const isCompleted = stepNum <= currentStep;
+                                        const isActive = stepNum === currentStep;
+                                        const Icon = step.icon;
+                                        
+                                        return (
+                                          <div key={step.key} className="relative z-10 flex flex-col items-center flex-1">
+                                            <div 
+                                              className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${
+                                                isCompleted 
+                                                  ? 'bg-[#0a0a0a] border-t1-red text-t1-red shadow-[0_0_15px_rgba(226,1,45,0.4)]' 
+                                                  : 'bg-[#0a0a0a] border-white/5 text-gray-700'
+                                              } ${isActive ? 'scale-110 border-t1-red text-t1-red font-bold' : ''}`}
+                                            >
+                                              <Icon size={16} />
+                                            </div>
+                                            <span 
+                                              className={`mt-2 text-[9px] font-oswald uppercase tracking-wider text-center transition-colors max-w-[80px] truncate ${
+                                                isCompleted ? 'text-white font-bold' : 'text-gray-600'
+                                              }`}
+                                            >
+                                              {step.label[language as 'en' | 'vi'] || step.label.en}
+                                            </span>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="py-4 px-5 my-2 bg-red-950/10 border border-red-500/10 rounded-xl flex items-center gap-3">
+                                    <XCircle className="text-red-500 shrink-0" size={18} />
+                                    <div>
+                                      <p className="text-xs font-oswald uppercase tracking-wider text-red-500">
+                                        {language === 'vi' ? 'ĐƠN HÀNG ĐÃ HỦY' : 'ORDER CANCELLED'}
+                                      </p>
+                                      <p className="text-[10px] text-gray-500 mt-0.5">
+                                        {language === 'vi' ? 'Đơn hàng này đã bị hủy và không còn hiệu lực.' : 'This order has been cancelled.'}
+                                      </p>
+                                    </div>
+                                  </div>
+                                )}
+
                                 {order.items.map((item: any, j: number) => (
                                   <div key={j} className='flex items-center gap-4 py-2'>
                                     <div className='w-14 h-14 shrink-0 bg-[#0d0d0d] overflow-hidden'>
@@ -1179,45 +1462,74 @@ export default function MyPage() {
                                   <span className='font-oswald font-black text-white'>{formatPrice(order.total, language)}</span>
                                 </div>
                                 {order.status === 'completed' && order.items && order.items.length > 0 && (
-                                  <button
-                                    onClick={() => handleOpenReviewModal(order)}
-                                    className='w-full mt-2 border border-white/10 text-gray-500 hover:border-t1-red hover:text-t1-red font-oswald font-bold text-[10px] tracking-widest uppercase py-3 transition-all duration-200'
-                                  >
-                                    {language === 'vi' ? 'VIẾT ĐÁNH GIÁ' : 'WRITE A REVIEW'}
-                                  </button>
-                                )}
-                                {order.status === 'pending' && (
                                   <div className='flex gap-2 w-full mt-2'>
                                     <button
-                                      disabled={cancellingId === order.rawId}
-                                      onClick={() => handleCancelOrder(order.rawId)}
-                                      className='flex-1 border border-red-500/20 text-red-500 hover:border-red-500 hover:bg-red-500/10 font-oswald font-bold text-[10px] tracking-widest uppercase py-3 transition-all duration-200 flex items-center justify-center gap-2'
+                                      onClick={() => handleOpenReviewModal(order)}
+                                      className='flex-1 border border-white/10 text-gray-500 hover:border-t1-red hover:text-t1-red font-oswald font-bold text-[10px] tracking-widest uppercase py-3 transition-all duration-200'
                                     >
-                                      {cancellingId === order.rawId ? (
-                                        <>
-                                          <Loader2 className='w-3 h-3 animate-spin' />
-                                          {language === 'vi' ? 'ĐANG HỦY...' : 'CANCELLING...'}
-                                        </>
-                                      ) : (
-                                        language === 'vi' ? 'HỦY ĐƠN HÀNG' : 'CANCEL ORDER'
-                                      )}
+                                      {language === 'vi' ? 'VIẾT ĐÁNH GIÁ' : 'WRITE A REVIEW'}
                                     </button>
-                                    {order.paymentStatus !== 'paid' && (
+                                    <button
+                                      onClick={() => handleReorder(order)}
+                                      className='flex-1 bg-white/5 border border-white/10 text-white hover:bg-t1-red hover:border-t1-red font-oswald font-bold text-[10px] tracking-widest uppercase py-3 transition-all duration-200 flex items-center justify-center gap-1.5'
+                                    >
+                                      <ShoppingBag size={12} />
+                                      {language === 'vi' ? 'MUA LẠI' : 'REORDER'}
+                                    </button>
+                                  </div>
+                                )}
+                                {order.status === 'pending' && (
+                                  <div className='flex flex-col gap-2 w-full mt-2'>
+                                    <div className='flex gap-2 w-full'>
                                       <button
-                                        disabled={isPayingId === order.rawId}
-                                        onClick={() => handlePayNow(order.rawId, order.total)}
-                                        className='flex-1 bg-t1-red text-white font-oswald font-bold text-[10px] tracking-widest uppercase py-3 hover:bg-[#ff0033] shadow-[0_0_15px_rgba(226,1,45,0.2)] transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed'
+                                        disabled={cancellingId === order.rawId}
+                                        onClick={() => handleCancelOrder(order.rawId)}
+                                        className='flex-1 border border-red-500/20 text-red-500 hover:border-red-500 hover:bg-red-500/10 font-oswald font-bold text-[10px] tracking-widest uppercase py-3 transition-all duration-200 flex items-center justify-center gap-2'
                                       >
-                                        {isPayingId === order.rawId ? (
+                                        {cancellingId === order.rawId ? (
                                           <>
                                             <Loader2 className='w-3 h-3 animate-spin' />
-                                            {language === 'vi' ? 'ĐANG XỬ LÝ...' : 'PROCESSING...'}
+                                            {language === 'vi' ? 'ĐANG HỦY...' : 'CANCELLING...'}
                                           </>
                                         ) : (
-                                          language === 'vi' ? 'THANH TOÁN NGAY' : 'PAY NOW'
+                                          language === 'vi' ? 'HỦY ĐƠN HÀNG' : 'CANCEL ORDER'
                                         )}
                                       </button>
-                                    )}
+                                      {order.paymentStatus !== 'paid' && (
+                                        <button
+                                          disabled={isPayingId === order.rawId}
+                                          onClick={() => handlePayNow(order.rawId, order.total)}
+                                          className='flex-1 bg-t1-red text-white font-oswald font-bold text-[10px] tracking-widest uppercase py-3 hover:bg-[#ff0033] shadow-[0_0_15px_rgba(226,1,45,0.2)] transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed'
+                                        >
+                                          {isPayingId === order.rawId ? (
+                                            <>
+                                              <Loader2 className='w-3 h-3 animate-spin' />
+                                              {language === 'vi' ? 'ĐANG XỬ LÝ...' : 'PROCESSING...'}
+                                            </>
+                                          ) : (
+                                            language === 'vi' ? 'THANH TOÁN NGAY' : 'PAY NOW'
+                                          )}
+                                        </button>
+                                      )}
+                                    </div>
+                                    <button
+                                      onClick={() => handleReorder(order)}
+                                      className='w-full bg-white/5 border border-white/10 text-white hover:bg-t1-red hover:border-t1-red font-oswald font-bold text-[10px] tracking-widest uppercase py-3 transition-all duration-200 flex items-center justify-center gap-1.5'
+                                    >
+                                      <ShoppingBag size={12} />
+                                      {language === 'vi' ? 'MUA LẠI' : 'REORDER'}
+                                    </button>
+                                  </div>
+                                )}
+                                {(order.status === 'cancelled' || order.status === 'paid' || order.status === 'shipping') && order.items && order.items.length > 0 && (
+                                  <div className='w-full mt-2'>
+                                    <button
+                                      onClick={() => handleReorder(order)}
+                                      className='w-full bg-white/5 border border-white/10 text-white hover:bg-t1-red hover:border-t1-red font-oswald font-bold text-[10px] tracking-widest uppercase py-3 transition-all duration-200 flex items-center justify-center gap-1.5'
+                                    >
+                                      <ShoppingBag size={12} />
+                                      {language === 'vi' ? 'MUA LẠI' : 'REORDER'}
+                                    </button>
                                   </div>
                                 )}
                               </div>

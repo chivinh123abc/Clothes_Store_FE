@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   ShoppingBag, TrendingUp, Users, DollarSign, Layers,
-  Grid, Loader2, ArrowRight, Sparkles, AlertCircle, ShoppingCart
+  Grid, Loader2, ArrowRight, Sparkles, AlertCircle, ShoppingCart,
+  Trophy, Calendar
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -23,6 +24,7 @@ interface Order {
   user_name?: string
   user_email?: string
   created_at: string
+  items?: { product_id: number; product_name: string; quantity: number; unit_price: number; product_item_image?: string }[]
 }
 
 interface UserDto {
@@ -31,6 +33,8 @@ interface UserDto {
   email: string
   role: string | number
 }
+
+type TimeRange = 'today' | '7d' | '30d' | 'all'
 
 const STATUS_BADGES = {
   pending: 'text-amber-400 border-amber-400/20 bg-amber-400/5',
@@ -48,6 +52,27 @@ const STATUS_LABELS = {
   cancelled: { en: 'Cancelled', vi: 'Đã hủy' }
 }
 
+const TIME_RANGE_LABELS: Record<TimeRange, { vi: string; en: string }> = {
+  today: { vi: 'Hôm nay', en: 'Today' },
+  '7d': { vi: '7 Ngày', en: '7 Days' },
+  '30d': { vi: '30 Ngày', en: '30 Days' },
+  all: { vi: 'Tất cả', en: 'All Time' }
+}
+
+function filterOrdersByRange(orders: Order[], range: TimeRange): Order[] {
+  if (range === 'all') return orders
+  const now = new Date()
+  const cutoff = new Date()
+  if (range === 'today') {
+    cutoff.setHours(0, 0, 0, 0)
+  } else if (range === '7d') {
+    cutoff.setDate(now.getDate() - 7)
+  } else if (range === '30d') {
+    cutoff.setDate(now.getDate() - 30)
+  }
+  return orders.filter(o => new Date(o.created_at) >= cutoff)
+}
+
 const AdminDashboard = () => {
   const { language } = useLanguage()
   const { theme, themeMode } = useAdminTheme()
@@ -57,6 +82,7 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [hoveredPoint, setHoveredPoint] = useState<number | null>(null)
+  const [timeRange, setTimeRange] = useState<TimeRange>('7d')
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -81,48 +107,83 @@ const AdminDashboard = () => {
     fetchDashboardData()
   }, [])
 
-  // Calculate metrics
+  // --- Filtered orders by time range ---
+  const filteredOrders = useMemo(() => filterOrdersByRange(orders, timeRange), [orders, timeRange])
+
+  // Calculate metrics from FILTERED orders
   const totalProducts = products.length
   const totalUsers = users.length
-  const totalOrders = orders.length
+  const totalOrders = filteredOrders.length
 
-  // Total revenue is the sum of paid orders
-  const totalRevenue = orders
+  const totalRevenue = filteredOrders
     .filter(o => o.payment_status === 'paid')
     .reduce((sum, o) => sum + parseFloat(o.total_amount || '0'), 0)
 
-  // Recent 5 sales
-  const recentSales = orders.slice(0, 5)
+  // Recent 5 sales from filtered
+  const recentSales = filteredOrders.slice(0, 5)
 
-  // Generate last 7 days of sales for chart
-  const last7DaysData = Array.from({ length: 7 }).map((_, i) => {
-    const d = new Date()
-    d.setDate(d.getDate() - (6 - i))
-    const dateStr = d.toISOString().split('T')[0]
+  // --- Top 5 best selling products from order items ---
+  const topProducts = useMemo(() => {
+    const salesMap: Record<number, { product_id: number; product_name: string; image: string; totalQty: number; totalRevenue: number }> = {}
 
-    const dayOrders = orders.filter(o => o.created_at?.split('T')[0] === dateStr)
-    const revenue = dayOrders
+    filteredOrders
       .filter(o => o.payment_status === 'paid')
-      .reduce((sum, o) => sum + parseFloat(o.total_amount || '0'), 0)
+      .forEach(order => {
+        (order.items || []).forEach(item => {
+          if (!item.product_id) return
+          if (!salesMap[item.product_id]) {
+            salesMap[item.product_id] = {
+              product_id: item.product_id,
+              product_name: item.product_name || `Product #${item.product_id}`,
+              image: item.product_item_image || '',
+              totalQty: 0,
+              totalRevenue: 0
+            }
+          }
+          salesMap[item.product_id].totalQty += Number(item.quantity) || 0
+          salesMap[item.product_id].totalRevenue += (Number(item.unit_price) || 0) * (Number(item.quantity) || 0)
+        })
+      })
 
-    return {
-      dateLabel: d.toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US', { weekday: 'short', day: 'numeric' }),
-      revenue,
-      orderCount: dayOrders.length
-    }
-  })
+    return Object.values(salesMap)
+      .sort((a, b) => b.totalQty - a.totalQty)
+      .slice(0, 5)
+  }, [filteredOrders])
+
+  // Generate chart data (days based on timeRange)
+  const chartDays = timeRange === 'today' ? 1 : timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 30
+  const chartDataPoints = useMemo(() => {
+    const daysToShow = Math.min(chartDays, 30)
+    return Array.from({ length: daysToShow }).map((_, i) => {
+      const d = new Date()
+      d.setDate(d.getDate() - (daysToShow - 1 - i))
+      const dateStr = d.toISOString().split('T')[0]
+
+      const dayOrders = filteredOrders.filter(o => o.created_at?.split('T')[0] === dateStr)
+      const revenue = dayOrders
+        .filter(o => o.payment_status === 'paid')
+        .reduce((sum, o) => sum + parseFloat(o.total_amount || '0'), 0)
+
+      return {
+        dateLabel: d.toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US', { weekday: 'short', day: 'numeric' }),
+        revenue,
+        orderCount: dayOrders.length
+      }
+    })
+  }, [filteredOrders, chartDays, language])
 
   // SVG Chart Calculations
-  const maxRevenue = Math.max(...last7DaysData.map(d => d.revenue), 100)
+  const maxRevenue = Math.max(...chartDataPoints.map(d => d.revenue), 100)
   const chartWidth = 500
   const chartHeight = 200
   const paddingX = 40
   const paddingY = 30
   const plotWidth = chartWidth - paddingX * 2
   const plotHeight = chartHeight - paddingY * 2
+  const totalPoints = chartDataPoints.length
 
-  const points = last7DaysData.map((d, i) => {
-    const x = paddingX + (i / 6) * plotWidth
+  const points = chartDataPoints.map((d, i) => {
+    const x = paddingX + (totalPoints > 1 ? (i / (totalPoints - 1)) : 0.5) * plotWidth
     const y = chartHeight - paddingY - (d.revenue / maxRevenue) * plotHeight
     return { x, y, val: d.revenue, label: d.dateLabel, count: d.orderCount }
   })
@@ -133,10 +194,10 @@ const AdminDashboard = () => {
     : ''
 
   const stats = [
-    { label: language === 'vi' ? 'Tổng sản phẩm' : 'Total Products', value: totalProducts, icon: <ShoppingBag className="text-blue-500" />, change: '+5%', link: '/admin/products' },
-    { label: language === 'vi' ? 'Tổng doanh thu' : 'Total Revenue', value: formatPrice(totalRevenue, language), icon: <DollarSign className="text-green-500" />, change: '+12%', link: '/admin/orders' },
-    { label: language === 'vi' ? 'Người dùng active' : 'Active Users', value: totalUsers, icon: <Users className="text-purple-500" />, change: '+8%', link: '/admin/users' },
-    { label: language === 'vi' ? 'Tổng đơn hàng' : 'Total Orders', value: totalOrders, icon: <ShoppingCart className="text-orange-500" />, change: '+15%', link: '/admin/orders' }
+    { label: language === 'vi' ? 'Tổng sản phẩm' : 'Total Products', value: totalProducts, icon: <ShoppingBag className="text-blue-500" />, link: '/admin/products' },
+    { label: language === 'vi' ? 'Doanh thu' : 'Revenue', value: formatPrice(totalRevenue, language), icon: <DollarSign className="text-green-500" />, link: '/admin/orders' },
+    { label: language === 'vi' ? 'Người dùng' : 'Users', value: totalUsers, icon: <Users className="text-purple-500" />, link: '/admin/users' },
+    { label: language === 'vi' ? 'Đơn hàng' : 'Orders', value: totalOrders, icon: <ShoppingCart className="text-orange-500" />, link: '/admin/orders' }
   ]
 
   if (loading) {
@@ -163,7 +224,29 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-8">
+
+      {/* ── Time Range Filter ── */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <Calendar size={14} className="text-gray-500" />
+        <span className={`text-[10px] font-oswald tracking-widest uppercase mr-2 ${theme.getTextMutedClass()}`}>
+          {language === 'vi' ? 'Khoảng thời gian:' : 'Period:'}
+        </span>
+        {(Object.keys(TIME_RANGE_LABELS) as TimeRange[]).map(range => (
+          <button
+            key={range}
+            onClick={() => setTimeRange(range)}
+            className={`text-[10px] font-oswald font-bold tracking-widest uppercase px-4 py-1.5 border transition-all duration-200 ${
+              timeRange === range
+                ? 'bg-t1-red border-t1-red text-white shadow-[0_0_12px_rgba(226,1,45,0.3)]'
+                : `border-white/10 ${theme.getTextMutedClass()} hover:border-t1-red/50 hover:text-t1-red`
+            }`}
+          >
+            {TIME_RANGE_LABELS[range][language as 'vi' | 'en']}
+          </button>
+        ))}
+      </div>
+
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, i) => (
@@ -179,8 +262,9 @@ const AdminDashboard = () => {
                 <div className={`p-3 rounded-xl transition-colors ${themeMode === 'light' ? 'bg-gray-100 group-hover:bg-gray-200' : 'bg-white/5 group-hover:bg-white/10'}`}>
                   {stat.icon}
                 </div>
-                <span className="text-[10px] font-oswald font-bold text-green-500 bg-green-500/10 px-2 py-1 rounded-full">
-                  {stat.change}
+                {/* Time range badge */}
+                <span className={`text-[9px] font-oswald font-bold tracking-widest uppercase px-2 py-0.5 rounded-full border ${themeMode === 'light' ? 'border-gray-200 text-gray-500 bg-gray-50' : 'border-white/10 text-gray-600 bg-white/5'}`}>
+                  {TIME_RANGE_LABELS[timeRange][language as 'vi' | 'en']}
                 </span>
               </div>
               <p className={`font-oswald text-xs uppercase tracking-widest mb-1 group-hover:text-t1-red transition-colors ${theme.getTextMutedClass()}`}>{stat.label}</p>
@@ -248,7 +332,7 @@ const AdminDashboard = () => {
             <div className="space-y-4">
               {recentSales.length === 0 ? (
                 <div className={`text-center py-12 font-oswald text-xs tracking-widest uppercase ${theme.getTextMutedClass()}`}>
-                  {language === 'vi' ? 'CHƯA CÓ ĐƠN HÀNG NÀO' : 'NO GIVEN SALES YET'}
+                  {language === 'vi' ? 'CHƯA CÓ ĐƠN HÀNG NÀO' : 'NO SALES YET'}
                 </div>
               ) : (
                 recentSales.map((order) => {
@@ -289,16 +373,15 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* Dynamic Analytics Chart Panel */}
+        {/* Revenue Chart Panel */}
         <div className={`rounded-2xl p-8 flex flex-col justify-between min-h-[400px] ${theme.getCardBgClass()}`}>
           <div>
             <h3 className={`font-oswald font-black italic text-xl uppercase mb-6 tracking-tight flex items-center gap-2 ${theme.getTextClass()}`}>
               <TrendingUp size={18} className="text-t1-red" />
-              {language === 'vi' ? 'Doanh Thu 7 Ngày Qua' : '7-Day Revenue Analytics'}
+              {language === 'vi' ? 'Biểu đồ Doanh thu' : 'Revenue Analytics'}
             </h3>
 
             <div className="relative mt-8">
-              {/* Custom SVG Line Chart */}
               <svg width="100%" height={chartHeight} viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="overflow-visible">
                 <defs>
                   <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
@@ -307,7 +390,6 @@ const AdminDashboard = () => {
                   </linearGradient>
                 </defs>
 
-                {/* Horizontal Gridlines */}
                 {[0, 0.25, 0.5, 0.75, 1].map((ratio, index) => {
                   const y = paddingY + ratio * plotHeight
                   const gridVal = maxRevenue * (1 - ratio)
@@ -315,31 +397,29 @@ const AdminDashboard = () => {
                     <g key={index} className="opacity-20">
                       <line x1={paddingX} y1={y} x2={chartWidth - paddingX} y2={y} stroke={themeMode === 'light' ? '#000' : '#fff'} strokeWidth="0.5" strokeDasharray="4" />
                       <text x={paddingX - 10} y={y + 3} textAnchor="end" className={`font-oswald text-[9px] font-bold ${themeMode === 'light' ? 'fill-gray-600' : 'fill-gray-400'}`}>
-                        {gridVal >= 1000 ? `$${(gridVal / 1000).toFixed(1)}k` : `$${Math.round(gridVal)}`}
+                        {gridVal >= 1000000 ? `${(gridVal / 1000000).toFixed(1)}M` : gridVal >= 1000 ? `${(gridVal / 1000).toFixed(0)}k` : Math.round(gridVal)}
                       </text>
                     </g>
                   )
                 })}
 
-                {/* Gradient area under line */}
                 {areaPath && (
                   <path d={areaPath} fill="url(#chartGradient)" />
                 )}
 
-                {/* Main line path */}
                 {linePath && (
                   <motion.path
+                    key={timeRange}
                     d={linePath}
                     fill="none"
                     stroke="#e2012d"
                     strokeWidth="3"
                     initial={{ pathLength: 0 }}
                     animate={{ pathLength: 1 }}
-                    transition={{ duration: 1 }}
+                    transition={{ duration: 0.8 }}
                   />
                 )}
 
-                {/* Plot points */}
                 {points.map((p, i) => (
                   <g key={i} className="cursor-pointer" onMouseEnter={() => setHoveredPoint(i)} onMouseLeave={() => setHoveredPoint(null)}>
                     <circle
@@ -360,8 +440,8 @@ const AdminDashboard = () => {
                   </g>
                 ))}
 
-                {/* X Axis Labels */}
-                {points.map((p, i) => (
+                {/* X Axis – chỉ hiện nếu ≤ 10 điểm */}
+                {points.length <= 10 && points.map((p, i) => (
                   <text
                     key={i}
                     x={p.x}
@@ -374,7 +454,7 @@ const AdminDashboard = () => {
                 ))}
               </svg>
 
-              {/* Tooltip Overlay */}
+              {/* Tooltip */}
               <AnimatePresence>
                 {hoveredPoint !== null && (
                   <motion.div
@@ -415,6 +495,86 @@ const AdminDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* ── Top Selling Products Widget ── */}
+      <div className={`rounded-2xl p-8 ${theme.getCardBgClass()}`}>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className={`font-oswald font-black italic text-xl uppercase tracking-tight flex items-center gap-2 ${theme.getTextClass()}`}>
+            <Trophy size={18} className="text-yellow-400" />
+            {language === 'vi' ? 'Top Sản Phẩm Bán Chạy' : 'Top Selling Products'}
+            <span className={`text-[10px] font-normal not-italic ml-1 px-2 py-0.5 rounded-full border ${themeMode === 'light' ? 'border-gray-200 text-gray-500 bg-gray-50' : 'border-white/10 text-gray-600 bg-white/5'}`}>
+              {TIME_RANGE_LABELS[timeRange][language as 'vi' | 'en']}
+            </span>
+          </h3>
+          <Link to="/admin/products" className="text-xs font-oswald font-bold tracking-widest text-t1-red hover:text-white uppercase transition-colors flex items-center gap-1.5">
+            {language === 'vi' ? 'Tất cả SP' : 'All Products'} <ArrowRight size={12} />
+          </Link>
+        </div>
+
+        {topProducts.length === 0 ? (
+          <div className={`text-center py-10 font-oswald text-xs tracking-widest uppercase ${theme.getTextMutedClass()}`}>
+            {language === 'vi' ? 'CHƯA CÓ DỮ LIỆU BÁN HÀNG TRONG KHOẢNG THỜI GIAN NÀY' : 'NO SALES DATA FOR THIS PERIOD'}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {topProducts.map((p, idx) => {
+              const maxQty = topProducts[0]?.totalQty || 1
+              const barWidth = (p.totalQty / maxQty) * 100
+              const rankColors = ['text-yellow-400', 'text-gray-300', 'text-amber-600', 'text-gray-500', 'text-gray-500']
+              return (
+                <motion.div
+                  key={p.product_id}
+                  initial={{ opacity: 0, x: -16 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: idx * 0.07 }}
+                  className={`flex items-center gap-4 p-3 rounded-xl transition-all ${theme.getHoverBgClass()}`}
+                >
+                  {/* Rank */}
+                  <span className={`font-oswald font-black text-xl w-8 text-center shrink-0 ${rankColors[idx] || 'text-gray-500'}`}>
+                    #{idx + 1}
+                  </span>
+
+                  {/* Image */}
+                  <div className="w-10 h-10 rounded-lg overflow-hidden bg-white/5 shrink-0">
+                    {p.image ? (
+                      <img src={p.image} alt={p.product_name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <ShoppingBag size={16} className="text-gray-600" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Info + Bar */}
+                  <div className="flex-1 min-w-0">
+                    <p className={`font-inter text-sm font-semibold truncate ${theme.getTextClass()}`}>{p.product_name}</p>
+                    <div className="flex items-center gap-3 mt-1.5">
+                      {/* Progress bar */}
+                      <div className={`flex-1 h-1.5 rounded-full overflow-hidden ${themeMode === 'light' ? 'bg-gray-200' : 'bg-white/10'}`}>
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${barWidth}%` }}
+                          transition={{ duration: 0.6, delay: idx * 0.07 }}
+                          className="h-full bg-gradient-to-r from-t1-red to-orange-500 rounded-full"
+                        />
+                      </div>
+                      <span className={`text-[10px] font-oswald uppercase tracking-widest shrink-0 ${theme.getTextMutedClass()}`}>
+                        {p.totalQty} {language === 'vi' ? 'đã bán' : 'sold'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Revenue */}
+                  <div className="text-right shrink-0">
+                    <p className="font-oswald font-black text-sm text-t1-red">{formatPrice(p.totalRevenue, language)}</p>
+                  </div>
+                </motion.div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
     </div>
   )
 }

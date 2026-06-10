@@ -488,9 +488,10 @@ function Step3({
       id: product.product_id,
       name: product.product_name,
       price: item?.sale_price ?? item?.product_item_price ?? 0,
+      originalPrice: item?.sale_price ? item.product_item_price : null,
       imageUrl: item?.product_item_image ?? null,
       size: item?.size ?? 'M'
-    }, 1)
+    }, 1, item?.stock_quantity ?? 0)
     setAddedToCart(true)
     setTimeout(() => setAddedToCart(false), 2500)
   }

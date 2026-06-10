@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   CreditCard,
@@ -25,12 +25,16 @@ import Layout from '~/components/layout/Layout'
 import Footer from '~/components/layout/Footer'
 
 export default function Checkout() {
-  const { items, totalPrice, clearCart } = useCart()
+  const location = useLocation()
+  const { items, removeCartItem } = useCart()
   const { user } = useAuth()
   const { showToast } = useToast()
   const { addNotification } = useNotifications()
   const { language, t } = useLanguage()
   const navigate = useNavigate()
+
+  // Use selected items from state if redirected from cart, otherwise use all cart items
+  const checkoutItems = location.state?.selectedItems || items
 
   // Form states prefilled with user info
   const [fullName, setFullName] = useState('')
@@ -53,15 +57,15 @@ export default function Checkout() {
 
   // Redirect if cart is empty and order hasn't been placed successfully
   useEffect(() => {
-    if (items.length === 0 && !orderSuccess) {
+    if (checkoutItems.length === 0 && !orderSuccess) {
       const timer = setTimeout(() => {
         navigate('/shop')
       }, 3000)
       return () => clearTimeout(timer)
     }
-  }, [items, orderSuccess, navigate])
+  }, [checkoutItems, orderSuccess, navigate])
 
-  const subtotal = totalPrice
+  const subtotal = checkoutItems.reduce((sum: number, item: any) => sum + item.price * item.quantity, 0)
   const shippingFee = subtotal > 100 ? 0 : 5.0
   const finalTotal = subtotal + shippingFee
 
@@ -144,7 +148,7 @@ export default function Checkout() {
 
       // 2. Create the child order items
       // For each item in the cart, resolve its product_item_id
-      const itemPromises = items.map(async (cartItem) => {
+      const itemPromises = checkoutItems.map(async (cartItem: any) => {
         try {
           const prodResponse = await productApi.getById(cartItem.id)
           const productData = prodResponse.data
@@ -171,7 +175,10 @@ export default function Checkout() {
 
       await Promise.all(itemPromises)
 
-      clearCart()
+      // Remove only the checked out items from the cart
+      checkoutItems.forEach((item: any) => {
+        removeCartItem(item.id, item.size)
+      })
 
       // 3. Branch based on payment method
       if (paymentMethod === 'momo') {
@@ -189,7 +196,7 @@ export default function Checkout() {
       // COD: go to success screen
       setOrderSuccess({
         order_id: newOrder.order_id,
-        items: [...items],
+        items: [...checkoutItems],
         total: finalTotal,
         paymentMethod
       })
@@ -478,7 +485,7 @@ export default function Checkout() {
 
             {/* Cart Items List */}
             <div className="flex flex-col gap-6 max-h-[350px] overflow-y-auto pr-2 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-t1-gray/50">
-              {items.map((item) => (
+              {checkoutItems.map((item: any) => (
                 <div key={`${item.id}-${item.size}`} className="flex gap-4 items-center border-b border-t1-gray/10 pb-4">
                   <div className="w-16 h-20 bg-t1-gray/10 border border-t1-gray/20 overflow-hidden shrink-0">
                     {item.imageUrl && <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />}

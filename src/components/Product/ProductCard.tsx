@@ -135,13 +135,16 @@ export function ProductCard({
             onClick={(e) => {
               e.preventDefault()
               setIsAdded(true)
+              const firstItem = items?.[0]
+              const stock = firstItem?.stock_quantity ?? 0
               addCartItem({
                 id: product_id,
                 name: product_name,
                 price: salePrice ?? price,
+                originalPrice: salePrice ? price : null,
                 imageUrl: image,
                 size: 'M'
-              })
+              }, 1, stock)
             }}
           >
             <AnimatePresence mode='wait'>

@@ -1,15 +1,16 @@
 import { useSearchParams, Link } from 'react-router-dom'
 import { useMemo, useState, useEffect, type FormEvent, type MouseEvent } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, SlidersHorizontal, X, ChevronDown, History, TrendingUp } from 'lucide-react'
+import { Search, SlidersHorizontal, X, ChevronDown, History, TrendingUp, Loader2 } from 'lucide-react'
 import Layout from '~/components/layout/Layout'
 import Footer from '~/components/layout/Footer'
-import { combinedProducts } from '~/data/products'
+import productApi from '~/apis/productApi'
+import categoryApi from '~/apis/categoriesApi'
 import type { Product } from '~/types/product'
+import type { Category } from '~/apis/categoriesApi'
 import { useLanguage } from '~/contexts/LanguageContext'
 import { formatPrice } from '~/utils/format'
 
-const CATEGORIES = ['All', 'tshirt', 'hoodie', 'jacket', 'pants', 'sweater', 'shirt', 'shoes', 'hat', 'accessories', 'collection']
 const SORT_KEY_MAP: Record<string, string> = {
   'relevant': 'sort.relevant',
   'price-asc': 'sort.priceLow',
@@ -18,11 +19,12 @@ const SORT_KEY_MAP: Record<string, string> = {
   'bestseller': 'sort.bestseller'
 }
 
-const POPULAR_SEARCHES = ['Premium', 'Winter Jacket', 'Champion Hoodie', 'Oversized', 'Cotton', 'Limited Edition']
+const POPULAR_SEARCHES = ['T1', 'Áo', 'Hoodie', 'Jacket', 'Faker', 'Limited']
 
 function highlightMatch(text: string, query: string) {
   if (!query) return text
-  const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const regex = new RegExp(`(${escaped})`, 'gi')
   const parts = text.split(regex)
   return parts.map((part, i) =>
     regex.test(part) ? <mark key={i} className='bg-t1-red/30 text-white rounded-sm px-0.5'>{part}</mark> : part
@@ -50,10 +52,38 @@ export default function SearchPage() {
   const [sortBy, setSortBy] = useState('relevant')
   const [showFilters, setShowFilters] = useState(false)
   const [sortOpen, setSortOpen] = useState(false)
+
+  // --- Real data from API ---
+  const [allProducts, setAllProducts] = useState<Product[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
+  const [loadingProducts, setLoadingProducts] = useState(true)
+  const [errorProducts, setErrorProducts] = useState<string | null>(null)
+
   const [recentSearches, setRecentSearches] = useState<string[]>(() => {
     const saved = localStorage.getItem('recent_searches')
     return saved ? JSON.parse(saved) : []
   })
+
+  // Fetch products and categories from API on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoadingProducts(true)
+        setErrorProducts(null)
+        const [productsRes, categoriesRes] = await Promise.all([
+          productApi.getAll(),
+          categoryApi.getCategories()
+        ])
+        setAllProducts(productsRes.data || [])
+        setCategories(categoriesRes.data || [])
+      } catch (err: any) {
+        setErrorProducts(err?.response?.data?.message || 'Không thể tải dữ liệu sản phẩm.')
+      } finally {
+        setLoadingProducts(false)
+      }
+    }
+    fetchData()
+  }, [])
 
   // Derive state from props (URL query) to avoid cascading renders in useEffect
   if (query !== prevQuery) {
@@ -70,7 +100,6 @@ export default function SearchPage() {
     })
   }
 
-  // Handle saving search term separately - using a timeout to avoid cascading render warning in ESLint
   useEffect(() => {
     if (query.trim()) {
       const timer = setTimeout(() => {
@@ -90,7 +119,7 @@ export default function SearchPage() {
   }
 
   const results = useMemo(() => {
-    let list = combinedProducts
+    let list = allProducts
 
     // Text search
     if (query.trim()) {
@@ -116,11 +145,11 @@ export default function SearchPage() {
     case 'newest':
       return [...list].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
     case 'bestseller':
-      return [...list].sort((a, b) => Number(b.is_bestseller) - Number(a.is_bestseller))
+      return [...list].sort((a, b) => (b.sold_count || 0) - (a.sold_count || 0))
     default:
       return query.trim() ? [...list].sort((a, b) => scoreProduct(b, query) - scoreProduct(a, query)) : list
     }
-  }, [query, activeCategory, sortBy])
+  }, [query, activeCategory, sortBy, allProducts])
 
   const handleSearch = (e: FormEvent) => {
     e.preventDefault()
@@ -210,7 +239,22 @@ export default function SearchPage() {
         </div>
 
         <div className='px-4 md:px-10 lg:px-20 max-w-7xl mx-auto mt-8'>
-          {query && (
+          {/* Loading state */}
+          {loadingProducts && (
+            <div className='flex items-center justify-center py-20 gap-3 text-gray-500'>
+              <Loader2 size={20} className='animate-spin text-t1-red' />
+              <span className='font-oswald text-xs tracking-widest uppercase'>Đang tải sản phẩm...</span>
+            </div>
+          )}
+
+          {/* Error state */}
+          {!loadingProducts && errorProducts && (
+            <div className='py-16 text-center'>
+              <p className='font-oswald text-sm text-rose-400'>{errorProducts}</p>
+            </div>
+          )}
+
+          {!loadingProducts && !errorProducts && query && (
             <>
               {/* Toolbar */}
               <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6'>
@@ -263,7 +307,7 @@ export default function SearchPage() {
                 </div>
               </div>
 
-              {/* Category Filter */}
+              {/* Category Filter – dùng categories từ DB */}
               <AnimatePresence>
                 {showFilters && (
                   <motion.div
@@ -274,15 +318,23 @@ export default function SearchPage() {
                     className='overflow-hidden'
                   >
                     <div className='bg-[#111] border border-white/5 p-5 mb-6'>
-                      <p className='text-[10px] font-oswald font-bold text-gray-600 tracking-[0.3em] uppercase mb-3'>Category</p>
+                      <p className='text-[10px] font-oswald font-bold text-gray-600 tracking-[0.3em] uppercase mb-3'>Danh mục</p>
                       <div className='flex flex-wrap gap-2'>
-                        {CATEGORIES.map(cat => (
+                        {/* Nút "All" */}
+                        <button
+                          onClick={() => setActiveCategory('All')}
+                          className={`text-[10px] font-oswald font-bold tracking-widest uppercase px-3 py-1.5 transition-all duration-200 ${activeCategory === 'All' ? 'bg-t1-red text-white shadow-[0_0_15px_rgba(226,1,45,0.3)]' : 'bg-white/5 text-gray-500 hover:bg-white/10 hover:text-white'}`}
+                        >
+                          {t('nav.all')}
+                        </button>
+                        {/* Các danh mục từ DB */}
+                        {categories.map(cat => (
                           <button
-                            key={cat}
-                            onClick={() => setActiveCategory(cat)}
-                            className={`text-[10px] font-oswald font-bold tracking-widest uppercase px-3 py-1.5 transition-all duration-200 ${activeCategory === cat ? 'bg-t1-red text-white shadow-[0_0_15px_rgba(226,1,45,0.3)]' : 'bg-white/5 text-gray-500 hover:bg-white/10 hover:text-white'}`}
+                            key={cat.category_id}
+                            onClick={() => setActiveCategory(cat.category_name)}
+                            className={`text-[10px] font-oswald font-bold tracking-widest uppercase px-3 py-1.5 transition-all duration-200 ${activeCategory === cat.category_name ? 'bg-t1-red text-white shadow-[0_0_15px_rgba(226,1,45,0.3)]' : 'bg-white/5 text-gray-500 hover:bg-white/10 hover:text-white'}`}
                           >
-                            {cat === 'All' ? t('nav.all') : t(`categories.${cat.toLowerCase()}`)}
+                            {cat.category_name}
                           </button>
                         ))}
                       </div>
@@ -296,7 +348,7 @@ export default function SearchPage() {
                 <div className='py-32 text-center border border-white/5 bg-[#111]'>
                   <Search size={48} className='text-gray-700 mx-auto mb-5' />
                   <p className='font-oswald font-black text-2xl text-gray-600 uppercase tracking-widest mb-2'>{t('common.noResults')}</p>
-                  <p className='text-gray-700 text-sm font-inter mb-6'>{t('common.noResults')} "{query}".</p>
+                  <p className='text-gray-700 text-sm font-inter mb-6'>Không tìm thấy sản phẩm nào cho "{query}".</p>
                   <div className='flex flex-wrap gap-2 justify-center'>
                     <button onClick={() => { setLocalQuery(''); setSearchParams({}) }} className='text-[11px] border border-white/10 text-gray-500 hover:text-white hover:border-white/30 font-oswald uppercase tracking-widest px-4 py-2 transition-colors'>
                       {t('common.clear')}
@@ -339,7 +391,7 @@ export default function SearchPage() {
                           {query ? highlightMatch(product.product_name, query) : product.product_name}
                         </p>
                         <p className='text-[10px] text-gray-600 uppercase tracking-widest mb-2'>
-                          {product.category_name ? t(`categories.${product.category_name.toLowerCase()}`) : ''}
+                          {product.category_name || ''}
                         </p>
                         <div className='flex items-center gap-2'>
                           {product.items?.[0]?.sale_price && product.items[0].sale_price < product.items[0].product_item_price ? (
