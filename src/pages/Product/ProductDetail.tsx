@@ -25,7 +25,6 @@ import { useAuth } from '~/hooks/useAuth'
 import { reviewApi } from '~/apis/reviewApi'
 import { useCart } from '~/contexts/CartContext'
 import { useFavorites } from '~/contexts/FavoritesContext'
-import { combinedProducts } from '~/data/products'
 import { ProductCard } from '~/components/Product/ProductCard'
 import LoginModal from '~/components/Modals/LoginModal'
 import Layout from '~/components/layout/Layout'
@@ -49,7 +48,7 @@ const isClothingProduct = (cat?: string, name?: string): boolean => {
   return hasClothing && !hasExclude
 }
 
-function ProductDetailContent({ product }: { product: Product }) {
+function ProductDetailContent({ product, allProducts }: { product: Product; allProducts: Product[] }) {
   const { addCartItem } = useCart()
   const { t, language } = useLanguage()
   const { user } = useAuth()
@@ -357,10 +356,10 @@ function ProductDetailContent({ product }: { product: Product }) {
 
   // Related products (same category, excluding current)
   const relatedProducts = useMemo(() => {
-    return combinedProducts
+    return allProducts
       .filter((p) => p.category_name === product.category_name && p.product_id !== product.product_id)
       .slice(0, 4)
-  }, [product])
+  }, [product, allProducts])
 
   const handleAddToCart = () => {
     const selectedItem = product.items?.find(item => item.size === activeSize) || product.items?.[0]
@@ -1172,6 +1171,7 @@ export default function ProductDetail() {
   const { t } = useLanguage()
 
   const [product, setProduct] = useState<Product | null>(null)
+  const [allProducts, setAllProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -1182,8 +1182,12 @@ export default function ProductDetail() {
       try {
         setLoading(true)
         setError(null)
-        const response = await productApi.getById(Number(id))
-        setProduct(response.data)
+        const [prodRes, allRes] = await Promise.all([
+          productApi.getById(Number(id)),
+          productApi.getAll()
+        ])
+        setProduct(prodRes.data)
+        setAllProducts(allRes.data || allRes || [])
       } catch (err: any) {
         // console.error('Error fetching product:', err)
         setError(err.message || 'Failed to load product')
@@ -1225,5 +1229,5 @@ export default function ProductDetail() {
     )
   }
 
-  return <ProductDetailContent key={id} product={product} />
+  return <ProductDetailContent key={id} product={product} allProducts={allProducts} />
 }

@@ -7,14 +7,6 @@ export const notices = [
   { id: 6, title: '[BẢO TRÌ] Website tạm ngừng hoạt động ngày 15/03 từ 00:00-06:00', date: '2026-03-12', author: 'System', pinned: false }
 ]
 
-export const reviews = [
-  { id: 1, user: 'Minh_Streetwear', rating: 5, text: 'Áo hoodie quá xịn, chất vải dày dặn, form đẹp. Giao hàng cực nhanh, chỉ 1 ngày là có rồi. Sẽ tiếp tục ủng hộ shop!', item: 'Modern Urban Hoodie Vol.1', date: '2026-04-11', image: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&q=80&w=400' },
-  { id: 2, user: 'ThuViOfficial', rating: 4, text: 'Hàng đẹp như mô tả, đóng gói rất cẩn thận. Chỉ có điều size hơi rộng so với bảng size, nên chọn size nhỏ hơn 1 cấp.', item: '2026 Official Jacket', date: '2026-04-09', image: 'https://images.unsplash.com/photo-1591047139829-d91aec369a70?auto=format&fit=crop&q=80&w=400' },
-  { id: 3, user: 'HoangDepTrai99', rating: 5, text: 'Chất vải mát, logo in sắc nét không bị bong tróc sau nhiều lần giặt. Giá cả hợp lý. Sẽ mua thêm cho cả nhà!', item: 'Premium Leather Jacket', date: '2026-04-07', image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&q=80&w=400' },
-  { id: 4, user: 'LinhBUI_HN', rating: 5, text: 'Mua làm quà sinh nhật cho bạn trai, bạn ấy rất thích! Shop tư vấn nhiệt tình, gói quà đẹp. Highly recommended!', item: 'Minimal Gray Sweater', date: '2026-04-05', image: 'https://images.unsplash.com/photo-1578762560072-46ef14a5a7f9?auto=format&fit=crop&q=80&w=400' },
-  { id: 5, user: 'SonDep_TPHCM', rating: 3, text: 'Sản phẩm ổn, nhưng giao hàng hơi chậm hơn dự kiến 1 ngày. Chất lượng thì không có gì phàn nàn, vẫn sẽ quay lại.', item: 'Champion Signature Pants Vol.5', date: '2026-04-02', image: 'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&q=80&w=400' },
-  { id: 6, user: 'AnhQuan.Outfit', rating: 5, text: 'Đây là lần thứ 4 mình mua ở đây rồi. Chất lượng luôn ổn định, không bao giờ thất vọng. Shop rất đáng tin!', item: 'Essential Black Hoodie', date: '2026-03-30', image: 'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?auto=format&fit=crop&q=80&w=400' }
-]
 
 export const events = [
   {

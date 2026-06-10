@@ -1,22 +1,5 @@
 import { CheckCircle, Clock, TrendingUp, XCircle } from 'lucide-react'
 
-export interface MockOrderItem {
-  name: string
-  size: string
-  qty: number
-  price: number
-  image: string
-}
-
-export interface MockOrder {
-  id: string
-  date: string
-  status: 'pending' | 'paid' | 'shipping' | 'completed' | 'cancelled'
-  total: number
-  items: MockOrderItem[]
-}
-
-export const mockOrders: MockOrder[] = []
 
 export const STATUS_CONFIG = {
   pending: {
