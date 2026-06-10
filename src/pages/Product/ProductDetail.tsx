@@ -738,9 +738,9 @@ function ProductDetailContent({ product }: { product: Product }) {
                             </p>
                           </div>
 
-                          {rev.image_url && (
+                          {(rev.image_url || rev.image) && (
                             <div className="w-24 h-24 rounded-lg overflow-hidden border border-white/5 bg-black/40 mb-4 shrink-0">
-                              <img src={rev.image_url} alt="Review attachment" className="w-full h-full object-cover" />
+                              <img src={rev.image_url || rev.image} alt="Review attachment" className="w-full h-full object-cover" />
                             </div>
                           )}
 

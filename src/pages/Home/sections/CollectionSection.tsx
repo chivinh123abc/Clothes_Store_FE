@@ -22,7 +22,7 @@ const CollectionSection = () => {
       id: 'essential',
       label: t('nav.essential'),
       subtitle: t('home.essentialSub'),
-      image: 'https://images.unsplash.com/photo-1556821840-ecc63f93428c?auto=format&fit=crop&q=80&w=900&h=1200',
+      image: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&q=80&w=900&h=1200',
       path: '/shop/collection/essential',
       tag: t('home.core')
     },

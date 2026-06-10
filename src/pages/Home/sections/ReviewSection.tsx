@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, Star } from 'lucide-react'
-import { REVIEWS } from '~/data/homeData'
 import { useLanguage } from '~/contexts/LanguageContext'
 import { reviewApi } from '~/apis/reviewApi'
 
@@ -14,25 +13,27 @@ const ReviewSection = () => {
       try {
         const res: any = await reviewApi.getAll()
         const fetchedReviews = res.data || res
-        if (Array.isArray(fetchedReviews) && fetchedReviews.length > 0) {
-          // Strict filter: Only 5-star reviews with active images
+        if (Array.isArray(fetchedReviews)) {
           const filtered = fetchedReviews.filter(
-            (r: any) => r.rating === 5 && (r.image_url || r.image)
+            (r: any) => Number(r.rating) === 5 && (r.image_url || r.image || r.product_image)
           )
-          if (filtered.length > 0) {
-            setReviewsList(filtered)
-          } else {
-            setReviewsList(REVIEWS.filter((r: any) => r.rating === 5 && r.image))
-          }
+          // Limit to 15 newest reviews
+          setReviewsList(filtered.slice(0, 15))
         } else {
-          setReviewsList(REVIEWS.filter((r: any) => r.rating === 5 && r.image))
+          setReviewsList([])
         }
-      } catch {
-        setReviewsList(REVIEWS.filter((r: any) => r.rating === 5 && r.image))
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('Failed to fetch reviews:', err)
+        setReviewsList([])
       }
     }
     fetchReviews()
   }, [])
+
+  if (reviewsList.length === 0) {
+    return null
+  }
 
   const maxIndex = Math.max(1, reviewsList.length - 3)
   const next = () => setCurrentIndex((prev: number) => (prev + 1) % maxIndex)
@@ -71,7 +72,7 @@ const ReviewSection = () => {
               const user = review.display_name || review.username || review.user || 'T1 Supporter'
               const date = review.created_at ? new Date(review.created_at).toISOString().split('T')[0] : (review.date || '2024.03.15')
               const productTitle = review.product || review.item || (review.product_id ? `Product #${review.product_id}` : 'T1 Gear')
-              const imageUrl = review.image_url || review.image || 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&q=80&w=400'
+              const imageUrl = review.product_image || review.image_url || review.image || 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&q=80&w=400'
 
               return (
                 <div key={review.review_id || review.id || idx} className="min-w-[300px] flex-shrink-0 w-1/4">

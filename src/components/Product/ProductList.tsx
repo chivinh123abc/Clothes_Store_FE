@@ -418,7 +418,7 @@ export function ProductList({ filter = 'all' }: ProductListProps) {
       return {
         title: `${t('shop.essential')} ${path.includes('/apparel') ? t('categories.apparel') : path.includes('/gift-and-accessory') ? t('categories.gifts') : t('categories.collection')}`,
         subtitle: t('categories.collection'),
-        bannerImage: 'https://images.unsplash.com/photo-1556821840-ecc63f93428c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
+        bannerImage: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
         highlight: t('shop.dailyWear')
       }
     }

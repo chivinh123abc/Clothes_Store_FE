@@ -24,7 +24,7 @@ import { orderApi } from '~/apis/orderApi'
 import { reviewApi } from '~/apis/reviewApi'
 import productApi from '~/apis/productApi'
 
-type Tab = 'profile' | 'favorites' | 'cart' | 'orders'
+type Tab = 'profile' | 'favorites' | 'cart' | 'orders' | 'reviews'
 
 export default function MyPage() {
   const { t, language } = useLanguage()
@@ -55,6 +55,18 @@ export default function MyPage() {
   const [reviewedProductIds, setReviewedProductIds] = useState<number[]>([])
   const [reviewImageUrlPreview, setReviewImageUrlPreview] = useState<string | null>(null)
   const [isUploadingImage, setIsUploadingImage] = useState<boolean>(false)
+
+  // Edit review states
+  const [myReviews, setMyReviews] = useState<any[]>([])
+  const [isLoadingMyReviews, setIsLoadingMyReviews] = useState<boolean>(false)
+  const [editingReview, setEditingReview] = useState<any | null>(null)
+  const [editRating, setEditRating] = useState<number>(5)
+  const [editHoverRating, setEditHoverRating] = useState<number>(0)
+  const [editText, setEditText] = useState<string>('')
+  const [editImageUrlPreview, setEditImageUrlPreview] = useState<string | null>(null)
+  const [isSubmittingEdit, setIsSubmittingEdit] = useState<boolean>(false)
+  const [isUploadingEditImage, setIsUploadingEditImage] = useState<boolean>(false)
+  const [, setEditImageFile] = useState<File | null>(null)
 
   // Security modals state
   const [changePwOpen, setChangePwOpen] = useState(false)
@@ -195,6 +207,115 @@ export default function MyPage() {
     fetchUserOrders()
   }, [user, activeTab])
 
+  const fetchMyReviews = useCallback(async () => {
+    if (!user?.user_id) return
+    try {
+      setIsLoadingMyReviews(true)
+      const res = await reviewApi.getAll()
+      const reviewsList = res.data || res
+      const filtered = reviewsList.filter((rev: any) => Number(rev.user_id) === Number(user.user_id))
+      setMyReviews(filtered)
+    } catch (err) {
+      console.error('Failed to load my reviews:', err)
+    } finally {
+      setIsLoadingMyReviews(false)
+    }
+  }, [user?.user_id])
+
+  useEffect(() => {
+    fetchMyReviews()
+  }, [fetchMyReviews])
+
+  const handleOpenEditModal = (review: any) => {
+    setEditingReview(review)
+    setEditRating(review.rating)
+    setEditText(review.text)
+    setEditImageUrlPreview(review.image_url || null)
+    setEditImageFile(null)
+  }
+
+  const handleCloseEditModal = () => {
+    setEditingReview(null)
+    setEditImageUrlPreview(null)
+    setEditImageFile(null)
+  }
+
+  const handleEditImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setEditImageFile(file)
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setEditImageUrlPreview(reader.result as string)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleRemoveEditImage = () => {
+    setEditImageUrlPreview(null)
+    setEditImageFile(null)
+  }
+
+  const handleDeleteReview = async (reviewId: number) => {
+    const confirmMessage = language === 'vi'
+      ? 'Bạn có chắc chắn muốn xóa đánh giá này không?'
+      : 'Are you sure you want to delete this review?'
+    if (!window.confirm(confirmMessage)) return
+
+    try {
+      await reviewApi.delete(reviewId)
+      showToast(
+        language === 'vi' ? 'Xóa đánh giá thành công!' : 'Review deleted successfully!',
+        'success'
+      )
+      fetchMyReviews()
+    } catch (err) {
+      console.error('Failed to delete review:', err)
+      showToast('Failed to delete review', 'error')
+    }
+  }
+
+  const handleSubmitEdit = async () => {
+    if (!editingReview || !editText.trim()) return
+    try {
+      setIsSubmittingEdit(true)
+      let image_url = editImageUrlPreview
+
+      if (editImageUrlPreview && editImageUrlPreview.startsWith('data:image')) {
+        setIsUploadingEditImage(true)
+        try {
+          const res = await reviewApi.uploadImage({ file: editImageUrlPreview })
+          image_url = res.data.secure_url
+        } catch (uploadErr) {
+          console.error(uploadErr)
+          setIsUploadingEditImage(false)
+          return
+        } finally {
+          setIsUploadingEditImage(false)
+        }
+      }
+
+      await reviewApi.update(editingReview.review_id, {
+        rating: editRating,
+        text: editText,
+        image_url: image_url || undefined
+      })
+
+      showToast(
+        language === 'vi' ? 'Cập nhật đánh giá thành công!' : 'Review updated successfully!',
+        'success'
+      )
+      handleCloseEditModal()
+      fetchMyReviews()
+    } catch (err) {
+      console.error('Failed to update review:', err)
+      showToast('Failed to update review', 'error')
+    } finally {
+      setIsSubmittingEdit(false)
+    }
+  }
+
   const handleCancelOrder = async (orderId: number) => {
     setCancelOrderModal(orderId)
   }
@@ -263,6 +384,7 @@ export default function MyPage() {
         'success'
       )
       setReviewedProductIds(prev => [...prev, selectedReviewProduct.productId])
+      fetchMyReviews()
 
       const remainingItems = reviewOrder.items.filter((item: any) =>
         item.productId !== selectedReviewProduct.productId && !reviewedProductIds.includes(item.productId)
@@ -551,7 +673,8 @@ export default function MyPage() {
     { id: 'profile', label: t('common.profile'), icon: User },
     { id: 'favorites', label: t('common.wishlist'), icon: Heart, count: totalFavorites },
     { id: 'cart', label: t('profile.cart'), icon: ShoppingBag, count: totalItems },
-    { id: 'orders', label: t('common.order'), icon: Package, count: realOrders.length }
+    { id: 'orders', label: t('common.order'), icon: Package, count: realOrders.length },
+    { id: 'reviews', label: language === 'vi' ? 'ĐÁNH GIÁ' : 'REVIEWS', icon: Star, count: myReviews.length }
   ]
 
   const memberSince = user?.created_at
@@ -1543,6 +1666,101 @@ export default function MyPage() {
               </motion.div>
             )}
 
+            {/* ── REVIEWS TAB ── */}
+            {activeTab === 'reviews' && (
+              <motion.div
+                key='reviews'
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -16 }}
+                transition={{ duration: 0.25 }}
+                className='space-y-6 w-full'
+              >
+                <div className='flex justify-between items-center mb-6 bg-[#111] border border-white/5 p-6'>
+                  <div>
+                    <h2 className='font-oswald font-bold text-lg uppercase tracking-wider flex items-center gap-2'>
+                      <Star size={16} className='text-t1-red' />
+                      {language === 'vi' ? 'ĐÁNH GIÁ CỦA TÔI' : 'MY REVIEWS'}
+                    </h2>
+                    <p className='text-xs text-gray-500 font-inter mt-1'>
+                      {language === 'vi'
+                        ? `Bạn đã viết ${myReviews.length} đánh giá`
+                        : `You have written ${myReviews.length} reviews`}
+                    </p>
+                  </div>
+                </div>
+
+                {isLoadingMyReviews ? (
+                  <div className='flex justify-center items-center py-20'>
+                    <Loader2 className='w-8 h-8 text-t1-red animate-spin' />
+                  </div>
+                ) : myReviews.length === 0 ? (
+                  <div className='text-center py-16 border border-dashed border-white/10 rounded-xl bg-white/[0.01]'>
+                    <p className='text-gray-500 font-inter text-sm italic'>
+                      {language === 'vi' ? 'Bạn chưa viết đánh giá nào.' : "You haven't written any reviews yet."}
+                    </p>
+                  </div>
+                ) : (
+                  <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                    {myReviews.map((rev: any, idx: number) => {
+                      const rating = rev.rating
+                      const text = rev.text
+                      const item = rev.product || 'T1 Gear'
+                      const date = rev.created_at ? new Date(rev.created_at).toISOString().split('T')[0] : 'Recently'
+
+                      return (
+                        <div key={rev.review_id || idx} className='bg-[#111111] p-6 border border-white/5 shadow-md flex flex-col justify-between relative group rounded-xl'>
+                          <div className='absolute top-4 right-4 flex items-center gap-2 z-10'>
+                            <button
+                              onClick={() => handleOpenEditModal(rev)}
+                              className='p-1.5 bg-white/5 hover:bg-t1-red text-gray-400 hover:text-white rounded-md transition-colors'
+                              title={language === 'vi' ? 'Chỉnh sửa đánh giá' : 'Edit review'}
+                            >
+                              <Edit3 size={14} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteReview(rev.review_id)}
+                              className='p-1.5 bg-white/5 hover:bg-t1-red text-gray-400 hover:text-white rounded-md transition-colors'
+                              title={language === 'vi' ? 'Xóa đánh giá' : 'Delete review'}
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+
+                          <div>
+                            <div className='flex justify-between items-start mb-3 pr-16'>
+                              <div className='flex gap-0.5 text-t1-red text-sm'>
+                                {'★'.repeat(rating)}
+                                <span className='text-gray-700'>{'★'.repeat(5 - rating)}</span>
+                              </div>
+                            </div>
+                            <p className='text-gray-300 font-inter text-sm italic leading-relaxed mb-4'>
+                              "{text}"
+                            </p>
+                          </div>
+
+                          {(rev.product_image || rev.image_url || rev.image) && (
+                            <div className='w-24 h-24 rounded-lg overflow-hidden border border-white/5 bg-black/40 mb-4 shrink-0'>
+                              <img src={rev.product_image || rev.image_url || rev.image} alt='Review attachment' className='w-full h-full object-cover' />
+                            </div>
+                          )}
+
+                          <div className='border-t border-white/5 pt-3 flex justify-between items-center'>
+                            <span className='font-oswald font-bold tracking-wider text-t1-red text-xs uppercase block truncate max-w-[200px]'>
+                              <Link to={`/product/${rev.product_id}`} className="hover:underline hover:text-white transition-colors">
+                                {item}
+                              </Link>
+                            </span>
+                            <span className='text-[10px] text-gray-600 font-inter'>{date}</span>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </motion.div>
+            )}
+
           </AnimatePresence>
         </div>
         {/* ── CHANGE PASSWORD MODAL ── */}
@@ -2034,6 +2252,160 @@ export default function MyPage() {
                     </div>
                   </div>
                 )}
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Edit Review Modal */}
+        <AnimatePresence>
+          {editingReview && (
+            <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+              {/* Overlay Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={handleCloseEditModal}
+                className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+              />
+
+              {/* Modal Container */}
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                transition={{ type: 'spring', duration: 0.5 }}
+                className="relative bg-t1-dark border border-white/10 w-full max-w-lg p-8 shadow-2xl flex flex-col z-10 text-white rounded-2xl"
+              >
+                {/* Close Button */}
+                <button
+                  onClick={handleCloseEditModal}
+                  className="absolute top-6 right-6 text-gray-500 hover:text-white transition-colors"
+                >
+                  <X size={18} />
+                </button>
+
+                {/* Header */}
+                <div className="mb-6">
+                  <h2 className="font-oswald font-black text-2xl text-white italic uppercase tracking-wider mb-2">
+                    {language === 'vi' ? 'CHỈNH SỬA ĐÁNH GIÁ' : 'EDIT YOUR REVIEW'}
+                  </h2>
+                  <div className="w-10 h-0.5 bg-t1-red" />
+                </div>
+
+                {/* Rating selection */}
+                <div className="mb-6">
+                  <label className="block text-xs text-gray-500 font-inter uppercase tracking-wider mb-3">
+                    {language === 'vi' ? 'Đánh giá của bạn:' : 'Your Rating:'}
+                  </label>
+                  <div className="flex gap-2 text-3xl">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setEditRating(star)}
+                        onMouseEnter={() => setEditHoverRating(star)}
+                        onMouseLeave={() => setEditHoverRating(0)}
+                        className="transition-colors duration-150"
+                      >
+                        <span
+                          className={
+                            star <= (editHoverRating || editRating)
+                              ? 'text-t1-red'
+                              : 'text-gray-800 hover:text-t1-red/50'
+                          }
+                        >
+                          ★
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Textarea */}
+                <div className="mb-6">
+                  <label className="block text-xs text-gray-500 font-inter uppercase tracking-wider mb-2">
+                    {language === 'vi' ? 'Nhận xét chi tiết:' : 'Detailed Review:'}
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={editText}
+                    onChange={(e) => setEditText(e.target.value)}
+                    placeholder={
+                      language === 'vi'
+                        ? 'Hãy chia sẻ cảm nhận của bạn về sản phẩm này...'
+                        : 'Share your thoughts about this product...'
+                    }
+                    className="w-full bg-[#151515] border border-white/5 rounded-xl p-4 text-white text-sm focus:outline-none focus:border-t1-red/50 transition-all font-inter placeholder:text-gray-600"
+                  />
+                </div>
+
+                {/* Image Upload */}
+                <div className="mb-8">
+                  <label className="block text-xs text-gray-500 font-inter uppercase tracking-wider mb-2 flex items-center justify-between">
+                    <span>{language === 'vi' ? 'Hình ảnh đính kèm:' : 'Attached Image:'}</span>
+                    <span className="text-[10px] text-gray-600 font-normal uppercase tracking-normal">
+                      {language === 'vi' ? 'Tối đa 1 ảnh (PNG, JPG)' : 'Max 1 photo (PNG, JPG)'}
+                    </span>
+                  </label>
+
+                  {editImageUrlPreview ? (
+                    <div className="relative group w-32 h-32 rounded-xl overflow-hidden border border-white/10 bg-[#151515] flex items-center justify-center">
+                      <img src={editImageUrlPreview} alt="Preview" className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={handleRemoveEditImage}
+                        className="absolute top-2 right-2 p-1.5 bg-black/75 hover:bg-t1-red text-white rounded-full transition-colors opacity-0 group-hover:opacity-100 duration-200"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center w-full h-28 border border-dashed border-white/10 hover:border-t1-red/40 rounded-xl bg-white/[0.01] hover:bg-white/[0.03] transition-all cursor-pointer group">
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <Camera size={24} className="text-gray-500 group-hover:text-t1-red mb-2 transition-colors duration-200" />
+                        <p className="text-xs text-gray-500 group-hover:text-gray-400 transition-colors duration-200">
+                          {language === 'vi' ? 'Nhấp để chọn ảnh chụp sản phẩm' : 'Click to select product image'}
+                        </p>
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleEditImageChange}
+                        className="hidden"
+                      />
+                    </label>
+                  )}
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-4 justify-end mt-auto">
+                  <button
+                    type="button"
+                    onClick={handleCloseEditModal}
+                    className="px-6 py-3 font-oswald font-bold text-xs tracking-widest text-gray-500 hover:text-white transition-colors"
+                  >
+                    {language === 'vi' ? 'HỦY BỎ' : 'CANCEL'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSubmitEdit}
+                    disabled={isSubmittingEdit || !editText.trim()}
+                    className="px-8 py-3 bg-t1-red text-white font-oswald font-black text-xs tracking-[0.2em] hover:bg-white hover:text-black transition-all flex items-center gap-2 shadow-[0_10px_20px_rgba(226,1,45,0.3)] disabled:bg-t1-gray/40 disabled:cursor-not-allowed"
+                  >
+                    {isSubmittingEdit ? (
+                      <>
+                        <Loader2 size={12} className="animate-spin" />
+                        {isUploadingEditImage
+                          ? (language === 'vi' ? 'ĐANG TẢI ẢNH...' : 'UPLOADING...')
+                          : (language === 'vi' ? 'ĐANG LƯU...' : 'SAVING...')}
+                      </>
+                    ) : (
+                      language === 'vi' ? 'LƯU THAY ĐỔI' : 'SAVE CHANGES'
+                    )}
+                  </button>
+                </div>
               </motion.div>
             </div>
           )}

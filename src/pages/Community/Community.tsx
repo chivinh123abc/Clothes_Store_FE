@@ -22,7 +22,6 @@ import { reviewApi } from '~/apis/reviewApi'
 
 import {
   notices,
-  reviews,
   events,
   qaItems
 } from '~/data/communityData'
@@ -30,7 +29,7 @@ import {
 const tabList = ['NOTICE', 'REVIEW', 'EVENT', 'QA']
 
 function Community() {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const [searchParams, setSearchParams] = useSearchParams()
   const tabFromUrl = searchParams.get('tab')?.toUpperCase() || 'NOTICE'
   const [activeTab, setActiveTab] = useState(tabFromUrl)
@@ -183,9 +182,15 @@ function Community() {
                 <div className='flex justify-center items-center py-20'>
                   <Loader2 className='w-8 h-8 text-t1-red animate-spin' />
                 </div>
+              ) : realReviews.length === 0 ? (
+                <div className="text-center py-20 border border-dashed border-white/10 bg-[#161616]">
+                  <p className="font-oswald text-gray-500 tracking-[0.3em] font-bold uppercase">
+                    {language === 'vi' ? 'CHƯA CÓ ĐÁNH GIÁ NÀO' : 'NO REVIEWS YET'}
+                  </p>
+                </div>
               ) : (
                 <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
-                  {(realReviews.length > 0 ? realReviews : reviews).map((review: any, i: number) => {
+                  {realReviews.map((review: any, i: number) => {
                     const rating = review.rating
                     const text = review.text
                     const user = review.display_name || review.username || review.user || 'Customer'
@@ -210,9 +215,9 @@ function Community() {
                         <p className='text-gray-400 font-inter text-sm italic leading-relaxed flex-grow mb-6'>
                           "{text}"
                         </p>
-                        {review.image_url && (
+                        {(review.product_image || review.image_url || review.image) && (
                           <div className='w-full aspect-[4/3] rounded-lg overflow-hidden border border-white/5 bg-black/40 mb-6 group-hover:border-white/10 transition-colors shrink-0'>
-                            <img src={review.image_url} alt="Review attachment" className='w-full h-full object-cover group-hover:scale-105 transition-transform duration-700' />
+                            <img src={review.product_image || review.image_url || review.image} alt="Review attachment" className='w-full h-full object-cover group-hover:scale-105 transition-transform duration-700' />
                           </div>
                         )}
                         <div className='border-t border-white/5 pt-5'>

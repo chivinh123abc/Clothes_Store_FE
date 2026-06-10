@@ -7,7 +7,7 @@ export const REVIEWS = [
     date: '2024.03.15',
     product: '2025 T1 World Champions Artisan Keycap',
     content: 'Absolutely peak quality. Came really fast and looks incredible on my keyboard. Worth every penny for a 3-peat fan!',
-    image: 'https://images.unsplash.com/photo-1612287230202-1ff1d85d1bdf?auto=format&fit=crop&q=80&w=400'
+    image: 'https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?auto=format&fit=crop&q=80&w=400'
   },
   {
     id: 2,
@@ -16,7 +16,7 @@ export const REVIEWS = [
     date: '2024.03.12',
     product: '2026 T1 Uniform Jacket',
     content: 'The material is premium. Fit is perfect (ordered XL). Highly recommend for anyone looking to support the goat.',
-    image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&q=80&w=400'
+    image: 'https://images.unsplash.com/photo-1591047139829-d91aec369a70?auto=format&fit=crop&q=80&w=400'
   },
   {
     id: 3,
@@ -25,7 +25,7 @@ export const REVIEWS = [
     date: '2024.03.10',
     product: '2025 T1 Player Plushie Keychain (Oner)',
     content: 'He is so cute and tiny! Puts perfectly on my bag. Shipping was fast and the packaging was protective.',
-    image: 'https://images.unsplash.com/photo-1608889175123-8ec330b86f84?auto=format&fit=crop&q=80&w=400'
+    image: 'https://images.unsplash.com/photo-1602144365691-388277259160?auto=format&fit=crop&q=80&w=400'
   },
   {
     id: 4,
@@ -34,7 +34,7 @@ export const REVIEWS = [
     date: '2024.03.05',
     product: '[Pro Order] 2025 T1 World Champions Jacket',
     content: 'The gold embroidery is stunning. Much better than the pictures. It feels like wearing history.',
-    image: 'https://images.unsplash.com/photo-1578587018452-892bacefd3f2?auto=format&fit=crop&q=80&w=400'
+    image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&q=80&w=400'
   },
   {
     id: 5,

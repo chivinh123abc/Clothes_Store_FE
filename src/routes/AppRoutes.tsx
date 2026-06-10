@@ -25,6 +25,7 @@ import VerifyAccount from '../pages/VerifyAccount/VerifyAccount'
 import Checkout from '../pages/Checkout/Checkout'
 import MoMoReturn from '../pages/Checkout/MoMoReturn'
 import TryOnPage from '../pages/TryOn/TryOnPage'
+import NotFound from '../pages/NotFound/NotFound'
 
 const Private = ({ children }: { children: React.ReactElement }) => {
   const { user, isLoading } = useAuth()
@@ -81,6 +82,7 @@ export default function AppRoutes() {
       <Route path='/admin/users' element={<AdminProtected><AdminUserList /></AdminProtected>} />
       <Route path='/admin/orders' element={<AdminProtected><AdminOrderList /></AdminProtected>} />
       <Route path='/admin/discounts' element={<AdminProtected><AdminDiscountList /></AdminProtected>} />
+      <Route path="*" element={<NotFound />} />
     </Routes>
   )
 }
