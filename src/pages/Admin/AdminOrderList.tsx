@@ -178,6 +178,13 @@ const AdminOrderList: React.FC = () => {
     })
   }, [orders, searchTerm, filterStatus, filterPayment])
 
+  // Normalize any legacy payment_method value to 'cod' or 'momo'
+  const normalizePayment = (raw?: string): 'cod' | 'momo' => {
+    const v = (raw || '').toLowerCase().trim()
+    if (v === 'momo') return 'momo'
+    return 'cod' // cod, cash on delivery, paypal, bank, empty → all treated as COD
+  }
+
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'completed': return 'text-emerald-400 bg-emerald-400/10'
@@ -356,46 +363,47 @@ const AdminOrderList: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex flex-col gap-2">
-                        {/* Method */}
-                        <div className="flex items-center gap-2">
-                          {order.payment_method?.toLowerCase() === 'cod' ? (
-                            <DollarSign size={14} className="text-amber-500" />
-                          ) : (
-                            <CreditCard size={14} className="text-cyan-400" />
-                          )}
-                          <span className={`text-[10px] font-bold uppercase tracking-wider ${order.payment_method?.toLowerCase() === 'cod' ? 'text-amber-500' : 'text-cyan-400'}`}>
-                            {order.payment_method || 'COD'}
-                          </span>
-                        </div>
-                        {/* Status Toggle */}
-                        <button
-                          onClick={() => handleUpdatePaymentStatus(order.order_id, order.payment_status === 'paid' ? 'unpaid' : 'paid')}
-                          disabled={
-                            order.payment_method?.toLowerCase() === 'momo' ||
-                            order.status?.toLowerCase() === 'completed' ||
-                            (order.payment_method?.toLowerCase() === 'cod' && order.status?.toLowerCase() !== 'completed')
-                          }
-                          className={`flex items-center gap-1.5 px-2 py-1 rounded-md border transition-all ${order.payment_status === 'paid'
-                            ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
-                            : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'
-                            } ${(order.payment_method?.toLowerCase() === 'momo' ||
-                              order.status?.toLowerCase() === 'completed' ||
-                              (order.payment_method?.toLowerCase() === 'cod' && order.status?.toLowerCase() !== 'completed'))
-                              ? 'opacity-40 cursor-not-allowed'
-                              : ''
-                            }`}
-                        >
-                          {order.payment_status === 'paid' ? (
-                            <CheckCircle2 size={12} />
-                          ) : (
-                            <Clock size={12} />
-                          )}
-                          <span className="text-[9px] font-bold uppercase tracking-widest">
-                            {order.payment_status === 'paid' ? 'Paid' : 'Unpaid'}
-                          </span>
-                        </button>
-                      </div>
+                      {(() => {
+                        const method = normalizePayment(order.payment_method)
+                        const isMomo = method === 'momo'
+                        const isCod = method === 'cod'
+                        const isCompleted = order.status?.toLowerCase() === 'completed'
+                        const paymentDisabled =
+                          isMomo || isCompleted || (isCod && !isCompleted)
+                        return (
+                          <div className="flex flex-col gap-2">
+                            {/* Method */}
+                            <div className="flex items-center gap-2">
+                              {isCod ? (
+                                <DollarSign size={14} className="text-amber-500" />
+                              ) : (
+                                <CreditCard size={14} className="text-cyan-400" />
+                              )}
+                              <span className={`text-[10px] font-bold uppercase tracking-wider ${isCod ? 'text-amber-500' : 'text-cyan-400'}`}>
+                                {isCod ? 'COD' : 'MOMO'}
+                              </span>
+                            </div>
+                            {/* Status Toggle */}
+                            <button
+                              onClick={() => handleUpdatePaymentStatus(order.order_id, order.payment_status === 'paid' ? 'unpaid' : 'paid')}
+                              disabled={paymentDisabled}
+                              className={`flex items-center gap-1.5 px-2 py-1 rounded-md border transition-all ${order.payment_status === 'paid'
+                                ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                                : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'
+                              } ${paymentDisabled ? 'opacity-40 cursor-not-allowed' : ''}`}
+                            >
+                              {order.payment_status === 'paid' ? (
+                                <CheckCircle2 size={12} />
+                              ) : (
+                                <Clock size={12} />
+                              )}
+                              <span className="text-[9px] font-bold uppercase tracking-widest">
+                                {order.payment_status === 'paid' ? 'Paid' : 'Unpaid'}
+                              </span>
+                            </button>
+                          </div>
+                        )
+                      })()}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
@@ -407,7 +415,7 @@ const AdminOrderList: React.FC = () => {
                           >
                             {(() => {
                               const current = order.status.toLowerCase()
-                              const method = order.payment_method?.toLowerCase()
+                              const method = normalizePayment(order.payment_method)
 
                               const allowed = method === 'cod'
                                 ? {
