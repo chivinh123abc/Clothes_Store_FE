@@ -20,6 +20,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { userApi } from '../../apis/userApi'
 import type { UserResponseDto } from '../../types/user'
 import { useToast } from '../../contexts/ToastContext'
+import { useAuth } from '../../hooks/useAuth'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 
 const AdminUserList: React.FC = () => {
@@ -29,6 +30,7 @@ const AdminUserList: React.FC = () => {
   const [filterRole, setFilterRole] = useState<'all' | 'admin' | 'user'>('all')
   const [userToDelete, setUserToDelete] = useState<number | null>(null)
   const { showToast } = useToast()
+  const { user: currentAdmin } = useAuth()
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -147,7 +149,7 @@ const AdminUserList: React.FC = () => {
   }
 
   const filteredUsers = React.useMemo(() => {
-    return users.filter(user => {
+    const filtered = users.filter(user => {
       const matchesSearch =
         user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.email.toLowerCase().includes(searchTerm.toLowerCase())
@@ -158,7 +160,18 @@ const AdminUserList: React.FC = () => {
 
       return matchesSearch && matchesRole
     })
-  }, [users, searchTerm, filterRole])
+
+    // Sort: YOU first → other admins → regular users
+    return [...filtered].sort((a, b) => {
+      const aIsSelf = currentAdmin && a.user_id === currentAdmin.user_id ? 1 : 0
+      const bIsSelf = currentAdmin && b.user_id === currentAdmin.user_id ? 1 : 0
+      if (aIsSelf !== bIsSelf) return bIsSelf - aIsSelf   // YOU always first
+
+      const aIsAdmin = a.role === 1 ? 1 : 0
+      const bIsAdmin = b.role === 1 ? 1 : 0
+      return bIsAdmin - aIsAdmin                           // admins before users
+    })
+  }, [users, searchTerm, filterRole, currentAdmin])
 
   return (
     <div className="space-y-8">
@@ -322,49 +335,57 @@ const AdminUserList: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-6 py-5">
-                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <motion.button
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          onClick={() => handleOpenModal(user)}
-                          className="p-2 bg-white/5 border border-white/10 text-gray-400 rounded-lg hover:bg-white/10 hover:text-white transition-all"
-                          title="Edit User"
-                        >
-                          <Edit2 size={16} />
-                        </motion.button>
-                        {user.status === 2 && (
+                      {currentAdmin && user.user_id === currentAdmin.user_id ? (
+                        <div className="flex items-center justify-end">
+                          <span className="px-3 py-1 rounded-full bg-t1-red/10 border border-t1-red/20 text-t1-red font-oswald text-[10px] uppercase tracking-widest">
+                            You
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <motion.button
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
-                            onClick={() => handleResendVerification(user.email)}
-                            title="Resend Verification Email"
-                            className="p-2 bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 rounded-lg hover:bg-yellow-500 hover:text-white transition-all"
+                            onClick={() => handleOpenModal(user)}
+                            className="p-2 bg-white/5 border border-white/10 text-gray-400 rounded-lg hover:bg-white/10 hover:text-white transition-all"
+                            title="Edit User"
                           >
-                            <Mail size={16} />
+                            <Edit2 size={16} />
                           </motion.button>
-                        )}
-                        <motion.button
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          onClick={() => handleUpdateStatus(user.user_id, !(user.status === 0 || user.is_active))}
-                          title={(user.status === 0 || user.is_active) ? 'Ban User' : 'Unban User'}
-                          className={`p-2 rounded-lg border transition-all ${(user.status === 0 || user.is_active)
-                            ? 'bg-red-500/10 border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white'
-                            : 'bg-green-500/10 border-green-500/20 text-green-500 hover:bg-green-500 hover:text-white'
-                          }`}
-                        >
-                          {(user.status === 0 || user.is_active) ? <XCircle size={16} /> : <CheckCircle2 size={16} />}
-                        </motion.button>
-                        <motion.button
-                          whileHover={{ scale: 1.1, backgroundColor: '#e2012d' }}
-                          whileTap={{ scale: 0.9 }}
-                          onClick={() => setUserToDelete(user.user_id)}
-                          title="Delete Permanently"
-                          className="p-2 bg-white/5 border border-white/10 text-gray-400 rounded-lg hover:border-t1-red hover:text-white transition-all"
-                        >
-                          <Trash2 size={16} />
-                        </motion.button>
-                      </div>
+                          {user.status === 2 && (
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={() => handleResendVerification(user.email)}
+                              title="Resend Verification Email"
+                              className="p-2 bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 rounded-lg hover:bg-yellow-500 hover:text-white transition-all"
+                            >
+                              <Mail size={16} />
+                            </motion.button>
+                          )}
+                          <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() => handleUpdateStatus(user.user_id, !(user.status === 0 || user.is_active))}
+                            title={(user.status === 0 || user.is_active) ? 'Ban User' : 'Unban User'}
+                            className={`p-2 rounded-lg border transition-all ${(user.status === 0 || user.is_active)
+                              ? 'bg-red-500/10 border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white'
+                              : 'bg-green-500/10 border-green-500/20 text-green-500 hover:bg-green-500 hover:text-white'
+                            }`}
+                          >
+                            {(user.status === 0 || user.is_active) ? <XCircle size={16} /> : <CheckCircle2 size={16} />}
+                          </motion.button>
+                          <motion.button
+                            whileHover={{ scale: 1.1, backgroundColor: '#e2012d' }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() => setUserToDelete(user.user_id)}
+                            title="Delete Permanently"
+                            className="p-2 bg-white/5 border border-white/10 text-gray-400 rounded-lg hover:border-t1-red hover:text-white transition-all"
+                          >
+                            <Trash2 size={16} />
+                          </motion.button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))

@@ -279,7 +279,7 @@ export default function Checkout() {
               <div>
                 <span className="text-xs text-gray-500 block uppercase font-semibold">PAYMENT METHOD</span>
                 <span className="text-white font-oswald font-bold text-base tracking-wider uppercase">
-                  {orderSuccess.paymentMethod === 'cod' ? 'Cash On Delivery' : orderSuccess.paymentMethod === 'bank' ? 'Bank Transfer' : 'Credit Card'}
+                  {orderSuccess.paymentMethod === 'momo' ? 'MoMo E-Wallet' : 'Cash On Delivery'}
                 </span>
               </div>
             </div>
