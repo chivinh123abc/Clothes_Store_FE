@@ -265,7 +265,7 @@ const AdminOrderList: React.FC = () => {
                   className={`w-full py-2 px-1 rounded-lg font-oswald text-[10px] uppercase tracking-[0.2em] transition-all whitespace-nowrap text-center ${filterStatus === status
                     ? 'bg-t1-red text-white shadow-lg shadow-t1-red/20'
                     : 'text-gray-500 hover:text-white hover:bg-white/5'
-                  }`}
+                    }`}
                 >
                   {status}
                 </button>
@@ -283,7 +283,7 @@ const AdminOrderList: React.FC = () => {
                   className={`w-full py-2 px-1 rounded-lg font-oswald text-[10px] uppercase tracking-[0.2em] transition-all whitespace-nowrap text-center ${filterPayment === pStatus
                     ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
                     : 'text-gray-500 hover:text-white hover:bg-white/5'
-                  }`}
+                    }`}
                 >
                   {pStatus}
                 </button>
@@ -371,10 +371,20 @@ const AdminOrderList: React.FC = () => {
                         {/* Status Toggle */}
                         <button
                           onClick={() => handleUpdatePaymentStatus(order.order_id, order.payment_status === 'paid' ? 'unpaid' : 'paid')}
+                          disabled={
+                            order.payment_method?.toLowerCase() === 'momo' ||
+                            order.status?.toLowerCase() === 'completed' ||
+                            (order.payment_method?.toLowerCase() === 'cod' && order.status?.toLowerCase() !== 'completed')
+                          }
                           className={`flex items-center gap-1.5 px-2 py-1 rounded-md border transition-all ${order.payment_status === 'paid'
                             ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
                             : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'
-                          }`}
+                            } ${(order.payment_method?.toLowerCase() === 'momo' ||
+                              order.status?.toLowerCase() === 'completed' ||
+                              (order.payment_method?.toLowerCase() === 'cod' && order.status?.toLowerCase() !== 'completed'))
+                              ? 'opacity-40 cursor-not-allowed'
+                              : ''
+                            }`}
                         >
                           {order.payment_status === 'paid' ? (
                             <CheckCircle2 size={12} />
@@ -395,17 +405,44 @@ const AdminOrderList: React.FC = () => {
                             onChange={(e) => handleUpdateStatus(order.order_id, e.target.value)}
                             className={`w-full appearance-none pl-4 pr-8 py-1.5 rounded-full text-[10px] font-oswald font-bold uppercase tracking-wider border border-white/10 outline-none cursor-pointer transition-all hover:border-white/30 focus:border-t1-red/50 ${getStatusColor(order.status)}`}
                           >
-                            <option value="pending" className="bg-[#111] text-amber-400">PENDING</option>
-                            <option
-                              value="paid"
-                              disabled={order.payment_method?.toLowerCase() === 'cod'}
-                              className={`bg-[#111] ${order.payment_method?.toLowerCase() === 'cod' ? 'text-gray-600' : 'text-blue-300'}`}
-                            >
-                              PAID {order.payment_method?.toLowerCase() === 'cod' ? '(N/A for COD)' : ''}
-                            </option>
-                            <option value="shipping" className="bg-[#111] text-blue-400">SHIPPING</option>
-                            <option value="completed" className="bg-[#111] text-emerald-400">COMPLETED</option>
-                            <option value="cancelled" className="bg-[#111] text-rose-400">CANCELLED</option>
+                            {(() => {
+                              const current = order.status.toLowerCase()
+                              const method = order.payment_method?.toLowerCase()
+
+                              const allowed = method === 'cod'
+                                ? {
+                                  pending: ['shipping', 'cancelled'],
+                                  shipping: ['completed', 'cancelled'],
+                                  completed: [],
+                                  cancelled: []
+                                }[current] ?? []
+                                : {
+                                  pending: ['paid', 'cancelled'],
+                                  paid: ['shipping', 'cancelled'],
+                                  shipping: ['completed'],
+                                  completed: [],
+                                  cancelled: []
+                                }[current] ?? []
+
+                              const options = [
+                                { value: 'pending', label: 'PENDING', color: 'text-amber-400' },
+                                { value: 'paid', label: method === 'cod' ? 'PAID (N/A for COD)' : 'PAID', color: 'text-blue-300' },
+                                { value: 'shipping', label: 'SHIPPING', color: 'text-blue-400' },
+                                { value: 'completed', label: 'COMPLETED', color: 'text-emerald-400' },
+                                { value: 'cancelled', label: 'CANCELLED', color: 'text-rose-400' },
+                              ]
+
+                              return options.map(opt => (
+                                <option
+                                  key={opt.value}
+                                  value={opt.value}
+                                  disabled={opt.value !== current && !allowed.includes(opt.value)}
+                                  className={`bg-[#111] ${opt.value !== current && !allowed.includes(opt.value) ? 'text-gray-600' : opt.color}`}
+                                >
+                                  {opt.label}
+                                </option>
+                              ))
+                            })()}
                           </select>
                           <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none opacity-50">
                             <Filter size={10} />
